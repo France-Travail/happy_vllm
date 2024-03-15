@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=41"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "happy_vllm"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "vllm>=0.3.2, <1.0",
+    "fastapi>=0.100.0,<1.0",
+    "pydantic_settings>=2.0.1,<3.0",
+    "uvicorn[standard]>=0.20,<1.0",
+    "starlette-prometheus>=0.9,<1.0",
+    "numpy>=1.19",
+    "lm-format-enforcer>=0.9.0,<0.10.0",
+    "torch>=2.0.0,<3.0.0"
+]
+
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {file = "version.txt"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["happy_vllm*"]
+
+[project.scripts]
+happy-vllm = "happy_vllm.launch:main"
+
+[project.optional-dependencies]
+test = ["httpx>=0.23,<1.0", "pytest>=7.4.3,<8.0", "pytest-cov>=4.1.0,<5.0", "mypy>=1.7.1,<2.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=happy_vllm"
+filterwarnings = [
+    "ignore:The hookimpl CovPlugin.pytest_",
+    "ignore:IPython could not be loaded!"
+]
+
+[tool.isort]
+profile = "black"
