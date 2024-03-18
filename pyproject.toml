@@ -4,6 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "happy_vllm"
+description = "happy_vllm is a REST API for vLLM, production ready"
+readme = "README.md"
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "vllm>=0.3.2, <1.0",
