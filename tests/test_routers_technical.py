@@ -16,7 +16,6 @@
 
 import os
 import shutil
-import importlib.metadata
 from .conftest import TEST_MODELS_DIR
 from fastapi.testclient import TestClient
 
@@ -56,7 +55,7 @@ def test_info(test_complete_client: TestClient):
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["application"] == "APP_TESTS"
-    assert response_json["version"] == importlib.metadata.version("happy_vllm")
+    assert response_json["version"] == utils.get_package_version()
     assert response_json["model_name"] == "TEST MODEL"
     assert response_json["truncation_side"] == "right"
     assert response_json["max_length"] == 2048

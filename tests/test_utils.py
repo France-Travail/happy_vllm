@@ -16,6 +16,7 @@
 
 import os
 import shutil
+import importlib.metadata
 from transformers import AutoTokenizer
 
 from happy_vllm import utils
@@ -27,6 +28,12 @@ def teardown_module():
     if os.path.exists(TEST_MODELS_DIR):
         if os.path.isdir(TEST_MODELS_DIR):
             shutil.rmtree(TEST_MODELS_DIR)
+
+
+def test_get_package_version():
+    # Nominal case
+    version = utils.get_package_version()
+    assert version == importlib.metadata.version("happy_vllm")
 
 
 def test_proper_tokenization():

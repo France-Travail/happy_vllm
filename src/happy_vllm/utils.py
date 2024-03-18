@@ -16,10 +16,21 @@
 
 import logging
 from pathlib import Path
+import importlib.metadata
 from typing import List, Union
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_package_version() -> str:
+    '''Returns the current version of the package
+
+    Returns:
+        str: version of the package
+    '''
+    version = importlib.metadata.version("happy_vllm")
+    return version
 
 
 def proper_tokenization(tokenizer, str_to_tokenize: str) -> tuple:

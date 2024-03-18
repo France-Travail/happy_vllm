@@ -129,11 +129,12 @@ async def generate(request: Request) -> Response:
     async for request_output in results_generator:
         if await request.is_disconnected():
             # Abort the request if the client disconnects.
-            await engine.abort(request_id)
+            await model._model.abort(request_id)
             return Response(status_code=499)
         final_output = request_output
 
-    assert final_output is not None
+    if final_output is None:
+        raise ValueError('The final ouput is None')
     prompt = final_output.prompt
     text_outputs = [output.text for output in final_output.outputs]
     finish_reasons = [output.finish_reason for output in request_output.outputs]
@@ -159,7 +160,7 @@ async def generate_stream(request: Request) -> StreamingResponse:
     model._tokenizer.truncation_side = model.original_truncation_side
     results_generator = model._model.generate(prompt, sampling_params, request_id)
 
-    async def stream_results() -> AsyncGenerator[bytes, None]:
+    async def stream_results() -> AsyncGenerator[str, None]:
         async for request_output in results_generator:
             prompt = request_output.prompt
             text_outputs = [
@@ -271,9 +272,7 @@ async def metadata_text(request: Request):
     request_dict = await request.json()
 
     tokens_ids = model.tokenize(request_dict['text'])
-    ret = {"tokens_nb": len(tokens_ids)}
-
     truncated_text = model.extract_text_outside_truncation(**request_dict)
-    ret['truncated_text'] = truncated_text
+    ret = {"tokens_nb": len(tokens_ids), "truncated_text": truncated_text}
 
     return JSONResponse(ret)

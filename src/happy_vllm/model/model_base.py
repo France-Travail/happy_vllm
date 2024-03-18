@@ -93,14 +93,14 @@ class Model:
 
         logger.info(f"Loading the model from {cli_args.model}")
         if model_name != "TEST MODEL":
-            engine_args = AsyncEngineArgs.from_cli_args(cli_args)
-            self._model = AsyncLLMEngine.from_engine_args(engine_args)
-            if isinstance(self._model.engine.tokenizer, TokenizerGroup):
-                self._tokenizer = self._model.engine.tokenizer.tokenizer
+            engine_args = AsyncEngineArgs.from_cli_args(cli_args) 
+            self._model = AsyncLLMEngine.from_engine_args(engine_args) # type: ignore
+            if isinstance(self._model.engine.tokenizer, TokenizerGroup): # type: ignore
+                self._tokenizer = self._model.engine.tokenizer.tokenizer # type: ignore
             else:
-                self._tokenizer = self._model.engine.tokenizer
+                self._tokenizer = self._model.engine.tokenizer # type: ignore
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
-            self.max_model_len = self._model.engine.model_config.max_model_len
+            self.max_model_len = self._model.engine.model_config.max_model_len # type: ignore
             self.original_truncation_side = self._tokenizer.truncation_side
         # For test purpose
         else:
