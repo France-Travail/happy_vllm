@@ -1,4 +1,4 @@
-ARG base_image=datascience/base-runtime-cu12:0.0.1
+ARG base_image=nvidia/cuda:12.1.0-devel-ubuntu22.04
 
 # base image
 FROM ${base_image}
