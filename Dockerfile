@@ -3,6 +3,9 @@ ARG base_image=nvidia/cuda:12.1.0-devel-ubuntu22.04
 # base image
 FROM ${base_image}
 
+RUN apt-get update -y \
+    && apt-get install -y python3-pip git
+
 ENV APP_NAME="happy_vllm"
 ENV API_ENTRYPOINT="/happy_vllm/rs/v1"
 
