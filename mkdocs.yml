@@ -1,0 +1,62 @@
+site_name: happy-vllm documentation
+repo_name: happy-vllm
+repo_url: https://github.com/OSS-Pole-Emploi/happy_vllm
+
+# see https://squidfunk.github.io/mkdocs-material/setup/
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+      primary: blue
+      accent: pink
+
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+      primary: blue
+      accent: pink
+  features:
+    - navigation.tabs
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Getting started: Quick_start/Quick_start.md
+  - Serving: Serving/Serving.md
+  - Models: Models/Models.md
+
+
+plugins:
+  - search
+  - section-index
+  - mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+
+
+
+
+
