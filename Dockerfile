@@ -1,30 +1,61 @@
-ARG base_image=nvidia/cuda:12.1.0-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS builder
 
-# base image
-FROM ${base_image}
+LABEL org.opencontainers.image.author="Agence Data Services"
+LABEL org.opencontainers.image.description="REST service happy-vllm"
 
-ENV APP_NAME="happy_vllm"
-ENV API_ENTRYPOINT="/happy_vllm/rs/v1"
+COPY prebuildfs /
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-LABEL maintainer="Agence Data Services"
-LABEL description="Service REST happy_vllm"
+# Install python common
+RUN install_packages software-properties-common
+
+RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
+     && install_packages python3.11 python3.11-dev python3.11-venv python3-pip \
+     && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=true \
+    APP_NAME="happy_vllm" \
+    API_ENTRYPOINT="/happy_vllm/rs/v1"
+
+RUN python -m venv /opt/venv \
+    && pip install --upgrade pip
+ENV VIRTUAL_ENV="/opt/venv" PATH="/opt/venv/bin:${PATH}"
 
 WORKDIR /app
 
 # Install package
-COPY pyproject.toml pyproject.toml
-COPY setup.py setup.py
-COPY src/ src/
-COPY requirements.txt requirements.txt
-COPY version.txt version.txt
+COPY pyproject.toml setup.py README.md requirements.txt version.txt /app
+COPY src/happy_vllm /app/src/happy_vllm
 
-RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa'
-RUN install_packages python3.11 python3.11-dev python3.11-venv python3-pip
+RUN python -m pip install -r requirements.txt && python -m pip install .
 
-RUN ln -sfn /usr/bin/python3.11 /usr/bin/python3
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
-RUN python3 -m pip install --upgrade pip && python3 -m pip install -r requirements.txt && python3 -m pip install .
+COPY prebuildfs /
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install python common
+RUN install_packages software-properties-common
+
+RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
+     && install_packages python3.11 \
+     && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:${PATH}" \
+    PIP_NO_CACHE_DIR=true \
+    APP_NAME="happy_vllm" \
+    API_ENTRYPOINT="/happy_vllm/rs/v1"
+
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+
+COPY src/happy_vllm/launch.py /app
 
 # Start API
-EXPOSE 8501
-CMD ["python3", "src/happy_vllm/launch.py"]
+EXPOSE 8000
+CMD ["python", "/app/launch.py"]
