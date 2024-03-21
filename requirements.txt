@@ -1,5 +1,4 @@
 vllm==0.3.2
-logits-processors-vllm==0.1.5
 fastapi==0.109.2
 pydantic-settings==2.2.1
 uvicorn[standard]==0.27.1
