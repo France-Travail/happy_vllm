@@ -18,13 +18,13 @@
 from fastapi import FastAPI
 from argparse import Namespace
 from fastapi.middleware.cors import CORSMiddleware
-from starlette_prometheus import metrics, PrometheusMiddleware
 
 from .core.config import settings
 from .routers import main_routeur
 from .core.resources import get_lifespan
 from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
-
+from aioprometheus import MetricsMiddleware
+from aioprometheus.asgi.starlette import metrics
 
 def declare_application(cli_args: Namespace) -> FastAPI:
     """Create the FastAPI application
@@ -39,8 +39,9 @@ def declare_application(cli_args: Namespace) -> FastAPI:
     )
 
     # Add PrometheusMiddleware
-    app.add_middleware(PrometheusMiddleware)
-    app.add_route("/metrics", metrics)
+    app.add_middleware(MetricsMiddleware)  # Trace HTTP server metrics
+    app.add_route("/metrics", metrics)  # Exposes HTTP metrics
+
 
     # CORS middleware that allows all origins to avoid CORS problems
     # see https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
