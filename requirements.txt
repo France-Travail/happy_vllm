@@ -1,5 +1,5 @@
 vllm==0.3.2
-fastapi==0.109.2
+fastapi==0.108.0
 pydantic-settings==2.2.1
 uvicorn[standard]==0.27.1
 aioprometheus[starlette]==23.12.0
