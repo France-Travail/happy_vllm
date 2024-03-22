@@ -43,6 +43,7 @@ import pytest
 from pathlib import Path
 from argparse import Namespace
 from fastapi.testclient import TestClient
+from aioprometheus import REGISTRY
 
 # Set paths
 TEST_DIR = Path(__file__).parent.resolve()
@@ -70,6 +71,8 @@ def test_complete_client(monkeypatch) -> TestClient:
     """Complete TestClient that do run startup and shutdown events to load
     the model
     """
+    REGISTRY.clear()
+    
     from happy_vllm.core import resources
     from happy_vllm.model.model_base import Model
 

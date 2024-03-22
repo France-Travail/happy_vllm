@@ -42,7 +42,6 @@ def declare_application(cli_args: Namespace) -> FastAPI:
     app.add_middleware(MetricsMiddleware)  # Trace HTTP server metrics
     app.add_route("/metrics", metrics)  # Exposes HTTP metrics
 
-
     # CORS middleware that allows all origins to avoid CORS problems
     # see https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
     app.add_middleware(

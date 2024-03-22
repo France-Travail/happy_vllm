@@ -25,7 +25,6 @@ so they can handle requests.
 """
 
 import logging
-import asyncio
 from typing import Callable
 from argparse import Namespace
 from contextlib import asynccontextmanager
@@ -47,13 +46,6 @@ def get_lifespan(cli_args: Namespace) -> Callable:
         logger.info("Model loaded")
 
         RESOURCES[RESOURCE_MODEL] = model
-        async def _force_log():
-            while True:
-                await asyncio.sleep(10)
-                await model._model.do_log_stats()
-
-        #if not cli_args.disable_log_stats:
-        asyncio.create_task(_force_log())
         yield
 
         # Clean up the ML models and release the resources
