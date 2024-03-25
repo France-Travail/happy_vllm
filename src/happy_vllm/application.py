@@ -39,8 +39,10 @@ def declare_application(cli_args: Namespace) -> FastAPI:
     )
 
     # Add PrometheusMiddleware
-    app.add_middleware(MetricsMiddleware)  # Trace HTTP server metrics
-    app.add_route("/metrics", metrics)  # Exposes HTTP metrics
+    # Trace HTTP server metrics 
+    app.add_middleware(MetricsMiddleware)  # type: ignore
+    # Exposes HTTP metrics
+    app.add_route("/metrics", metrics)  
 
     # CORS middleware that allows all origins to avoid CORS problems
     # see https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
