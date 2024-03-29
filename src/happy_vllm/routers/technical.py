@@ -18,10 +18,11 @@
 from fastapi import APIRouter
 from starlette.responses import JSONResponse
 
-from ..core.config import settings
 from ..core.resources import RESOURCES, RESOURCE_MODEL
 from ..model.model_base import Model
 from .schemas.technical import ResponseInformation, ResponseLiveness, ResponseReadiness
+
+from happy_vllm import utils
 
 # Technical router
 router = APIRouter()
@@ -66,8 +67,8 @@ async def info() -> ResponseInformation:
     model: Model = RESOURCES.get(RESOURCE_MODEL)
 
     return ResponseInformation(
-        application=settings.app_name,
-        version=settings.app_version,
+        application=model.app_name,
+        version=utils.get_package_version(),
         model_name=model._model_conf.get("model_name", "?"),
         truncation_side=model.original_truncation_side,
         max_length=model.max_model_len

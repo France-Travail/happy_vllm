@@ -37,12 +37,12 @@ logger = logging.getLogger(__name__)
 RESOURCES = {}
 RESOURCE_MODEL = "model"
 
-def get_lifespan(cli_args: Namespace) -> Callable:
+def get_lifespan(args: Namespace) -> Callable:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Load the ML model
-        model = Model()
-        model.loading(cli_args=cli_args)
+        model = Model(app_name=args.app_name)
+        model.loading(args=args)
         logger.info("Model loaded")
 
         RESOURCES[RESOURCE_MODEL] = model

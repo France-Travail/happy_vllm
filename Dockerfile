@@ -15,9 +15,7 @@ RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=true \
-    APP_NAME="happy_vllm" \
-    API_ENTRYPOINT="/happy_vllm/rs/v1"
+    PIP_NO_CACHE_DIR=true
 
 RUN python -m venv /opt/venv \
     && pip install --upgrade pip
@@ -46,9 +44,7 @@ RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:${PATH}" \
-    PIP_NO_CACHE_DIR=true \
-    APP_NAME="happy_vllm" \
-    API_ENTRYPOINT="/happy_vllm/rs/v1"
+    PIP_NO_CACHE_DIR=true
 
 COPY --from=builder /opt/venv /opt/venv
 
@@ -57,5 +53,5 @@ WORKDIR /app
 COPY src/happy_vllm/launch.py /app
 
 # Start API
-EXPOSE 8000
+EXPOSE 5000
 CMD ["python", "/app/launch.py"]

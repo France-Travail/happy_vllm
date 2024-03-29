@@ -14,13 +14,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 
-from happy_vllm.core.config import settings
+from happy_vllm import utils_args
 
+def test_get_parser():
+    parser = utils_args.get_parser()
+    application_settings = utils_args.ApplicationSettings()
+    for key, value in application_settings.model_dump().items():
+        assert parser.get_default(key) == value
 
-def test_settings():
-    """Verify that environment variables set in conftest.py are taken into
-    account in the application settings.
-    """
-    assert settings.app_name == "APP_TESTS"
-    assert settings.api_entrypoint == "/tests"
+def test_get_model_settings():
+    parser = utils_args.get_parser()
+    model_settings = utils_args.get_model_settings(parser)
+    for key, field in model_settings.model_fields.items():
+        if parser.get_default(key) is not None:
+            assert parser.get_default(key) == field.default
+            
+    assert model_settings.model == os.environ['MODEL']
+    assert model_settings.model_name == os.environ['MODEL_NAME']
+

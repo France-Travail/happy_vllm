@@ -18,23 +18,23 @@ import uvicorn
 import argparse
 from vllm.engine.arg_utils import AsyncEngineArgs
 
+from happy_vllm.utils_args import parse_args
 from happy_vllm.application import declare_application
 
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default='127.0.0.1')
-    parser.add_argument("--port", type=int, default=8000)
-    parser.add_argument("--model_name", type=str, default='?')
-    parser.add_argument("--explicit_errors", action='store_true')
-    parser = AsyncEngineArgs.add_cli_args(parser)
-    cli_args = parser.parse_args()
+    args = parse_args()
 
-    app = declare_application(cli_args=cli_args)
-
+    app = declare_application(args=args)
     uvicorn.run(app,
-                host=cli_args.host,
-                port=cli_args.port)
+                host=args.host,
+                port=args.port,
+                log_level=args.uvicorn_log_level,
+                ssl_keyfile=args.ssl_keyfile,
+                ssl_certfile=args.ssl_certfile,
+                ssl_ca_certs=args.ssl_ca_certs,
+                ssl_cert_reqs=args.ssl_cert_reqs)
 
 if __name__ == "__main__":
     main()

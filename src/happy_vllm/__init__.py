@@ -18,10 +18,10 @@
 import os
 import logging
 
-from .core.config import settings
+from .core.config import log_settings
 from .core.logtools import get_pattern_log
 
-level = settings.log_level
+level = log_settings.log_level
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level)

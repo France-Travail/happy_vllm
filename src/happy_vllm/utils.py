@@ -22,6 +22,7 @@ from typing import List, Union
 
 logger = logging.getLogger(__name__)
 
+TEST_TOKENIZER_NAME = "mistralai/Mixtral-8x7B-Instruct-v0.1"
 
 def get_package_version() -> str:
     '''Returns the current version of the package

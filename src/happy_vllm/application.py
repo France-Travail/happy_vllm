@@ -19,23 +19,22 @@ from fastapi import FastAPI
 from argparse import Namespace
 from fastapi.middleware.cors import CORSMiddleware
 
-from .core.config import settings
 from .routers import main_routeur
 from .core.resources import get_lifespan
 from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
 from aioprometheus import MetricsMiddleware
 from aioprometheus.asgi.starlette import metrics
 
-def declare_application(cli_args: Namespace) -> FastAPI:
+def declare_application(args: Namespace) -> FastAPI:
     """Create the FastAPI application
 
     See https://fastapi.tiangolo.com/tutorial/first-steps/ to learn how to
     customize your FastAPI application
     """
     app = FastAPI(
-        title=f"REST API form {settings.app_name}",
-        description=f"Use {settings.app_name} thanks to FastAPI",
-        lifespan=get_lifespan(cli_args=cli_args)
+        title=f"REST API for vLLM",
+        description=f"A REST API for vLLM, production ready",
+        lifespan=get_lifespan(args=args)
     )
 
     # Add PrometheusMiddleware
@@ -55,10 +54,10 @@ def declare_application(cli_args: Namespace) -> FastAPI:
     )
 
     # Add exception middleware
-    if cli_args.explicit_errors:
+    if args.explicit_errors:
         app.add_middleware(ExceptionHandlerMiddleware)
 
     #
-    app.include_router(main_routeur, prefix=settings.api_entrypoint)
+    app.include_router(main_routeur, prefix=args.api_endpoint_prefix)
 
     return app

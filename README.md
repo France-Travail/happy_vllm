@@ -6,15 +6,17 @@ How to launch :
  - `python src/happy_vllm/launch.py` or via the entry point : `happy-vllm`
 
 The path to the model is specified (in the order of priority):
+ - In the argument `--model` of `launch.py` (or of `happy-vllm`)
  - In the environnement variable `MODEL`
  - In the `MODEL` field of the `.env` 
- - In the argument `--model` of `launch.py` (or of `happy-vllm`)
+ 
 If no model are specified, the default model of vllm is chosen
 
 The name of the model is specified (in the order of priority):
+ - In the argument `--model-name` of `launch.py` (or of `happy-vllm`)
  - In the environnement variable `MODEL_NAME`
  - In the `MODEL_NAME` field of the `.env` 
- - In the argument `--model_name` of `launch.py` (or of `happy-vllm`)
+ 
 
  ### Routes
   - #### /generate (POST) :

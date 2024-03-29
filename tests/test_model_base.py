@@ -33,7 +33,7 @@ def teardown_module():
 
 
 def init_model(truncation_side="left"):
-    model = Model()
+    model = Model(app_name=os.environ['app_name'])
     model._tokenizer = AutoTokenizer.from_pretrained(os.environ["tokenizer_name"],
                                                      cache_dir=TEST_MODELS_DIR, truncation_side=truncation_side)
     model.original_truncation_side = truncation_side
@@ -44,7 +44,7 @@ def init_model(truncation_side="left"):
 def test_is_model_loaded():
     model = init_model()
     assert not(model.is_model_loaded())
-    model.loading(Namespace())
+    model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL']))
     assert model.is_model_loaded()
 
 

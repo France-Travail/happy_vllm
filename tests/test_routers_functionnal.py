@@ -40,7 +40,7 @@ def teardown_module():
 
 
 def init_model(truncation_side="left"):
-    model = Model()
+    model = Model(app_name=os.environ['app_name'])
     model._tokenizer = AutoTokenizer.from_pretrained(os.environ["tokenizer_name"],
                                                      cache_dir=TEST_MODELS_DIR, truncation_side=truncation_side)
     model._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(model._tokenizer)

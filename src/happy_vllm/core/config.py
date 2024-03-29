@@ -21,17 +21,13 @@ This module handle global app configuration
 """
 
 
-from happy_vllm import utils
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
-    app_name: str = "happy_vllm"
-    app_version: str = utils.get_package_version()
-    api_entrypoint: str = "/happy_vllm/rs/v1"
+class LogSettings(BaseSettings):
     log_level: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
 
-settings = Settings()
+log_settings = LogSettings()

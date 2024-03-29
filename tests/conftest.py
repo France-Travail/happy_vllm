@@ -42,8 +42,9 @@ import os
 import pytest
 from pathlib import Path
 from argparse import Namespace
-from fastapi.testclient import TestClient
 from aioprometheus import REGISTRY
+from fastapi.testclient import TestClient
+
 
 # Set paths
 TEST_DIR = Path(__file__).parent.resolve()
@@ -51,18 +52,26 @@ TEST_MODELS_DIR = TEST_DIR / "data" / "models"
 
 # Set environment variables for testing
 os.environ["app_name"] = "APP_TESTS"
-os.environ["api_entrypoint"] = "/tests"
+os.environ["api_endpoint_prefix"] = "/tests"
 os.environ["MODEL_NAME"] = "TEST MODEL"
 os.environ["MODEL"] = "test"
 os.environ["TEST_MODELS_DIR"] = str(TEST_MODELS_DIR)
-os.environ["tokenizer_name"] = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+
+# We must import the utils module after setting the environnement variables because
+# it also imports the .core folder via the __init__ and it may impact the other tests
+from happy_vllm import utils
+os.environ["tokenizer_name"] = utils.TEST_TOKENIZER_NAME
 
 
 @pytest.fixture(scope="session")
 def test_base_client() -> TestClient:
     """Basic TestClient that do not run startup and shutdown events"""
     from happy_vllm.application import declare_application
-    app = declare_application(Namespace(explicit_errors=False))
+    app = declare_application(Namespace(explicit_errors=False,
+                                        model_name=os.environ['MODEL_NAME'],
+                                        model=os.environ['MODEL'],
+                                        app_name=os.environ["app_name"],
+                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"]))
     return TestClient(app)
 
 
@@ -80,7 +89,11 @@ def test_complete_client(monkeypatch) -> TestClient:
     monkeypatch.setattr(resources, "Model", Model)
 
     from happy_vllm.application import declare_application
-    app = declare_application(Namespace(explicit_errors=False))
+    app = declare_application(Namespace(explicit_errors=False,
+                                        model_name=os.environ['MODEL_NAME'],
+                                        model=os.environ['MODEL'],
+                                        app_name=os.environ["app_name"],
+                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"]))
     
     with TestClient(app) as client:
         yield client
