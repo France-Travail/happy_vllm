@@ -20,7 +20,6 @@ from .conftest import TEST_MODELS_DIR
 from fastapi.testclient import TestClient
 
 from happy_vllm import utils
-from aioprometheus import REGISTRY
 
 
 def teardown_module():
@@ -31,7 +30,6 @@ def teardown_module():
 
 def test_get_liveness(test_base_client: TestClient):
     """Test the technical route /liveness"""
-    REGISTRY.clear()
     response = test_base_client.get("/tests/liveness")
     assert response.status_code == 200
     assert response.json() == {"alive": "ok"}

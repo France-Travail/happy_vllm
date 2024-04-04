@@ -27,7 +27,7 @@ from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
-from vllm.transformers_utils.tokenizer import TokenizerGroup
+from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
