@@ -44,10 +44,10 @@ def declare_application(args: Namespace) -> FastAPI:
     # see https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=args.allowed_origins,
+        allow_credentials=args.allow_credentials,
+        allow_methods=args.allowed_methods,
+        allow_headers=args.allowed_headers,
     )
 
     # Add exception middleware
@@ -56,5 +56,7 @@ def declare_application(args: Namespace) -> FastAPI:
 
     #
     app.include_router(main_routeur, prefix=args.api_endpoint_prefix)
+
+    app.root_path = args.root_path
 
     return app

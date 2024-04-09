@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from happy_vllm.logits_processors.json_format import VLLMLogitsProcessorJSON
-from happy_vllm.logits_processors.min_tokens import VLLMLogitsProcessorMinTokens
 from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
 
 # In the following parser, we have entries of the form:
@@ -31,15 +30,12 @@ from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorRespon
 logits_processors_parser = {'response_pool': {'class': VLLMLogitsProcessorResponsePool,
                                                 'arguments': {'response_pool': 'possible_responses'},
                                                 'tokenizer': True},
-                            'min_tokens': {'class': VLLMLogitsProcessorMinTokens,
-                                                'arguments': {'min_tokens': 'min_tokens'},
-                                                'tokenizer': True},
                             'json_format':{'class': VLLMLogitsProcessorJSON,
                                             'arguments': {'json_format': 'json_format',
                                                           'json_format_is_json_schema': 'json_format_is_json_schema'},
                                             'tokenizer_lmformatenforcer': True}}
 
-logits_processors_incompatibilities = [('response_pool', 'min_tokens'), ('response_pool', 'json_format')]
+logits_processors_incompatibilities = [('response_pool', 'json_format')]
 
 def detect_logits_processors_incompatibilities(request_dict: dict) -> None:
     """Detects if some keywords present in request_dict could allow incompatible logits_processors

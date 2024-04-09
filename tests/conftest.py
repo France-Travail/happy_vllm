@@ -70,7 +70,12 @@ def test_base_client() -> TestClient:
                                         model_name=os.environ['MODEL_NAME'],
                                         model=os.environ['MODEL'],
                                         app_name=os.environ["app_name"],
-                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"]))
+                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"],
+                                        allow_credentials=True,
+                                        allowed_origins=["*"],
+                                        allowed_methods=["*"],
+                                        allowed_headers=["*"],
+                                        root_path=None))
     return TestClient(app)
 
 
@@ -91,7 +96,12 @@ def test_complete_client(monkeypatch) -> TestClient:
                                         model_name=os.environ['MODEL_NAME'],
                                         model=os.environ['MODEL'],
                                         app_name=os.environ["app_name"],
-                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"]))
+                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"],
+                                        allow_credentials=True,
+                                        allowed_origins=["*"],
+                                        allowed_methods=["*"],
+                                        allowed_headers=["*"],
+                                        root_path=None))
     
     with TestClient(app) as client:
         yield client

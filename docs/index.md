@@ -1,17 +1,45 @@
-# Welcome to MkDocs
+# Welcome to Happy_vLLM
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Happy_vLLM is a REST API, production ready. It is based on the popular library [vLLM](https://github.com/vllm-project/vllm) and provide an API for it.
 
-## Commands
+## Installation
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+You can install happy_vLLM using pip:
 
-## Project layout
+```bash
+pip install happy_vllm
+```
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+Or build it from source:
+
+```bash
+git clone https://github.com/OSS-Pole-Emploi/happy_vllm.git
+cd happy_vllm
+pip install -e .
+```
+
+## Quickstart
+
+Just use the entrypoint `happy-vllm` (see [arguments](arguments.md) for a list of all possible arguments)
+
+```bash
+happy_vllm --model path_to_model --host 127.0.0.1 --port 5000
+```
+
+It will launch the API and you can directly query it for example with 
+
+```bash
+curl 127.0.0.1:5000/info
+```
+
+To get various information on the application or 
+
+```bash
+curl 127.0.0.1:5000/generate -d '{"prompt": "Hey,"}'
+```
+
+if you want to generate your first LLM response using happy_vLLM. See [endpoints](endpoints/endpoints.md) for more details on all the endpoints provided by happy_vLLM. 
+
+## Swagger
+
+You can reach the swagger UI at the `/docs` endpoint (so for example by default at `127.0.0.1:5000/docs`). You will be provided all the endpoints and examples on how to use them.

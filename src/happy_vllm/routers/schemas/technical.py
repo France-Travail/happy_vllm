@@ -30,7 +30,7 @@ with open(response_examples_path, 'r') as file:
 class ResponseLiveness(BaseModel):
     """Return object for liveness probe"""
 
-    alive: str = Field(None, title="Message")
+    alive: str = Field(None, title="Alive message")
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -42,7 +42,7 @@ class ResponseLiveness(BaseModel):
 class ResponseReadiness(BaseModel):
     """Return object for readiness probe"""
 
-    ready: str = Field(None, title="Message")
+    ready: str = Field(None, title="Ready message")
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -57,6 +57,7 @@ class ResponseInformation(BaseModel):
 
     application: str = Field(None, title="Application name")
     version: str = Field(None, title="Application version")
+    vllm_version: str = Field(None, title="Version of vLLM")
     model_name: str = Field(None, title="Model name")
     truncation_side: str = Field(None, title="Truncation side")
     max_length : int = Field(None, title="Max length")

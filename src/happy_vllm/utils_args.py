@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import sys
 import ssl
 import json
 
@@ -26,7 +27,7 @@ from vllm.engine.arg_utils import AsyncEngineArgs
 
 DEFAULT_MODEL_NAME = '?'
 DEFAULT_APP_NAME = "happy_vllm"
-DEFAULT_API_ENDPOINT_PREFIX = "/happy_vllm/rs/v1"
+DEFAULT_API_ENDPOINT_PREFIX = ""
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5000
 DEFAULT_EXPLICIT_ERRORS = False
@@ -127,6 +128,18 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         max_log_len: Optional[int] = default_args.max_log_len
         disable_log_requests: bool = False
         engine_use_ray: bool = False
+        use_v2_block_manager: bool = False
+        num_lookahead_slots: int = default_args.num_lookahead_slots
+        forced_num_gpu_blocks: Optional[int] = default_args.forced_num_gpu_blocks
+        max_logprobs: int = default_args.max_logprobs
+        tokenizer_pool_size: int = default_args.tokenizer_pool_size
+        tokenizer_pool_type: str = default_args.tokenizer_pool_type
+        tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
+        image_input_type: Optional[str] = default_args.image_input_type
+        image_input_shape: Optional[str] = default_args.image_input_shape
+        image_feature_size: Optional[int] = default_args.image_feature_size
+        scheduler_delay_factor: float = default_args.scheduler_delay_factor
+        enable_chunked_prefill: bool = default_args.enable_chunked_prefill
 
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -174,19 +187,19 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--allow-credentials',
                         default=application_settings.allow_credentials,
                         action=BooleanOptionalAction,
-                        help="allow credentials")
+                        help="allow credentials for CORS")
     parser.add_argument("--allowed-origins",
                         type=json.loads,
                         default=application_settings.allowed_origins,
-                        help="allowed origins")
+                        help="CORS allowed origins")
     parser.add_argument("--allowed-methods",
                         type=json.loads,
                         default=application_settings.allowed_methods,
-                        help="allowed methods")
+                        help="CORS allowed methods")
     parser.add_argument("--allowed-headers",
                         type=json.loads,
                         default=application_settings.allowed_headers,
-                        help="allowed headers")
+                        help="CORS allowed headers")
     parser.add_argument("--uvicorn-log-level",
                         type=str,
                         default=application_settings.uvicorn_log_level,
@@ -236,4 +249,9 @@ def parse_args() -> Namespace:
     parser.set_defaults(**model_settings.model_dump())
     # Gets the args
     args = parser.parse_args()
+
+    # Explicitly check for help flag for the providing help message to the entrypoint
+    if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
+        parser.print_help()
+        sys.exit()
     return args

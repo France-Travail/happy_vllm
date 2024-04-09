@@ -5,19 +5,20 @@ repo_name: OSS-Pole-Emploi/happy_vllm
 # see https://squidfunk.github.io/mkdocs-material/setup/
 theme:
   name: material
+  logo: source/assets/logo/logo_happy_vllm.svg
   palette:
     - scheme: default
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-      primary: blue
+      primary: blue grey
       accent: pink
 
     - scheme: slate
       toggle:
         icon: material/weather-sunny
         name: Switch to dark mode
-      primary: blue
+      primary: blue grey
       accent: pink
   features:
     - navigation.tabs
@@ -25,15 +26,30 @@ theme:
     - content.code.annotate
 
 nav:
-  - Getting started: Quick_start/Quick_start.md
-  - Serving: Serving/Serving.md
-  - Models: Models/Models.md
+  - Home: 
+    - Quickstart and installation: index.md
+    - Arguments: arguments.md
+    - Endpoints: endpoints/endpoints.md
+    - Functionalities added by happy_vLLM: pros.md
+    - Code Reference: reference/
+  - Endpoints: 
+    - Endpoints overview: endpoints/endpoints.md
+    - Technical: endpoints/technical.md
+    - Generate and generate_stream: endpoints/generate.md
+    - Tokenizer : endpoints/tokenizer.md
+    - Data manipulation: endpoints/data_manipulation.md
+    
 
 
 plugins:
   - search
+  - literate-nav:
+      nav_file: SUMMARY.md
   - section-index
   - mkdocstrings
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
 
 markdown_extensions:
   - admonition
@@ -42,7 +58,7 @@ markdown_extensions:
   - pymdownx.critic
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true

@@ -145,10 +145,12 @@ class Model:
         Then we decode this list of tensors of token IDs containing special tokens to a string.
 
         Args:
-            prompt (str)
+            text (str) : The text we want to parse
+            truncation_side (str) : The side of the truncation
+            max_length (int) : The length above which the text will be truncated
 
         Returns:
-            prompt outside the truncation (str)
+            The part of the text which will be dropped by the truncation (str)
         """
         if max_length is None:
             max_length = self.max_model_len

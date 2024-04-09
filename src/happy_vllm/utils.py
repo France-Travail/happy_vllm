@@ -34,13 +34,23 @@ def get_package_version() -> str:
     return version
 
 
+def get_vllm_version() -> str:
+    '''Returns the installed version of vLLM 
+
+    Returns:
+        str: version of vLLM
+    '''
+    version = importlib.metadata.version("vllm")
+    return version
+
+
 def proper_tokenization(tokenizer, str_to_tokenize: str) -> tuple:
     """Gets the token ids for a str. We must use this technique in order to get the right token ids
     with their whitespace in the case of some tokenizers (e.g. Llama) adding whitespace in front of the tokenized sentence
 
     Args:
         tokenizer : A tokenizer
-        str_to_tokenizer (str) : The string one wants to tokenize
+        str_to_tokenize (str) : The string one wants to tokenize
 
     Returns:
         tuple : The tuple containing the token ids for the input string

@@ -28,7 +28,7 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
 from happy_vllm import utils
-from happy_vllm.logits_processors.min_tokens import VLLMLogitsProcessorMinTokens
+from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
 from happy_vllm.logits_processors.utils_parse_logits_processors import logits_processors_parser, detect_logits_processors_incompatibilities
 
 from ..model.model_base import Model
@@ -110,10 +110,11 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
     sampling_params = SamplingParams(**request_dict)
     sampling_params.logits_processors = logits_processors
     for logits_processor in logits_processors:
-        if isinstance(logits_processor, VLLMLogitsProcessorMinTokens):
-            min_tokens = logits_processor.min_tokens
-            if min_tokens > sampling_params.max_tokens:
-                raise ValueError(f"min_tokens : {min_tokens} can't be superior to max_tokens : {sampling_params.max_tokens}")
+        if isinstance(logits_processor, VLLMLogitsProcessorResponsePool):
+            min_tokens = sampling_params.min_tokens
+            reponse_pool = logits_processor.possible_tokens_responses
+            if min_tokens > 0 and len(reponse_pool):
+                raise ValueError(f"min_tokens : {min_tokens} is incompatible with the `response_pool` keyword")
     return prompt, prompt_in_response, sampling_params
 
 
@@ -128,7 +129,8 @@ async def generate(
 
     The request should be a JSON object with the following fields:
     - prompt: The prompt to use for the generation.
-    - other fields: The sampling parameters (See `SamplingParams` for details).
+    - other fields: The sampling parameters (See `SamplingParams` from vLLM for more details : 
+                                             https://github.com/vllm-project/vllm/blob/main/vllm/sampling_params.py).
     """
     
     model: Model = RESOURCES.get(RESOURCE_MODEL)
@@ -270,11 +272,11 @@ async def split_text(request: Request,
         RequestSplitText,
         Body(openapi_examples=request_openapi_examples["split_text"])] = None
     ):
-    """Splits a text
+    """Splits a text with a minimal number of token in each chunk. Each chunk is delimited by a separator
 
     The request should be a JSON object with the following fields:
     - text: The text to split
-    - num_tokens_in_chunk (optional): The minimal number of tokens we want in each split
+    - num_tokens_in_chunk (optional): The minimal number of tokens we want in each chunk
     - separators (optional) : The allowed separators between the chunks
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)

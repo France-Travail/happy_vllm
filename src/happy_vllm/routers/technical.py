@@ -72,6 +72,7 @@ async def info() -> ResponseInformation:
         application=model.app_name,
         version=utils.get_package_version(),
         model_name=model._model_conf.get("model_name", "?"),
+        vllm_version=utils.get_vllm_version(),
         truncation_side=model.original_truncation_side,
         max_length=model.max_model_len
     )
@@ -79,6 +80,8 @@ async def info() -> ResponseInformation:
 
 @router.get("/live_metrics", response_model=ResponseLiveMetrics)
 async def get_live_metrics() -> JSONResponse:
+    """Deprecated. You should use now the /metrics endpoint
+    """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
 
     gpu_cache_usage = model.get_gpu_kv_cache_usage()

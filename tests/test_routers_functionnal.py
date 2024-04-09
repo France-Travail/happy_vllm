@@ -29,7 +29,6 @@ from .conftest import TEST_MODELS_DIR
 from happy_vllm.routers import functional
 from happy_vllm.model.model_base import Model
 from happy_vllm.logits_processors.json_format import VLLMLogitsProcessorJSON
-from happy_vllm.logits_processors.min_tokens import VLLMLogitsProcessorMinTokens
 from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
 
 
@@ -66,17 +65,6 @@ def test_parse_logits_processors():
         assert len(logits_processors[0].possible_tokens_responses) == len(response_pool)
         assert logits_processors[0].eos_token_id == tokenizer.eos_token_id
 
-    # With min_tokens
-    prompt = "This is the prompt"
-    for min_tokens in [10, 500]:
-        request_dict = {'temperature': 0, "keyword": "value", "min_tokens": min_tokens}
-        logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
-        assert request_dict == {"temperature": 0, "keyword": "value"}
-        assert len(logits_processors) == 1
-        assert isinstance(logits_processors[0], VLLMLogitsProcessorMinTokens)
-        assert logits_processors[0].min_tokens == min_tokens
-        assert logits_processors[0].eos_token_id == tokenizer.eos_token_id
-
     # With json_format
     prompt = "This is the prompt"
     json_format = {"name": "string",
@@ -101,30 +89,7 @@ def test_parse_logits_processors():
     assert len(logits_processors) == 1
     assert isinstance(logits_processors[0], VLLMLogitsProcessorJSON)
     assert not(logits_processors[0].logits_processor_activated)
-
-    # With min_tokens and response_pool
-    prompt = "This is the prompt"
-    for min_tokens in [10, 500]:
-        for response_pool in [["Yes", "No"], ["Certainly", "I think so", "Of course"], ["Without a doubt"]]:
-            request_dict = {'temperature': 0, "keyword": "value", "min_tokens": min_tokens, "response_pool": response_pool}
-            logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
-            assert request_dict == {"temperature": 0, "keyword": "value"}
-            assert len(logits_processors) == 2
-            if isinstance(logits_processors[0], VLLMLogitsProcessorMinTokens):
-                assert isinstance(logits_processors[1], VLLMLogitsProcessorResponsePool)
-                assert logits_processors[0].min_tokens == min_tokens
-                assert logits_processors[0].eos_token_id == tokenizer.eos_token_id
-                assert len(logits_processors[1].possible_tokens_responses) == len(response_pool)
-                assert logits_processors[1].eos_token_id == tokenizer.eos_token_id
-            else:
-                assert isinstance(logits_processors[0], VLLMLogitsProcessorResponsePool)
-                assert isinstance(logits_processors[1], VLLMLogitsProcessorMinTokens)
-                assert logits_processors[1].min_tokens == min_tokens
-                assert logits_processors[1].eos_token_id == tokenizer.eos_token_id
-                assert len(logits_processors[0].possible_tokens_responses) == len(response_pool)
-                assert logits_processors[0].eos_token_id == tokenizer.eos_token_id
             
-
     # Without logits_processors
     request_dict = {"temperature": 0, "keyword": "value"}
     logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
@@ -149,18 +114,6 @@ def test_parse_generate_parameters():
     assert sampling_params.temperature == temperature
     assert len(sampling_params.logits_processors) == 1
     assert isinstance(sampling_params.logits_processors[0], VLLMLogitsProcessorResponsePool)
-
-    # with min_tokens
-    prompt_ini = "This is the prompt"
-    temperature = 0
-    request_dict = {"temperature": temperature, "min_tokens": 10, "prompt": prompt_ini, "max_tokens": 100}
-    prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
-    assert prompt == prompt_ini
-    assert not(prompt_in_response)
-    assert isinstance(sampling_params, SamplingParams)
-    assert sampling_params.temperature == temperature
-    assert len(sampling_params.logits_processors) == 1
-    assert isinstance(sampling_params.logits_processors[0], VLLMLogitsProcessorMinTokens)
 
     # with json_format
     prompt_ini = "This is the prompt"
@@ -205,15 +158,6 @@ def test_parse_generate_parameters():
     assert sampling_params.temperature == temperature
     assert sampling_params.max_tokens == max_tokens
     assert sampling_params.logits_processors == []
-
-    # Raise ValueError if min_tokens superior to max_tokens
-    prompt_ini = "Here"
-    temperature = 0.1
-    max_tokens = 10
-    min_tokens = 20
-    request_dict = {'temperature': temperature, "prompt": prompt_ini, "max_tokens": max_tokens, "min_tokens": min_tokens}
-    with pytest.raises(ValueError):
-        prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
 
     # Raise ValueError if response_pool and min_tokens are present
     prompt_ini = "This is the prompt"

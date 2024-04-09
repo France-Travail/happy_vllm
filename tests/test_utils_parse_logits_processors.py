@@ -19,18 +19,11 @@ from happy_vllm.logits_processors.utils_parse_logits_processors import detect_lo
 
 
 def test_detect_logits_processors_incompatibilities():
-    request_dict = {"prompt": "my_prompt", "min_tokens": 10}
-    assert detect_logits_processors_incompatibilities(request_dict) is None
-
     request_dict = {"prompt": "my_prompt", "response_pool": ["Yes", "No"]}
     assert detect_logits_processors_incompatibilities(request_dict) is None
 
     request_dict = {"prompt": "my_prompt", "json_format": {"name": "Smith"}}
     assert detect_logits_processors_incompatibilities(request_dict) is None
-
-    request_dict = {"prompt": "my_prompt", "response_pool": ["Yes", "No"], "min_tokens": 10}
-    with pytest.raises(ValueError):
-        detect_logits_processors_incompatibilities(request_dict)
 
     request_dict = {"prompt": "my_prompt", "response_pool": ["Yes", "No"], "json_format": {"name": "Smith"}}
     with pytest.raises(ValueError):

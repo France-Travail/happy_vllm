@@ -36,6 +36,12 @@ def test_get_package_version():
     assert version == importlib.metadata.version("happy_vllm")
 
 
+def test_get_vllm_version():
+    # Nominal case
+    version = utils.get_vllm_version()
+    assert version == importlib.metadata.version("vllm")
+
+
 def test_proper_tokenization():
     tokenizer = AutoTokenizer.from_pretrained(os.environ["tokenizer_name"],
                                                      cache_dir=TEST_MODELS_DIR)

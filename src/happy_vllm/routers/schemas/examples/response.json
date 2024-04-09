@@ -1,43 +1,78 @@
 {
     "generate": {
-        "responses": ["response example"],
-        "finish_reasons": ["finish_reason example"],
-        "prompt": "prompt example"
+        "responses": [
+            "Why don't scientists trust atoms? \n Because they make up everything!"
+        ],
+        "finish_reasons": [
+            "stop"
+        ],
+        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:"
     },
     "generate_stream": {
-        "responses": ["response example"],
-        "finish_reasons": ["finish_reason example"],
-        "prompt": "prompt example"
+        "responses": [
+            "Why don't scientists trust atoms? \n Because they make up everything!"
+        ],
+        "finish_reasons": [
+            "stop"
+        ],
+        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:"
     },
     "tokenizer": {
-        "tokens_ids": [1,45021,3],
-        "tokens_nb": 3,
-        "tokens_str": "tokens_str example"
+        "tokens_ids": [
+            1,
+            851,
+            349,
+            264,
+            2245,
+            2757
+        ],
+        "tokens_nb": 6,
+        "tokens_str": [
+            "<s>",
+            "▁This",
+            "▁is",
+            "▁a",
+            "▁text",
+            "▁example"
+        ]
     },
     "decode": {
-        "decoded_string": "decoded_string example",
-        "tokens_str": ["decoded", "_string", " example"]
+        "decoded_string": "<s> Hey, how are you ?",
+        "tokens_str": [
+            "<s>",
+            "▁Hey",
+            ",",
+            "▁how",
+            "▁are",
+            "▁you",
+            "▁?"
+        ]
     },
     "split_text": {
-        "split_text": ["split_text example"]
+        "split_text": [
+            "Hey, how are you ?",
+            " I am clearly fine.",
+            " And you ? Exceptionally good, thanks for asking."
+        ]
     },
     "metadata_text": {
-        "tokens_nb": 42,
-        "truncated_text": "truncated_text example"
+        "tokens_nb": 6,
+        "truncated_text": "Hey, how are"
     },
     "liveness": {
-        "alive": "alive example"
+        "alive": "ok"
     },
     "readiness": {
-        "ready": "ready example"
+        "ready": "ok"
     },
     "information": {
-        "application": "application example",
-        "version": "version example",
-        "model_name": "model_name example",
-        "truncation_side": "truncation_side example",
-        "max_length": 100
-    },    
+        "application": "happy_vllm",
+        "version": "1.0.0",
+        "vllm_version": "0.4.0.post1",
+        "model_name": "Vigostral-7B-Chat-AWQ",
+        "truncation_side": "right",
+        "max_length": 32768
+      },
     "live_metrics": {
         "requests_running": 5,
         "requests_swapped": 3,

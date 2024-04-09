@@ -73,12 +73,15 @@ class RequestGenerate(BaseModel):
     skip_special_tokens: bool = Field(None)
     spaces_between_special_tokens: bool = Field(None)
     truncate_prompt_tokens: int = Field(None)
+    response_pool: list = Field(None)
+    json_format: dict = Field(None)
+    json_format_is_json_schema: bool = Field(None)
 
 
 class ResponseTokenizer(BaseModel):
     tokens_ids: List[int] = Field(None, title="List of token ids")
     tokens_nb: int = Field(None, title="Number of tokens")
-    tokens_str: str = Field(None, title="Decoded tokens")
+    tokens_str: List[str] = Field(None, title="List of decoded tokens")
     model_config = {"json_schema_extra": {"examples": [response_examples["tokenizer"]]}}
 
 
@@ -109,7 +112,7 @@ class ResponseSplitText(BaseModel):
 
 class RequestSplitText(BaseModel):
     text: str = Field(None, title="Input text")
-    num_tokens_in_chunk: int = Field(None, title="Min number of tokens per split")
+    num_tokens_in_chunk: int = Field(None, title="Min number of tokens per chunk")
     separators: List[str] = Field(None, title="List of separators")
 
 
