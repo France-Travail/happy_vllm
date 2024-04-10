@@ -42,3 +42,6 @@ filterwarnings = [
 
 [tool.isort]
 profile = "black"
+
+[tool.setuptools.package-data]
+examples = ["*.json"]
