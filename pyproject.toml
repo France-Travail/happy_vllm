@@ -44,4 +44,4 @@ filterwarnings = [
 profile = "black"
 
 [tool.setuptools.package-data]
-examples = ["*.json"]
+"happy_vllm.routers.schemas.examples" = ["*.json"]
