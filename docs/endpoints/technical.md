@@ -1,10 +1,10 @@
 # Technical endpoints
 
-Here we present the various technical endpoints
+Here we present the various technical endpoints : `/info`, `/metrics`, `/liveness` and  `/readiness`.
 
 ## info (GET)
 
-This endpoints gives various information on the application and the model. The output is of the form:
+This endpoints gives various information on the application and the model. The format of the output is as follows:
 
 ```
 {
@@ -23,7 +23,7 @@ We remind you that this endpoint is the only one not prefixed by the `api_endpoi
 
 ## liveness (GET)
 
-Checks if the API is live. The output is of the form:
+Checks if the API is live. The format of the output is as follows:
 
 ```
 {
@@ -33,7 +33,7 @@ Checks if the API is live. The output is of the form:
 
 ## readiness (GET)
 
-Checks if the API is ready. The output is of the form:
+Checks if the API is ready. The format of the output is as follows:
 
 ```
 {

@@ -23,7 +23,7 @@ pip install -e .
 Just use the entrypoint `happy-vllm` (see [arguments](arguments.md) for a list of all possible arguments)
 
 ```bash
-happy_vllm --model path_to_model --host 127.0.0.1 --port 5000
+happy-vllm --model path_to_model --host 127.0.0.1 --port 5000
 ```
 
 It will launch the API and you can directly query it for example with 

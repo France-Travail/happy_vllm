@@ -1,8 +1,10 @@
 # Data manipulation endpoints
 
+In this section we will give more details on the endpoints `/metadata_text` and `/split_text`.
+
 ## metadata_text (POST)
 
-Gives the number of tokens of a text and indicates the part that would be truncated if too long. Note that this endpoint uses the special version of the tokenizer provided by happy_vLLM (more details [here](tokenizer.md#vanilla-tokenizer-vs-happy_vllm-tokenizer)). The input is of the form:
+Returns the number of tokens of a text and indicates the part that would be truncated if too long. Note that this endpoint uses the special version of the tokenizer provided by happy_vLLM (more details [here](tokenizer.md#vanilla-tokenizer-vs-happy_vllm-tokenizer)). The format of the input is as follows:
 
 ```
 {
@@ -13,10 +15,10 @@ Gives the number of tokens of a text and indicates the part that would be trunca
 ```
 
  - `text`: The text we want to analyze
- - `truncation_side`: The side of the truncation. This keyword is optional and the default value is the default value of the tokenizer which can be obtained for example via the [`/info` endpoint](technical.md#info-get)
+ - `truncation_side`: The side of the truncation. This keyword is optional and the default value is the one of the tokenizer which can be obtained for example via the [`/info` endpoint](technical.md#info-get)
  - `max_length`: The maximal length of the string before the truncation acts. This keyword is optional and the default value is the `max_model_len` of the model which can be obtained for example via the [`/info` endpoint](technical.md#info-get)
 
-The output is of the form:
+The format of the output is as follows:
 
 ```
 {
@@ -30,7 +32,9 @@ The output is of the form:
 
 ## split_text (POST)
 
-Splits a text in chunks. You can specify a minimal number of tokens present in each chunk. Each chunk will be delimited by separators you can specify. The input is of the form:
+Splits a text in chunks. You can specify a minimal number of tokens present in each chunk. Each chunk will be delimited by separators you can specify. 
+
+The format of the input is as follows:
 
 ```
 {
@@ -44,7 +48,7 @@ Splits a text in chunks. You can specify a minimal number of tokens present in e
  - `num_tokens_in_chunk`: The **minimal** number of tokens you want in a chunk. The keyword is optional, the default value is 200.
  - `separators`: The list of separators which can separate the chunks. Note that they should be corresponding to tokens of the tokenizer. That's why it might be a good practice, depending on the specific tokenizer, to include a space in the separator (such as this : ` ?`). This keyword is optional. The default value is [".", "!", "?", "|", " .", " !", " ?", " |"]
 
-The output is of the form:
+The format of the output is as follows:
 
 ```
 {

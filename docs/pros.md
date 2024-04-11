@@ -16,6 +16,7 @@ If you would like to see an endpoint added, don't hesitate to open an issue or a
 ## Already included logits processors, easy to use
 
 happy_vLLM include some logits processors which provide new functionalities to the generation which can simply be accessed via keywords passed to the generation request. Namely:
+
  - The possibility to force the LLM to answer in a set of possible answer. Useful, for example, when you want to use the LLM as a classifier, you can force it to answer only in constrained way to be sure to always have a valid output without any parsing of the response.
  - The possibility to force the LLM to answer using a json making the parsing of the answer a piece of cake. The specification of this json are made as simple as possible in order to permit beginner users to use this functionality. 
 

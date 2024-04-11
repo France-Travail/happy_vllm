@@ -1,6 +1,8 @@
 # Generating endpoints
 
-There are two endpoints used to generate content. They have the same contract, the only difference is in the response where the one of the `generate` endpoint will give the whole response in one go whereas the `generate_stream` endpoint will provide a streaming response.
+There are two endpoints used to generate content. They have the same contract, the only difference is in the response.
+
+The `/generate` endpoint will give the whole response in one go whereas the `/generate_stream` endpoint will provide a streaming response.
 
 ## Keywords
 
@@ -8,11 +10,15 @@ Here are the keywords you can send to the endpoint. The `prompt` keyword is the 
 
  - `prompt`: The prompt we want to send to the model to complete. Example : "Can you give me the seven wonders of the world ?" 
  - `prompt_in_response`: Whether we want the prompt in the response or no. Example : True (default value: False)
- - `response_pool`: A list of string. The model will be forced to answer one of these strings. It is incompatible with the keyword `min_tokens`. Example : ["Yes", "No", "Maybe"] (default value: not activated)
+ - `response_pool`: A list of string. The model will be forced to answer one of these strings. Example : ["Yes", "No", "Maybe"] (default value: not activated). It is incompatible with the keyword `min_tokens`.
  - `json_format`: When used, specifify to the model that we want a json output and indicates the format of the json. It uses [LM-format-enforcer](https://github.com/noamgat/lm-format-enforcer). To have more details on how to fill this, see [the corresponding section below](#json-format)
  - `json_format_is_json_schema`: Indicates if the `json_format` is a simple json or a json schema. More details in [the corresponding section below](#json-format)
 
-You can also add all the keywords permitted by vLLM such as `temperature`, `top_p`, `repetition_penalty`, ... (the whole list can be found [here](https://github.com/vllm-project/vllm/blob/main/vllm/sampling_params.py)). Note that the keyword `logits_processors` is not allowed to be used since happy_vllm use this keyword to implement its own logits processors (and provide for example the `response_pool` or `json_format` keywords). If you would like to add a specific logits processor, feel free to open a PR or an issue.
+You can also add all the keywords permitted by vLLM such as `temperature`, `top_p`, `repetition_penalty`, ... (the whole list can be found [here](https://github.com/vllm-project/vllm/blob/main/vllm/sampling_params.py)). 
+
+Note that the keyword `logits_processors` is not allowed to be used since happy_vllm use this keyword to implement its own logits processors (and provide for example the `response_pool` or `json_format` keywords). 
+
+If you would like to add a specific logits processor, feel free to open a PR or an issue.
 
 ## Output
 
@@ -32,7 +38,11 @@ The output is of the following form :
 ```
 
 
-The `responses` field are the responses to the prompt. The `finish_reasons` field are those provided by vLLM and has the same length as the `responses` field. `length` means that `max_tokens` has been reached or that the max context has been reached. `stop` means that an eos token has been generated (so the LLM has finished its answer). `abort` means that the request has been aborted. `None` that the response is not finished (happens when you use the streaming endpoint and that the generation for this request is ongoing).
+The `responses` field are the responses to the prompt. The `finish_reasons` field are the reason provided by vLLM for finishing the responses and has the same length as the `responses` field. 
+- `length` means that `max_tokens` has been reached or that the max context has been reached:
+- `stop` means that an eos token has been generated (so the LLM has finished its answer)
+- `abort` means that the request has been aborted
+- `None` that the response is not finished (happens when you use the streaming endpoint and that the generation for this request is ongoing).
 
 ## Json format
 

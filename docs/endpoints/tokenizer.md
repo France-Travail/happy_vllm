@@ -2,11 +2,11 @@
 
 ## Tokenizer endpoints
 
-The tokenizer endpoints allow to use the tokenizer underlying the model.
+The tokenizer endpoints allow to use the tokenizer underlying the model. These endpoints are `/tokenizer` and `/decode` and you can find more details on each below.
 
 ### tokenizer (POST)
 
-Tokenizes the given text. The input is of the form :
+Tokenizes the given text. The format of the input is as follows :
 
 ```
 {
@@ -20,7 +20,7 @@ Tokenizes the given text. The input is of the form :
  - `with_tokens_str`: Whether the list of tokens in string form should be given in the response (optional, default value : `false`)
  - `vanilla`: Whether we should use the vanilla version of the tokenizer or the happy_vLLM version (see [this section](#vanilla-tokenizer-vs-happy_vllm-tokenizer) for more details). This keyword is optional and the default value is `true`.
 
-The output is of the form :
+The format of the output is as follows :
 
 ```
 {
@@ -52,7 +52,7 @@ The output is of the form :
 
 ### decode (POST)
 
-Decodes the given token ids. The input is of the form :
+Decodes the given token ids. The format of the input is as follows :
 
 ```
 {
@@ -74,7 +74,7 @@ Decodes the given token ids. The input is of the form :
  - `with_tokens_str`: Whether we want the response to also decode the ids, id by id
  - `vanilla`: Whether we should use the vanilla version of the tokenizer or the happy_vLLM version (see [this section](#vanilla-tokenizer-vs-happy_vllm-tokenizer) for more details). This keyword is optional and the default value is `true`.
 
-The output is of the form:
+The format of the output is as follows:
 
 ```
 {
@@ -96,8 +96,18 @@ The output is of the form:
 
 ## Vanilla tokenizer vs happy_vLLM tokenizer
 
-Using the routes `tokenizer` and `decode`, you can decide if you want to use the usual version of the tokenizers (with the keyword `vanilla` set to `true`). But in some cases, the tokenizer introduce special characters instead of whitespaces, add a whitespace in front of the string etc. While it is usually the correct way to use the tokenizer (since the models have been trained with these), in particular cases, you might want to just get rid of all these additions. We provide a simple way to do so just by setting the keyword `vanilla` to `false` in the routes `tokenizer` and `decode`.
+Using the routes `tokenizer` and `decode`, you can decide if you want to use the usual version of the tokenizers (with the keyword `vanilla` set to `true`). But in some cases, the tokenizer introduces special characters instead of whitespaces, adds a whitespace in front of the string etc. While it is usually the correct way to use the tokenizer (since the models have been trained with these), in some cases, you might want just to get rid of all these additions. We provide a simple way to do so just by setting the keyword `vanilla` to `false` in the routes `tokenizer` and `decode`.
 
-For example, if you want to encode and decode the string : `Hey, how are you ? Fine thanks.` with the Llama tokenizer, it will create the following tokens (in string forms) : `["<s>", "▁Hey", ",", "▁how", "▁are", "▁you", "▁?", "▁Fine", "▁thanks", "."]` for the usual tokenizer and `["H", "ey", ",", " how", " are", " you", " ?", " Fine", " thanks", "."]` for the modified. Note in particular that the "Hey" is not treated the same way but that the whitespaces are directly translated in real whitespaces and there is no initial whitespace.
+For example, if you want to encode and decode the string : `Hey, how are you ? Fine thanks.` with the Llama tokenizer, it will create the following tokens (in string forms) : 
 
-Note that this modified version of the tokenizer is the one used in the `metadata_text` route (see [this section](data_manipulation.md#metadata_text-post) for more details) but otherwise, the usual tokenizer is used (in particular for the `generate` and `generate_stream` routes)
+For the usual tokenizer:
+
+`["<s>", "▁Hey", ",", "▁how", "▁are", "▁you", "▁?", "▁Fine", "▁thanks", "."]` 
+
+For the happy_vLLM tokenizer:
+
+`["H", "ey", ",", " how", " are", " you", " ?", " Fine", " thanks", "."]`
+
+ Note that the "Hey" is not treated the same way, that the whitespaces are directly translated in real whitespaces and there is no initial whitespace.
+
+Note that our modified version of the tokenizer is the one used in the `/metadata_text` endpoint (see [this section](data_manipulation.md#metadata_text-post) for more details). For all other endpoints, the usual tokenizer is used (in particular for the `/generate` and `/generate_stream` routes).
