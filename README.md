@@ -53,6 +53,15 @@ curl 127.0.0.1:5000/generate -d '{"prompt": "Hey,"}'
 
 if you want to generate your first LLM response using happy_vLLM. See [endpoints](https://oss-pole-emploi.github.io/happy_vllm/endpoints/endpoints) for more details on all the endpoints provided by happy_vLLM. 
 
+## Deploy with Docker image
+
+A docker image is available from the [Github Container Registry](https://github.com/OSS-Pole-Emploi/happy_vllm/pkgs/container/happy_vllm) :  
+
+```bash
+docker pull ghcr.io/oss-pole-emploi/happy_vllm:latest
+```
+See [deploying_with_docker](https://oss-pole-emploi.github.io/happy_vllm/deploying_with_docker) for more details on how to serve happy_vLLM with docker. 
+
 ## Swagger
 
 You can reach the swagger UI at the `/docs` endpoint (so for example by default at `127.0.0.1:5000/docs`). You will be displayed all the endpoints and examples on how to use them.

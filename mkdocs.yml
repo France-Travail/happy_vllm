@@ -31,6 +31,7 @@ nav:
     - Arguments: arguments.md
     - Endpoints: endpoints/endpoints.md
     - Functionalities added by happy_vLLM: pros.md
+    - Deploying with Docker: deploying_with_docker.md
     - Code Reference: reference/
   - Endpoints: 
     - Endpoints overview: endpoints/endpoints.md
