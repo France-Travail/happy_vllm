@@ -20,6 +20,8 @@ import os
 import json
 from pydantic import BaseModel, Field
 
+from vllm.entrypoints.openai.protocol import ModelList
+
 # Load the response examples
 directory = os.path.dirname(os.path.abspath(__file__))
 response_examples_path = os.path.join(directory, "examples", "response.json")
@@ -83,5 +85,9 @@ class ResponseLiveMetrics(BaseModel):
             ]
         }
     }
+
+
+class HappyvllmModelList(ModelList):
+    model_config = {"json_schema_extra": {"examples": [response_examples["models"]]}}
 
 

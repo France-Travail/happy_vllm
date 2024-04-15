@@ -23,19 +23,19 @@ pip install -e .
 Just use the entrypoint `happy-vllm` (see [arguments](arguments.md) for a list of all possible arguments)
 
 ```bash
-happy-vllm --model path_to_model --host 127.0.0.1 --port 5000
+happy-vllm --model path_to_model --host 127.0.0.1 --port 5000 --model-name my_model
 ```
 
 It will launch the API and you can directly query it for example with 
 
 ```bash
-curl 127.0.0.1:5000/info
+curl 127.0.0.1:5000/v1/info
 ```
 
 To get various information on the application or 
 
 ```bash
-curl 127.0.0.1:5000/generate -d '{"prompt": "Hey,"}'
+curl 127.0.0.1:5000/v1/completions -d '{"prompt": "Hey,", "model": "my_model"}'
 ```
 
 if you want to generate your first LLM response using happy_vLLM. See [endpoints](endpoints/endpoints.md) for more details on all the endpoints provided by happy_vLLM. 

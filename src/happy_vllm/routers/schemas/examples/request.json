@@ -266,5 +266,107 @@
                 "max_length": 2
               }
         }
+    },
+    "completions": {
+        "Nominal case": {
+            "summary": "Nominal case",
+            "description": "The nominal case where we we use all default values",
+            "value": {
+                "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
+                "model": "my_model"
+            }
+        },
+        "simple_case": {
+            "summary": "Simple case",
+            "description": "A simple case where we use some vLLM sampling parameters",
+            "value": {
+                "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
+                "model": "my_model",
+                "repetition_penalty": 1.1,
+                "temperature": 0.5,
+                "top_p": 0.8,
+                "max_tokens": 100
+            }
+        },
+        "choices": {
+            "summary": "Use of guided choices",
+            "description": "How to use `guided_choice`. In this example, the LLM will answer one of the three proposed responses, even if the choices are not present in the prompt",
+            "value": {
+                "prompt": "Was was the occupation of Ada Lovelace ?",
+                "model": "my_model",
+                "temperature": 0,
+                "guided_choice": [
+                    "mathematician",
+                    "astronaut",
+                    "show writer"
+                ]
+            }
+        },
+        "guided_json": {
+            "summary": "Use of guided_json with a json schema",
+            "description": "How to use `guided_json` with a json schema. In this example, we are not obligated to put in the prompt what json we are expecting even if it may help the LLM answer correctly. For more complex json schema, please read the corresponding documentation : https://json-schema.org/",
+            "value": {
+                "prompt": "Describe Ada Lovelace. Your answer should be in form of a json with the keywords name, age, is_alive, height_in_meters, names_of_children.",
+                "model": "my_model",
+                "temperature": 0,
+                "repetition_penalty": 1,
+                "top_p": 0.8,
+                "max_tokens": 100,
+                "guided_json": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "age": {
+                            "type": "integer"
+                        },
+                        "is_alive": {
+                            "type": "boolean"
+                        },
+                        "height_in_meters": {
+                            "type": "number"
+                        },
+                        "names_of_children": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "age",
+                        "is_alive",
+                        "height_in_meters",
+                        "names_of_children"
+                    ]
+                }
+            }
+        }
+    },
+    "chat_completions": {
+        "nominal_case": {
+            "summary": "Nominal case",
+            "description": "A nominal case",
+            "value": {
+                "messages": [{
+                    "role": "system",
+                    "content": "You are a helpful assistant."
+                }, {
+                    "role": "user",
+                    "content": "Who won the world series in 2020?"
+                }, {
+                    "role":
+                    "assistant",
+                    "content":
+                    "The Los Angeles Dodgers won the World Series in 2020."
+                }, {
+                    "role": "user",
+                    "content": "Where was it played?"
+                }],
+                "model": "my_model"
+              }
+        }
     }
 }

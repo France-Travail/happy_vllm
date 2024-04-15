@@ -17,12 +17,13 @@
 
 from fastapi import FastAPI
 from argparse import Namespace
-from fastapi.middleware.cors import CORSMiddleware
-
 from .routers import main_routeur
 from .core.resources import get_lifespan
-from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
 from prometheus_client import make_asgi_app
+from fastapi.middleware.cors import CORSMiddleware
+
+from happy_vllm import utils
+from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
 
 def declare_application(args: Namespace) -> FastAPI:
     """Create the FastAPI application
@@ -31,9 +32,10 @@ def declare_application(args: Namespace) -> FastAPI:
     customize your FastAPI application
     """
     app = FastAPI(
-        title=f"REST API for vLLM",
+        title=f"A REST API for vLLM",
         description=f"A REST API for vLLM, production ready",
-        lifespan=get_lifespan(args=args)
+        lifespan=get_lifespan(args=args),
+        version=utils.get_package_version()
     )
 
     # Add prometheus asgi middleware to route /metrics requests

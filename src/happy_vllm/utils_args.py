@@ -23,6 +23,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from argparse import Namespace, ArgumentParser, BooleanOptionalAction
 
 from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.entrypoints.openai.cli_args import LoRAParserAction
 
 
 DEFAULT_MODEL_NAME = '?'
@@ -42,6 +43,9 @@ DEFAULT_SSL_CERTFILE = None
 DEFAULT_SSL_CA_CERTS = None
 DEFAULT_SSL_CERT_REQS = int(ssl.CERT_NONE)
 DEFAULT_ROOT_PATH = None
+DEFAULT_LORA_MODULES = None
+DEFAULT_CHAT_TEMPLATE = None
+DEFAULT_RESPONSE_ROLE = "assistant"
 
 
 class ApplicationSettings(BaseSettings):
@@ -70,6 +74,9 @@ class ApplicationSettings(BaseSettings):
     root_path: Optional[str] = DEFAULT_ROOT_PATH
     app_name: str = DEFAULT_APP_NAME
     api_endpoint_prefix: str = DEFAULT_API_ENDPOINT_PREFIX
+    lora_modules: Optional[str] = DEFAULT_LORA_MODULES
+    chat_template : Optional[str] = DEFAULT_CHAT_TEMPLATE
+    response_role: str = DEFAULT_RESPONSE_ROLE
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -225,8 +232,25 @@ def get_parser() -> ArgumentParser:
                         type=str,
                         default=application_settings.root_path,
                         help="FastAPI root_path when app is behind a path based routing proxy")
+    parser.add_argument("--lora-modules",
+                        type=str,
+                        default=application_settings.lora_modules,
+                        nargs='+',
+                        action=LoRAParserAction,
+                        help="LoRA module configurations in the format name=path. "
+                        "Multiple modules can be specified.")
+    parser.add_argument("--chat-template",
+                        type=str,
+                        default=application_settings.chat_template,
+                        help="The file path to the chat template, "
+                        "or the template in single-line form "
+                        "for the specified model")
+    parser.add_argument("--response-role",
+                        type=str,
+                        default=application_settings.response_role,
+                        help="The role name to return if "
+                        "`request.add_generation_prompt=true`.")
     parser = AsyncEngineArgs.add_cli_args(parser)
-
     return parser
 
 

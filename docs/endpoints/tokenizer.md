@@ -2,9 +2,9 @@
 
 ## Tokenizer endpoints
 
-The tokenizer endpoints allow to use the tokenizer underlying the model. These endpoints are `/tokenizer` and `/decode` and you can find more details on each below.
+The tokenizer endpoints allow to use the tokenizer underlying the model. These endpoints are [`/v1/tokenizer`](#v1tokenizer-post) and [`/v1/decode`](#v1decode-post) and you can find more details on each below.
 
-### tokenizer (POST)
+### /v1/tokenizer (POST)
 
 Tokenizes the given text. The format of the input is as follows :
 
@@ -50,7 +50,7 @@ The format of the output is as follows :
  - `tokens_nb`: The number of tokens in the input
  - `tokens_str`: The string representation of each token (given only if `with_tokens_str` was set to `true` in the request)
 
-### decode (POST)
+### /v1/decode (POST)
 
 Decodes the given token ids. The format of the input is as follows :
 
@@ -96,7 +96,7 @@ The format of the output is as follows:
 
 ## Vanilla tokenizer vs happy_vLLM tokenizer
 
-Using the routes `tokenizer` and `decode`, you can decide if you want to use the usual version of the tokenizers (with the keyword `vanilla` set to `true`). But in some cases, the tokenizer introduces special characters instead of whitespaces, adds a whitespace in front of the string etc. While it is usually the correct way to use the tokenizer (since the models have been trained with these), in some cases, you might want just to get rid of all these additions. We provide a simple way to do so just by setting the keyword `vanilla` to `false` in the routes `tokenizer` and `decode`.
+Using the endpoints `/v1/tokenizer` and `/v1/decode`, you can decide if you want to use the usual version of the tokenizers (with the keyword `vanilla` set to `true`). But in some cases, the tokenizer introduces special characters instead of whitespaces, adds a whitespace in front of the string etc. While it is usually the correct way to use the tokenizer (since the models have been trained with these), in some cases, you might want just to get rid of all these additions. We provide a simple way to do so just by setting the keyword `vanilla` to `false` in the endpoints `/v1/tokenizer` and `/v1/decode`.
 
 For example, if you want to encode and decode the string : `Hey, how are you ? Fine thanks.` with the Llama tokenizer, it will create the following tokens (in string forms) : 
 
@@ -110,4 +110,4 @@ For the happy_vLLM tokenizer:
 
  Note that the "Hey" is not treated the same way, that the whitespaces are directly translated in real whitespaces and there is no initial whitespace.
 
-Note that our modified version of the tokenizer is the one used in the `/metadata_text` endpoint (see [this section](data_manipulation.md#metadata_text-post) for more details). For all other endpoints, the usual tokenizer is used (in particular for the `/generate` and `/generate_stream` routes).
+Note that our modified version of the tokenizer is the one used in the `/v1/metadata_text` endpoint (see [this section](data_manipulation.md#metadata_text-post) for more details). For all other endpoints, the usual tokenizer is used (in particular for the `/v1/generate` and `/v1/generate_stream` endpoints).

@@ -11,3 +11,4 @@ site
 *.pyc
 *.egg-info
 .env
+bandit_outputs.txt

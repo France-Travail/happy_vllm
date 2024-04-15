@@ -23,9 +23,11 @@ from starlette.requests import Request
 from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
-from typing import Annotated, AsyncGenerator, Tuple, List
+from vllm.entrypoints.openai import protocol as vllm_protocol
+from typing import Annotated, AsyncGenerator, Tuple, List, Union
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
+
 
 from happy_vllm import utils
 from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
@@ -33,7 +35,8 @@ from happy_vllm.logits_processors.utils_parse_logits_processors import logits_pr
 
 from ..model.model_base import Model
 from ..core.resources import RESOURCE_MODEL, RESOURCES
-from .schemas.functional import ResponseGenerate, RequestGenerate, ResponseTokenizer, RequestTokenizer, ResponseDecode, RequestDecode, ResponseSplitText, RequestSplitText, ResponseMetadata, RequestMetadata
+from happy_vllm.routers.schemas import functional as functional_schema
+
 
 
 # Load the response examples
@@ -118,14 +121,14 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
     return prompt, prompt_in_response, sampling_params
 
 
-@router.post("/generate", response_model=ResponseGenerate)
+@router.post("/v1/generate", response_model=functional_schema.ResponseGenerate)
 async def generate(
     request: Request,
     request_type: Annotated[
-        RequestGenerate,
+        functional_schema.RequestGenerate,
         Body(openapi_examples=request_openapi_examples["generate"])] = None
     ) -> Response:
-    """Generate completion for the request.
+    """DEPRECATED. Generate completion for the request.
 
     The request should be a JSON object with the following fields:
     - prompt: The prompt to use for the generation.
@@ -161,13 +164,13 @@ async def generate(
     return JSONResponse(ret)
 
 
-@router.post("/generate_stream", response_model=ResponseGenerate)
+@router.post("/v1/generate_stream", response_model=functional_schema.ResponseGenerate)
 async def generate_stream(request: Request,
     request_type: Annotated[
-        RequestGenerate,
+        functional_schema.RequestGenerate,
         Body(openapi_examples=request_openapi_examples["generate_stream"])] = None
     ) -> StreamingResponse:
-    """Generate completion for the request.
+    """DEPRECATED. Generate completion for the request.
 
     The request should be a JSON object with the following fields:
     - prompt: The prompt to use for the generation.
@@ -196,10 +199,10 @@ async def generate_stream(request: Request,
     return StreamingResponse(stream_results())
 
 
-@router.post("/tokenizer", response_model=ResponseTokenizer)
+@router.post("/v1/tokenizer", response_model=functional_schema.ResponseTokenizer)
 async def tokenizer(request: Request,
     request_type: Annotated[
-        RequestTokenizer,
+        functional_schema.RequestTokenizer,
         Body(openapi_examples=request_openapi_examples["tokenizer"])] = None
     ) -> Response:
     """Tokenizes a text
@@ -231,10 +234,10 @@ async def tokenizer(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/decode", response_model=ResponseDecode)
+@router.post("/v1/decode", response_model=functional_schema.ResponseDecode)
 async def decode(request: Request,
     request_type: Annotated[
-        RequestDecode,
+        functional_schema.RequestDecode,
         Body(openapi_examples=request_openapi_examples["decode"])] = None
     ) -> Response:
     """Decodes token ids
@@ -266,10 +269,10 @@ async def decode(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/split_text", response_model=ResponseSplitText)
+@router.post("/v1/split_text", response_model=functional_schema.ResponseSplitText)
 async def split_text(request: Request,
     request_type: Annotated[
-        RequestSplitText,
+        functional_schema.RequestSplitText,
         Body(openapi_examples=request_openapi_examples["split_text"])] = None
     ):
     """Splits a text with a minimal number of token in each chunk. Each chunk is delimited by a separator
@@ -288,10 +291,10 @@ async def split_text(request: Request,
     return JSONResponse(response)
 
 
-@router.post("/metadata_text", response_model=ResponseMetadata)
+@router.post("/v1/metadata_text", response_model=functional_schema.ResponseMetadata)
 async def metadata_text(request: Request,
     request_type: Annotated[
-        RequestMetadata,
+        functional_schema.RequestMetadata,
         Body(openapi_examples=request_openapi_examples["metadata_text"])] = None):
     """Gives meta data on a text
 
@@ -311,3 +314,39 @@ async def metadata_text(request: Request,
     ret = {"tokens_nb": len(tokens_ids), "truncated_text": truncated_text}
 
     return JSONResponse(ret)
+
+
+@router.post("/v1/chat/completions", response_model=functional_schema.HappyvllmChatCompletionResponse)
+async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Body(openapi_examples=request_openapi_examples["chat_completions"])],
+                                 raw_request: Request):
+    """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
+    """
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    generator = await model.openai_serving_chat.create_chat_completion(
+        request, raw_request)
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+    if request.stream:
+        return StreamingResponse(content=generator,
+                                 media_type="text/event-stream")
+    else:
+        return JSONResponse(content=generator.model_dump())
+
+
+@router.post("/v1/completions", response_model=functional_schema.HappyvllmCompletionResponse)
+async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
+                            raw_request: Request):
+    """Open AI compatible completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
+    """
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    generator = await model.openai_serving_completion.create_completion(
+        request, raw_request)
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+    if request.stream:
+        return StreamingResponse(content=generator,
+                                 media_type="text/event-stream")
+    else:
+        return JSONResponse(content=generator.model_dump())

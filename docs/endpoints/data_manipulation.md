@@ -1,8 +1,8 @@
 # Data manipulation endpoints
 
-In this section we will give more details on the endpoints `/metadata_text` and `/split_text`.
+In this section we will give more details on the endpoints [`/v1/metadata_text`](#v1metadata_text-post) and [`v1/split_text`](#v1split_text-post)
 
-## metadata_text (POST)
+## /v1/metadata_text (POST)
 
 Returns the number of tokens of a text and indicates the part that would be truncated if too long. Note that this endpoint uses the special version of the tokenizer provided by happy_vLLM (more details [here](tokenizer.md#vanilla-tokenizer-vs-happy_vllm-tokenizer)). The format of the input is as follows:
 
@@ -15,8 +15,8 @@ Returns the number of tokens of a text and indicates the part that would be trun
 ```
 
  - `text`: The text we want to analyze
- - `truncation_side`: The side of the truncation. This keyword is optional and the default value is the one of the tokenizer which can be obtained for example via the [`/info` endpoint](technical.md#info-get)
- - `max_length`: The maximal length of the string before the truncation acts. This keyword is optional and the default value is the `max_model_len` of the model which can be obtained for example via the [`/info` endpoint](technical.md#info-get)
+ - `truncation_side`: The side of the truncation. This keyword is optional and the default value is the one of the tokenizer which can be obtained for example via the [`/v1/info` endpoint](technical.md#v1info-get)
+ - `max_length`: The maximal length of the string before the truncation acts. This keyword is optional and the default value is the `max_model_len` of the model which can be obtained for example via the [`/v1/info` endpoint](technical.md#v1info-get)
 
 The format of the output is as follows:
 
@@ -30,7 +30,7 @@ The format of the output is as follows:
  - `tokens_nb`: The number of tokens in the given text
  - `truncated_text`: The part of the text which would be truncated
 
-## split_text (POST)
+## /v1/split_text (POST)
 
 Splits a text in chunks. You can specify a minimal number of tokens present in each chunk. Each chunk will be delimited by separators you can specify. 
 

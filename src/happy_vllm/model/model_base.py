@@ -27,10 +27,16 @@ from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
+# We use our own version of OpenAIServingChat to avoid this issue (https://github.com/vllm-project/vllm/issues/2683)
+# To solve this issue, we do what is described in this PR (https://github.com/vllm-project/vllm/pull/2727)
+# When it is resolved, please go back to the vLLM version of OpenAIServingChat and delete this one
+# from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from happy_vllm.model.openai_serving_chat_fixed import OpenAIServingChat
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +83,11 @@ class Model:
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self.max_model_len = self._model.engine.model_config.max_model_len # type: ignore
             self.original_truncation_side = self._tokenizer.truncation_side
+            self.openai_serving_chat = OpenAIServingChat(self._model, args.model_name,
+                                                        args.response_role,
+                                                        args.lora_modules,
+                                                        args.chat_template)
+            self.openai_serving_completion = OpenAIServingCompletion(self._model, args.model_name, args.lora_modules)
         # For test purpose
         else:
             self.max_model_len = 2048
@@ -273,3 +284,5 @@ class MockOutput():
             self.finish_reason = "stop"
         else:
             self.finish_reason = None
+
+

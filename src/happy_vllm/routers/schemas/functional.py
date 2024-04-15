@@ -19,9 +19,10 @@
 
 import os
 import json
-from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
+from pydantic import BaseModel, Field, conint
 from typing import Any, List, Union, Optional
+from vllm.entrypoints.openai.protocol import ResponseFormat, CompletionResponse, ChatCompletionResponse
 
 from .utils import NumpyArrayEncoder
 
@@ -128,3 +129,11 @@ class RequestMetadata(BaseModel):
     text: str = Field(None, title="Input text")
     truncation_side: str = Field(None, title="Side of truncation")
     max_length: int = Field(None, title="Max length before truncation")
+
+
+class HappyvllmCompletionResponse(CompletionResponse):
+    model_config = {"json_schema_extra": {"examples": [response_examples["completion_response"]]}}
+
+
+class HappyvllmChatCompletionResponse(ChatCompletionResponse):
+    model_config = {"json_schema_extra": {"examples": [response_examples["chat_completion_response"]]}}

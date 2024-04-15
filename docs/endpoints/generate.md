@@ -1,10 +1,18 @@
 # Generating endpoints
 
-There are two endpoints used to generate content. They have the same contract, the only difference is in the response.
+There are four endpoints used to generate content. The first two are direct copies of the endpoints provided by vLLM : `/v1/completions` and `/v1/chat/completions` and follow the Open AI contract. The last two `/v1/generate` and `/v1/generate_stream` are deprecated and should not be used anymore. We keep the relevant documentation until we delete them.
 
-The `/generate` endpoint will give the whole response in one go whereas the `/generate_stream` endpoint will provide a streaming response.
+## Open AI compatible endpoints
 
-## Keywords
+For these two endpoints (`/v1/completions` and `/v1/chat/completions`) we refer you to the [vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html). Some examples on how to use them are available in the swagger (whose adress is `127.0.0.1:5000/docs` by default)
+
+## Deprecated generating endpoints
+
+They have the same contract, the only difference is in the response.
+
+The `/v1/generate` endpoint will give the whole response in one go whereas the `/v1/generate_stream` endpoint will provide a streaming response.
+
+### Keywords
 
 Here are the keywords you can send to the endpoint. The `prompt` keyword is the only one which is mandatory, all others are optional.
 
@@ -20,7 +28,7 @@ Note that the keyword `logits_processors` is not allowed to be used since happy_
 
 If you would like to add a specific logits processor, feel free to open a PR or an issue.
 
-## Output
+### Output
 
 The output is of the following form :
 
@@ -44,11 +52,11 @@ The `responses` field are the responses to the prompt. The `finish_reasons` fiel
 - `abort` means that the request has been aborted
 - `None` that the response is not finished (happens when you use the streaming endpoint and that the generation for this request is ongoing).
 
-## Json format
+### Json format
 
 In order to force the LLM to answer in a json format, we implemented [LM-format-enforcer](https://github.com/noamgat/lm-format-enforcer). To be more user friendly we implemented two ways to force this response.
 
-### Simple Json
+#### Simple Json
 
 You can specify the fields you want and the type of the corresponding values (to choose in the following list `["string", "integer", "boolean", "number"]`) by passing a json in the `json_format` field. You can also specify if the value should be an array by passing the type of the items in an array. For example by passing the following json in `json_format`:
 
@@ -75,7 +83,7 @@ the LLM should answer something similar to:
 
 To use this mode, the keyword `json_format_is_json_schema` should be set to `false` (which is the default value)
 
-### Json schema
+#### Json schema
 
 In order to permit more complicated json outputs (in particular nested json), you can also use a json schema ([more detail here](https://json-schema.org/)). For example the simple json above  could also have been put under the form of a json schema as such :
 
@@ -115,9 +123,9 @@ In order to permit more complicated json outputs (in particular nested json), yo
 
 To use this mode, the keyword `json_format_is_json_schema` should be set to `true` (the default value is `false`)
 
-## Examples
+### Examples
 
-### Nominal example
+#### Nominal example
 
 You can use the following input
 
@@ -146,7 +154,7 @@ You will receive something similar to this :
 
 Here we can see that the LLM has not completed its response since the `max_tokens` of 50 has been reached wich can be seen via the `finish_reasons` of the response being ̀`length`
 
-### Use of response_pool
+#### Use of response_pool
 
 You can use the following input
 
@@ -200,7 +208,7 @@ The response should be this :
 
 The LLM generated just a few token, providing the response faster. We don't need to parse the answer since we know it is necessarily an item of ["mathematician", "astronaut", "show writer"]. Moreover, we are not forced to put the choices in the prompt itself even if it might help get the correct answer.
 
-### Use of json_format
+#### Use of json_format
 
 You can use the following input
 

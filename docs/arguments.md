@@ -20,7 +20,7 @@ Here is a list of arguments useful for the application (they all have default va
 
  - `host` : The name of the host (default value is `127.0.0.1`)
  - `port` : The port number (default value is `5000`)
- - `model-name` : The name of the model which will be given by the `\info` endpoint. It is solely informative and won't have any other purpose (default value is `?`)
+ - `model-name` : The name of the model which will be given by the `/v1/info` endpoint or the `/v1/models`. Knowing the name of the model is important to be able to use the endpoints `/v1/completions` and `/v1/chat/completions` (default value is `?`)
  - `app-name`: The name of the application (default value is `happy_vllm`)
  - `api-endpoint-prefix`: The prefix added to all the API endpoints (default value is no prefix)
  - `explicit-errors`: If `False`, the message displayed when an `500 error` is encountered will be `Internal Server Error`. If `True`, the message displayed will be more explicit and give information on the underlying error. The `True` setting is not recommended in a production setting (default value is `False`).
@@ -34,6 +34,9 @@ Here is a list of arguments useful for the application (they all have default va
  - `ssl-ca-certs`: Uvicorn setting, the CA certificates file (default value is `None`)
  - `ssl-cert-reqs`: Uvicorn setting, Whether client certificate is required (see stdlib ssl module's) (default value is `0`)
  - `root_path`: The FastAPI root path (default value is `None`)
+ - `lora-modules`: LoRA module configurations in the format name=path
+ - `chat-template`: The file path to the chat template, or the template in single-line form for the specified model (see [the documentation of vLLM](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#chat-template) for more details). Useful in the `/v1/chat/completions` endpoint
+ - `response-role`: The role name to return if `request.add_generation_prompt=true`. Useful in the `/v1/chat/completions` endpoint
 
 ### Model arguments
 

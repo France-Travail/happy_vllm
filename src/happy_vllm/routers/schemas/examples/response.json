@@ -69,15 +69,87 @@
         "application": "happy_vllm",
         "version": "1.0.0",
         "vllm_version": "0.4.0.post1",
-        "model_name": "Vigostral-7B-Chat-AWQ",
+        "model_name": "my_model",
         "truncation_side": "right",
         "max_length": 32768
-      },
+    },
     "live_metrics": {
         "requests_running": 5,
         "requests_swapped": 3,
         "requests_pending": 2,
         "gpu_cache_usage": 0.24,
         "cpu_cache_usage": 0.36
-    }
+    },
+    "completion_response": {
+        "id": "cmpl-2f9f838910034a63ba6abb98104f91ef",
+        "object": "text_completion",
+        "created": 1712907649,
+        "model": "my_model",
+        "choices": [
+            {
+                "index": 0,
+                "text": ".\n\nI’m not very good at telling jokes.\n\nWhat’s the difference between a cat and a comma?\n\nA cat has claws at the end of its paws. A comma is a pause at the end of a clause.",
+                "logprobs": null,
+                "finish_reason": "length",
+                "stop_reason": null
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 5,
+            "total_tokens": 61,
+            "completion_tokens": 56
+        }
+    },
+    "chat_completion_response": {
+        "id": "cmpl-2c0f5a15fb264c2bba3907fd7f94e695",
+        "object": "chat.completion",
+        "created": 1712908150,
+        "model": "my_model",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": " The 2020 World Series was played in Arlington, Texas, at Globe Life Field. The series was played in a neutral site due to the COVID-19 pandemic."
+                },
+                "logprobs": null,
+                "finish_reason": "stop",
+                "stop_reason": null
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 68,
+            "total_tokens": 108,
+            "completion_tokens": 40
+        }
+    },
+    "models":{
+        "object": "list",
+        "data": [
+          {
+            "id": "my_model",
+            "object": "model",
+            "created": 1712912178,
+            "owned_by": "vllm",
+            "root": "my_model",
+            "parent": null,
+            "permission": [
+              {
+                "id": "modelperm-65002a6a74374009a8554d53407c7ce2",
+                "object": "model_permission",
+                "created": 1712912178,
+                "allow_create_engine": false,
+                "allow_sampling": true,
+                "allow_logprobs": true,
+                "allow_search_indices": false,
+                "allow_view": true,
+                "allow_fine_tuning": false,
+                "organization": "*",
+                "group": null,
+                "is_blocking": false
+              }
+            ]
+          }
+        ]
+      }
 }

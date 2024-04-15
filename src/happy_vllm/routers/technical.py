@@ -22,9 +22,9 @@ from starlette.responses import JSONResponse
 
 from ..core.resources import RESOURCES, RESOURCE_MODEL
 from ..model.model_base import Model
-from .schemas.technical import ResponseInformation, ResponseLiveness, ResponseReadiness, ResponseLiveMetrics
 
 from happy_vllm import utils
+from happy_vllm.routers.schemas import technical as technical_schema
 
 # Technical router
 router = APIRouter()
@@ -32,43 +32,43 @@ router = APIRouter()
 
 @router.get(
     "/liveness",
-    response_model=ResponseLiveness,
+    response_model=technical_schema.ResponseLiveness,
     name="liveness",
     tags=["technical"],
 )
-async def get_liveness() -> ResponseLiveness:
+async def get_liveness() -> technical_schema.ResponseLiveness:
     """Liveness probe for k8s"""
-    liveness_msg = ResponseLiveness(alive="ok")
+    liveness_msg = technical_schema.ResponseLiveness(alive="ok")
     return liveness_msg
 
 
 @router.get(
     "/readiness",
-    response_model=ResponseReadiness,
+    response_model=technical_schema.ResponseReadiness,
     name="readiness",
     tags=["technical"],
 )
-async def get_readiness() -> ResponseReadiness:
+async def get_readiness() -> technical_schema.ResponseReadiness:
     """Readiness probe for k8s"""
     model: Model = RESOURCES.get(RESOURCE_MODEL)
 
     if model and model.is_model_loaded():
-        return ResponseReadiness(ready="ok")
+        return technical_schema.ResponseReadiness(ready="ok")
     else:
-        return ResponseReadiness(ready="ko")
+        return technical_schema.ResponseReadiness(ready="ko")
 
 
 @router.get(
-    "/info",
-    response_model=ResponseInformation,
+    "/v1/info",
+    response_model=technical_schema.ResponseInformation,
     name="information",
     tags=["technical"],
 )
-async def info() -> ResponseInformation:
+async def info() -> technical_schema.ResponseInformation:
     """Rest resource for info"""
     model: Model = RESOURCES.get(RESOURCE_MODEL)
 
-    return ResponseInformation(
+    return technical_schema.ResponseInformation(
         application=model.app_name,
         version=utils.get_package_version(),
         model_name=model._model_conf.get("model_name", "?"),
@@ -78,7 +78,7 @@ async def info() -> ResponseInformation:
     )
 
 
-@router.get("/live_metrics", response_model=ResponseLiveMetrics)
+@router.get("/live_metrics", response_model=technical_schema.ResponseLiveMetrics)
 async def get_live_metrics() -> JSONResponse:
     """Deprecated. You should use now the /metrics endpoint
     """
@@ -90,3 +90,10 @@ async def get_live_metrics() -> JSONResponse:
     metrics["gpu_cache_usage"] = gpu_cache_usage
     metrics["cpu_cache_usage"] = cpu_cache_usage
     return JSONResponse(metrics)
+
+
+@router.get("/v1/models", response_model=technical_schema.HappyvllmModelList)
+async def show_available_models():
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    models = await model.openai_serving_chat.show_available_models()
+    return JSONResponse(content=models.model_dump())

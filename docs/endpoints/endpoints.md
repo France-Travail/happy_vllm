@@ -4,44 +4,52 @@ happy_vLLM provides several endpoints which cover most of the use cases. Feel fr
 
 ## Technical endpoints
 
-### info (GET)
+### /v1/info (GET)
 
 Provides information on the API and the model (more details [here](technical.md))
 
-### metrics (GET)
+### /metrics (GET)
 
 The technical metrics obtained for prometheus (more details [here](technical.md))
 
-### liveness (GET)
+### /liveness (GET)
 
 The liveness endpoint (more details [here](technical.md))
 
-### readiness (GET)
+### /readiness (GET)
 
 The readiness endpoint (more details [here](technical.md))
 
+### /v1/models (GET)
+
+The Open AI compatible endpoint used, for example, to get the name of the model. Mimicks the vLLM implementation (more details [here](technical.md))
+
 ## Generating endpoints
 
-### generate and generate_stream (POST)
+### /v1/completions and /v1/chat/completions (POST)
+
+These two endpoints mimick the one of vLLM. They follow the Open AI contract and you can find more details in [the vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html)
+
+### DEPRECATED /v1/generate and /v1/generate_stream (POST)
 
 The core of the reactor. These two routes take a prompt and completes it (more details [here](generate.md))
 
 ## Tokenizer endpoints
 
-### tokenizer (POST)
+### /v1/tokenizer (POST)
 
 Used to tokenizer a text (more details [here](tokenizer.md))
 
-### decode (POST)
+### /v1/decode (POST)
 
 Used to decode a list of token ids (more details [here](tokenizer.md))
 
 ## Data manipulation endpoints
 
-### metadata_text (POST)
+### /v1/metadata_text (POST)
 
 Used to know which part of a prompt will be truncated (more details [here](data_manipulation.md))
 
-### split_text (POST)
+### /v1/split_text (POST)
 
 Splits a text on some separators, for example to prepare for some RAG (more details [here](data_manipulation.md))

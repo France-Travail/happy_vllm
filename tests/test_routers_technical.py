@@ -50,8 +50,8 @@ def test_get_readiness_ok(test_complete_client: TestClient):
 
 
 def test_info(test_complete_client: TestClient):
-    """Test the technical route /info"""
-    response = test_complete_client.get("/tests/info")
+    """Test the technical route /v1/info"""
+    response = test_complete_client.get("/tests/v1/info")
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["application"] == "APP_TESTS"
