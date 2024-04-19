@@ -156,9 +156,14 @@ async def generate(
         raise ValueError('The final ouput is None')
     prompt = final_output.prompt
     text_outputs = [output.text for output in final_output.outputs]
+    prompt_nb_tokens = len(final_output.prompt_token_ids)
+    nb_tokens_outputs = [len(output.token_ids) for output in final_output.outputs]
+    usages = [{"prompt_tokens": prompt_nb_tokens,
+               "completion_tokens": completion_tokens,
+               "total_tokens": prompt_nb_tokens + completion_tokens } for completion_tokens in nb_tokens_outputs]
     finish_reasons = [output.finish_reason for output in request_output.outputs]
     finish_reasons = ["None" if finish_reason is None else finish_reason for finish_reason in finish_reasons]
-    ret = {"responses": text_outputs, "finish_reasons": finish_reasons}
+    ret = {"responses": text_outputs, "finish_reasons": finish_reasons, "usages": usages}
     if prompt_in_response:
         ret['prompt'] = prompt
     return JSONResponse(ret)
@@ -191,7 +196,12 @@ async def generate_stream(request: Request,
             ]
             finish_reasons = [output.finish_reason for output in request_output.outputs]
             finish_reasons = ["None" if finish_reason is None else finish_reason for finish_reason in finish_reasons]
-            ret = {"responses": text_outputs, "finish_reasons": finish_reasons}
+            prompt_nb_tokens = len(request_output.prompt_token_ids)
+            nb_tokens_outputs = [len(output.token_ids) for output in request_output.outputs]
+            usages = [{"prompt_tokens": prompt_nb_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_nb_tokens + completion_tokens } for completion_tokens in nb_tokens_outputs]
+            ret = {"responses": text_outputs, "finish_reasons": finish_reasons, "usages": usages}
             if prompt_in_response:
                 ret['prompt'] = prompt
             yield (json.dumps(ret) + "\n")#.encode("utf-8")

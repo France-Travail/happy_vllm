@@ -174,9 +174,9 @@ def test_generate(test_complete_client: TestClient):
 
     def get_response(tokenizer, prompt, i, max_tokens):
         prompt_tot = f"n={i} "*i + prompt + " This is the generated text. I find it really good don't you ?"
-        token_ids = tokenizer(prompt_tot, add_special_tokens=False)['input_ids']
+        token_ids = tokenizer(prompt_tot)['input_ids']
         token_ids = token_ids[:max_tokens]
-        return tokenizer.decode(token_ids)
+        return tokenizer.decode(token_ids, skip_special_tokens=True), len(token_ids)
     
     # Nominal case
     max_tokens = 500
@@ -185,9 +185,14 @@ def test_generate(test_complete_client: TestClient):
     response = test_complete_client.post("/tests/v1/generate", json=body)
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["responses"] == [get_response(tokenizer, prompt, 0, max_tokens)]
+    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
+    response, completion_tokens = get_response(tokenizer, prompt, 0, max_tokens)
+    assert response_json["responses"] == [response]
     assert response_json["finish_reasons"] == ["stop"]
-    assert set(response_json) == {"responses", "finish_reasons"}
+    assert response_json["usages"] == [{"prompt_tokens": nb_token_prompt,
+                                        "completion_tokens": completion_tokens,
+                                        "total_tokens": nb_token_prompt + completion_tokens }]
+    assert set(response_json) == {"responses", "finish_reasons", "usages"}
 
     # Several responses and prompt_in_response
     max_tokens = 500
@@ -196,17 +201,22 @@ def test_generate(test_complete_client: TestClient):
     response = test_complete_client.post("/tests/v1/generate", json=body)
     assert response.status_code == 200
     response_json = response.json()
+    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
     assert len(response_json["responses"]) == 3
     assert len(response_json["finish_reasons"]) == 3
+    assert len(response_json["usages"]) == 3
     for i in [0, 1, 2]:
-        target_response = get_response(tokenizer, prompt, i, max_tokens)
+        target_response, target_completion_tokens = get_response(tokenizer, prompt, i, max_tokens)
         assert response_json["responses"][i] == target_response
         if target_response[-4:] == "ou ?":
             assert response_json["finish_reasons"][i] == "stop"
         else:
             assert response_json["finish_reasons"][i] == "length"
+        assert response_json["usages"][i] == {"prompt_tokens": nb_token_prompt,
+                                        "completion_tokens": target_completion_tokens,
+                                        "total_tokens": nb_token_prompt + target_completion_tokens } 
     assert response_json["prompt"] == "Hello there"
-    assert set(response_json) == {"responses", "finish_reasons", "prompt"}
+    assert set(response_json) == {"responses", "finish_reasons", "prompt", "usages"}
 
     # Generations stopped
     max_tokens = 5
@@ -215,16 +225,20 @@ def test_generate(test_complete_client: TestClient):
     response = test_complete_client.post("/tests/v1/generate", json=body)
     assert response.status_code == 200
     response_json = response.json()
+    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
     assert len(response_json["responses"]) == 3
     assert len(response_json["finish_reasons"]) == 3
     for i in [0, 1, 2]:
-        target_response = get_response(tokenizer, prompt, i, max_tokens)
+        target_response, target_completion_tokens = get_response(tokenizer, prompt, i, max_tokens)
         assert response_json["responses"][i] == target_response
         if target_response[-4:] == "ou ?":
             assert response_json["finish_reasons"][i] == "stop"
         else:
             assert response_json["finish_reasons"][i] == "length"
-    assert set(response_json) == {"responses", "finish_reasons"}
+        assert response_json["usages"][i] == {"prompt_tokens": nb_token_prompt,
+                                        "completion_tokens": target_completion_tokens,
+                                        "total_tokens": nb_token_prompt + target_completion_tokens } 
+    assert set(response_json) == {"responses", "finish_reasons", "usages"}
 
     # Some Generation stopped
     max_tokens = 18
@@ -233,16 +247,20 @@ def test_generate(test_complete_client: TestClient):
     response = test_complete_client.post("/tests/v1/generate", json=body)
     assert response.status_code == 200
     response_json = response.json()
+    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
     assert len(response_json["responses"]) == 3
     assert len(response_json["finish_reasons"]) == 3
     for i in [0, 1, 2]:
-        target_response = get_response(tokenizer, prompt, i, max_tokens)
+        target_response, target_completion_tokens = get_response(tokenizer, prompt, i, max_tokens)
         assert response_json["responses"][i] == target_response
         if target_response[-4:] == "ou ?":
             assert response_json["finish_reasons"][i] == "stop"
         else:
             assert response_json["finish_reasons"][i] == "length"
-    assert set(response_json) == {"responses", "finish_reasons"}
+        assert response_json["usages"][i] == {"prompt_tokens": nb_token_prompt,
+                                        "completion_tokens": target_completion_tokens,
+                                        "total_tokens": nb_token_prompt + target_completion_tokens } 
+    assert set(response_json) == {"responses", "finish_reasons", "usages"}
 
 
 def test_tokenizer(test_complete_client: TestClient):

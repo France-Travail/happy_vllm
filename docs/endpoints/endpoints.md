@@ -32,7 +32,7 @@ These two endpoints mimick the one of vLLM. They follow the Open AI contract and
 
 ### DEPRECATED /v1/generate and /v1/generate_stream (POST)
 
-The core of the reactor. These two routes take a prompt and completes it (more details [here](generate.md))
+DEPRECATED : These two routes take a prompt and completes it (more details [here](generate.md))
 
 ## Tokenizer endpoints
 

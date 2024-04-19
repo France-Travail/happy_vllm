@@ -36,7 +36,7 @@ nav:
   - Endpoints: 
     - Endpoints overview: endpoints/endpoints.md
     - Technical: endpoints/technical.md
-    - Generate and generate_stream: endpoints/generate.md
+    - Generating endpoints: endpoints/generate.md
     - Tokenizer : endpoints/tokenizer.md
     - Data manipulation: endpoints/data_manipulation.md
     

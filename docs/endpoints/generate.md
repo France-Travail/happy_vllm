@@ -41,7 +41,17 @@ The output is of the following form :
   "finish_reasons": [
     "length",
     "stop"
-  ]
+  ],
+  "usages": [{
+      "prompt_tokens": 3,
+      "completion_tokens": 7,
+      "total_tokens": 10
+    },
+    {
+      "prompt_tokens": 3,
+      "completion_tokens": 5,
+      "total_tokens": 8
+    }]
 }
 ```
 
@@ -51,6 +61,7 @@ The `responses` field are the responses to the prompt. The `finish_reasons` fiel
 - `stop` means that an eos token has been generated (so the LLM has finished its answer)
 - `abort` means that the request has been aborted
 - `None` that the response is not finished (happens when you use the streaming endpoint and that the generation for this request is ongoing).
+The `usages` field give information on the number of tokens in the prompt and in the responses (`prompt_tokens` for the number of tokens of the prompt, `completion_tokens` for the number of tokens of the response and `total_tokens` the sum of the two). This list is the same length as the `responses` field
 
 ### Json format
 

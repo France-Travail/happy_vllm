@@ -6,7 +6,14 @@
         "finish_reasons": [
             "stop"
         ],
-        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:"
+        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
+        "usages": [
+            {
+                "prompt_tokens": 17,
+                "completion_tokens": 17,
+                "total_tokens": 34
+            }
+        ]
     },
     "generate_stream": {
         "responses": [
@@ -15,7 +22,14 @@
         "finish_reasons": [
             "stop"
         ],
-        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:"
+        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
+        "usages": [
+            {
+                "prompt_tokens": 17,
+                "completion_tokens": 17,
+                "total_tokens": 34
+            }
+        ]
     },
     "tokenizer": {
         "tokens_ids": [
@@ -123,33 +137,33 @@
             "completion_tokens": 40
         }
     },
-    "models":{
+    "models": {
         "object": "list",
         "data": [
-          {
-            "id": "my_model",
-            "object": "model",
-            "created": 1712912178,
-            "owned_by": "vllm",
-            "root": "my_model",
-            "parent": null,
-            "permission": [
-              {
-                "id": "modelperm-65002a6a74374009a8554d53407c7ce2",
-                "object": "model_permission",
+            {
+                "id": "my_model",
+                "object": "model",
                 "created": 1712912178,
-                "allow_create_engine": false,
-                "allow_sampling": true,
-                "allow_logprobs": true,
-                "allow_search_indices": false,
-                "allow_view": true,
-                "allow_fine_tuning": false,
-                "organization": "*",
-                "group": null,
-                "is_blocking": false
-              }
-            ]
-          }
+                "owned_by": "vllm",
+                "root": "my_model",
+                "parent": null,
+                "permission": [
+                    {
+                        "id": "modelperm-65002a6a74374009a8554d53407c7ce2",
+                        "object": "model_permission",
+                        "created": 1712912178,
+                        "allow_create_engine": false,
+                        "allow_sampling": true,
+                        "allow_logprobs": true,
+                        "allow_search_indices": false,
+                        "allow_view": true,
+                        "allow_fine_tuning": false,
+                        "organization": "*",
+                        "group": null,
+                        "is_blocking": false
+                    }
+                ]
+            }
         ]
-      }
+    }
 }

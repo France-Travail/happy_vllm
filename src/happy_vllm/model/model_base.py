@@ -251,10 +251,10 @@ class MockModel():
 
     async def generate(self, prompt, sampling_params, request_id):
         stream_txts = [f"n={i} "*i + prompt + " This is the generated text. I find it really good don't you ?" for i in range(sampling_params.n)]
-        stream_ids = [self.tokenizer(stream_txt, add_special_tokens=False, truncation=True, max_length=sampling_params.max_tokens)['input_ids'] for stream_txt in stream_txts]
+        stream_ids = [self.tokenizer(stream_txt, truncation=True, max_length=sampling_params.max_tokens)['input_ids'] for stream_txt in stream_txts]
         max_length = max([len(element) for element in stream_ids]) + 1
-        stream_tmp = [[self.tokenizer.decode(text[:i]) for text in stream_ids] for i in range(max_length)]
-        stream = [MockGenerateResponse(prompt, texts) for texts in stream_tmp]
+        stream_tmp = [[self.tokenizer.decode(text[:i], skip_special_tokens=True) for text in stream_ids] for i in range(max_length)]
+        stream = [MockGenerateResponse(prompt, texts, self.tokenizer) for texts in stream_tmp]
         # Mock the length finish_reason
         for i in range(sampling_params.n):
             if stream[-1].outputs[i].finish_reason is None:
@@ -270,16 +270,18 @@ class MockModel():
 
 class MockGenerateResponse():
 
-    def __init__(self, prompt, outputs):
+    def __init__(self, prompt, outputs, tokenizer):
         self.prompt = prompt
-        outputs = [MockOutput(output) for output in outputs]
+        outputs = [MockOutput(output, tokenizer) for output in outputs]
         self.outputs = outputs
+        self.prompt_token_ids = tokenizer(self.prompt)['input_ids']
 
 
 class MockOutput():
     
-    def __init__(self, text):
+    def __init__(self, text, tokenizer):
         self.text = text
+        self.token_ids = tokenizer(text)['input_ids']
         if text[-len("don't you ?"):] == "don't you ?":
             self.finish_reason = "stop"
         else:
