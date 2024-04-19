@@ -1,9 +1,5 @@
 name: Linter
 on:
-  push:
-    paths:
-      - 'src/**'
-      - '!*.md'
   pull_request:
     types: [opened, reopened, synchronize]
     paths:

@@ -1,9 +1,5 @@
 name: Build & Tests
 on:
-  push:
-    paths:
-      - 'src/**'
-      - '!*.md'
   pull_request:
     types: [opened, reopened, synchronize]
     branches:
@@ -36,3 +32,5 @@ jobs:
         pip install .[test]
         pytest
         python -m mypy --ignore-missing-imports --allow-redefinition --no-strict-optional -p src
+      env:
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}

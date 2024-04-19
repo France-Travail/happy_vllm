@@ -40,10 +40,21 @@ We use it to :
 
 import os
 import pytest
+from typing import Union
 from pathlib import Path
 from argparse import Namespace
 from fastapi.testclient import TestClient
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Manage the huggingface token
+class HuggingfaceSettings(BaseSettings):
+    """A class to get the HuggingFace token
+    """
+    hf_token : Union[str, None] = None
+    model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
+
+huggingface_settings = HuggingfaceSettings()
+os.environ['HF_TOKEN'] = huggingface_settings.hf_token
 
 # Set paths
 TEST_DIR = Path(__file__).parent.resolve()
