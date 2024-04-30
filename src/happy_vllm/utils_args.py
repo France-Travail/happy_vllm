@@ -98,12 +98,14 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         model: str = default_args.model
         model_name: str = default_args.model_name
         tokenizer: Optional[str] = default_args.tokenizer
+        skip_tokenizer_init: bool = False
         tokenizer_mode: str = default_args.tokenizer_mode
         trust_remote_code: bool = False
         download_dir: Optional[str] = default_args.download_dir
         load_format: str = default_args.load_format
         dtype: str = default_args.dtype
         kv_cache_dtype: str = default_args.kv_cache_dtype
+        quantization_param_path: Optional[str] = default_args.quantization_param_path
         seed: int = default_args.seed
         max_model_len: Optional[int] = default_args.max_model_len
         worker_use_ray: bool = False
@@ -132,12 +134,13 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
         device: str = default_args.device
         ray_workers_use_nsight: bool = False
+        num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
+        num_lookahead_slots: int = default_args.num_lookahead_slots
+        model_loader_extra_config: Optional[dict] = default_args.model_loader_extra_config
         max_log_len: Optional[int] = default_args.max_log_len
         disable_log_requests: bool = False
         engine_use_ray: bool = False
         use_v2_block_manager: bool = False
-        num_lookahead_slots: int = default_args.num_lookahead_slots
-        forced_num_gpu_blocks: Optional[int] = default_args.forced_num_gpu_blocks
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: str = default_args.tokenizer_pool_type
@@ -146,7 +149,12 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         image_input_shape: Optional[str] = default_args.image_input_shape
         image_feature_size: Optional[int] = default_args.image_feature_size
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
-        enable_chunked_prefill: bool = default_args.enable_chunked_prefill
+        enable_chunked_prefill: bool = False
+        guided_decoding_backend: str = default_args.guided_decoding_backend
+        # Speculative decoding configuration.
+        speculative_model: Optional[str] = default_args.speculative_model
+        num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
+        speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
 
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 

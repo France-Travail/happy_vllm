@@ -83,11 +83,11 @@ class Model:
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self.max_model_len = self._model.engine.model_config.max_model_len # type: ignore
             self.original_truncation_side = self._tokenizer.truncation_side
-            self.openai_serving_chat = OpenAIServingChat(self._model, args.model_name,
+            self.openai_serving_chat = OpenAIServingChat(self._model, [args.model_name],
                                                         args.response_role,
                                                         args.lora_modules,
                                                         args.chat_template)
-            self.openai_serving_completion = OpenAIServingCompletion(self._model, args.model_name, args.lora_modules)
+            self.openai_serving_completion = OpenAIServingCompletion(self._model, [args.model_name], args.lora_modules)
         # For test purpose
         else:
             self.max_model_len = 2048

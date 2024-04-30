@@ -1,6 +1,6 @@
+import asyncio
 import codecs
 import time
-import asyncio
 from typing import AsyncGenerator, AsyncIterator, List, Optional, Union
 
 from fastapi import Request
@@ -11,7 +11,7 @@ from vllm.entrypoints.openai.protocol import (
     ChatCompletionResponseChoice, ChatCompletionResponseStreamChoice,
     ChatCompletionStreamResponse, ChatMessage, DeltaMessage, ErrorResponse,
     UsageInfo)
-from vllm.entrypoints.openai.serving_engine import LoRA, OpenAIServing
+from happy_vllm.model.openai_serving_engine_fixed import LoRA, OpenAIServing
 from vllm.logger import init_logger
 from vllm.model_executor.guided_decoding import (
     get_guided_decoding_logits_processor)
@@ -20,29 +20,22 @@ from vllm.utils import random_uuid
 
 logger = init_logger(__name__)
 
+
 class OpenAIServingChat(OpenAIServing):
 
     def __init__(self,
                  engine: AsyncLLMEngine,
-                 served_model: str,
+                 served_model_names: List[str],
                  response_role: str,
                  lora_modules: Optional[List[LoRA]] = None,
                  chat_template=None):
         super().__init__(engine=engine,
-                         served_model=served_model,
-                         lora_modules=lora_modules)
+                         served_model_names=served_model_names,
+                         lora_modules=lora_modules,
+                         await_post_init=self._load_chat_template(
+                             chat_template=chat_template))
         self.response_role = response_role
-        try:
-            event_loop = asyncio.get_running_loop()
-        except RuntimeError:
-            event_loop = None
-
-        if event_loop is not None and event_loop.is_running(
-        ):  # If the current is instanced by Ray Serve, there is already a running event loop
-            event_loop.create_task(
-                self._load_chat_template_async(chat_template))
-        else:  # When using single vLLM without engine_use_ray
-            self._load_chat_template(chat_template)
+        self._load_chat_template(chat_template)
 
     async def create_chat_completion(
         self, request: ChatCompletionRequest, raw_request: Request
@@ -62,7 +55,7 @@ class OpenAIServingChat(OpenAIServing):
             return error_check_ret
 
         try:
-            prompt = self.tokenizer.apply_chat_template( # type: ignore
+            prompt = self.tokenizer.apply_chat_template(
                 conversation=request.messages,
                 tokenize=False,
                 add_generation_prompt=request.add_generation_prompt)
@@ -73,13 +66,18 @@ class OpenAIServingChat(OpenAIServing):
 
         request_id = f"cmpl-{random_uuid()}"
         try:
-            token_ids = self._validate_prompt_and_tokenize(request,
-                                                           prompt=prompt)
+            # Tokenize/detokenize depending on prompt format (string/token list)
+            prompt_ids, prompt_text = self._validate_prompt_and_tokenize(
+                request, prompt=prompt)
             sampling_params = request.to_sampling_params()
             lora_request = self._maybe_get_lora(request)
+            decoding_config = self.engine.engine.decoding_config
+            guided_decoding_backend = request.guided_decoding_backend \
+                or decoding_config.guided_decoding_backend
             guided_decode_logits_processor = (
                 await get_guided_decoding_logits_processor(
-                    request, await self.engine.get_tokenizer()))
+                    guided_decoding_backend, request, await
+                    self.engine.get_tokenizer()))
             if guided_decode_logits_processor:
                 if sampling_params.logits_processors is None:
                     sampling_params.logits_processors = []
@@ -88,8 +86,8 @@ class OpenAIServingChat(OpenAIServing):
         except ValueError as e:
             return self.create_error_response(str(e))
 
-        result_generator = self.engine.generate(prompt, sampling_params,
-                                                request_id, token_ids,
+        result_generator = self.engine.generate(prompt_text, sampling_params,
+                                                request_id, prompt_ids,
                                                 lora_request)
         # Streaming response
         if request.stream:
@@ -114,18 +112,19 @@ class OpenAIServingChat(OpenAIServing):
             result_generator: AsyncIterator[RequestOutput], request_id: str
     ) -> Union[ErrorResponse, AsyncGenerator[str, None]]:
 
-        model_name = request.model
+        model_name = self.served_model_names[0]
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
         first_iteration = True
 
         # Send response for each token for each request.n (index)
+        if request.n is None:
+            raise ValueError()
         previous_texts = [""] * request.n
         previous_num_tokens = [0] * request.n
         finish_reason_sent = [False] * request.n
         try:
             async for res in result_generator:
-                res: RequestOutput # type: ignore
                 # We need to do it here, because if there are exceptions in
                 # the result_generator, it needs to be sent as the FIRST
                 # response (by the try...catch).
@@ -220,7 +219,7 @@ class OpenAIServingChat(OpenAIServing):
                     else:
                         # Send the finish response for each request.n only once
                         prompt_tokens = len(res.prompt_token_ids)
-                        final_usage = UsageInfo( # type: ignore
+                        final_usage = UsageInfo(
                             prompt_tokens=prompt_tokens,
                             completion_tokens=previous_num_tokens[i],
                             total_tokens=prompt_tokens +
@@ -256,7 +255,7 @@ class OpenAIServingChat(OpenAIServing):
             result_generator: AsyncIterator[RequestOutput],
             request_id: str) -> Union[ErrorResponse, ChatCompletionResponse]:
 
-        model_name = request.model
+        model_name = self.served_model_names[0]
         created_time = int(time.time())
         final_res: RequestOutput = None
 
@@ -267,7 +266,7 @@ class OpenAIServingChat(OpenAIServing):
                 return self.create_error_response("Client disconnected")
             final_res = res
         if final_res is None:
-            raise ValueError("final_res should not be None")
+            raise ValueError()
 
         choices = []
 
@@ -324,30 +323,33 @@ class OpenAIServingChat(OpenAIServing):
 
         return response
 
-    def _load_chat_template(self, chat_template):
+    async def _load_chat_template(self, chat_template):
+        while self.tokenizer is None:
+            # Give the parent class time to load the tokenizer
+            await asyncio.sleep(0.1)
+
         if chat_template is not None:
             try:
                 with open(chat_template, "r") as f:
-                    self.tokenizer.chat_template = f.read()
-            except OSError:
+                    tokenizer.chat_template = f.read() # noqa
+            except OSError as e:
+                JINJA_CHARS = "{}\n"
+                if not any(c in chat_template for c in JINJA_CHARS):
+                    msg = (f"The supplied chat template ({chat_template}) "
+                           f"looks like a file path, but it failed to be "
+                           f"opened. Reason: {e}")
+                    raise ValueError(msg) from e
+
                 # If opening a file fails, set chat template to be args to
                 # ensure we decode so our escape are interpreted correctly
-                self.tokenizer.chat_template = codecs.decode(
+                tokenizer.chat_template = codecs.decode( # noqa
                     chat_template, "unicode_escape")
 
             logger.info(
-                f"Using supplied chat template:\n{self.tokenizer.chat_template}"
-            )
-        elif self.tokenizer.chat_template is not None:
+                f"Using supplied chat template:\n{tokenizer.chat_template}") # noqa
+        elif tokenizer.chat_template is not None: # noqa
             logger.info(
-                f"Using default chat template:\n{self.tokenizer.chat_template}"
-            )
+                f"Using default chat template:\n{tokenizer.chat_template}") # noqa
         else:
             logger.warning(
                 "No chat template provided. Chat API will not work.")
-
-    async def _load_chat_template_async(self, chat_template):
-        while self.tokenizer is None:
-            # Give the parent class time to laod the tokenizer
-            await asyncio.sleep(0.1)
-        self._load_chat_template(chat_template)

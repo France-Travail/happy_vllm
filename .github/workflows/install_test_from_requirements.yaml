@@ -9,7 +9,7 @@ on:
       - 'src/**'
       - '!*.md'
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 4 * * 1-5'
   workflow_dispatch:
 
 jobs:
@@ -21,17 +21,29 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
           python-version: ${{ matrix.python-version }}
-    - name: Install the project and run tests
+    - name: Free space
+      # Free space as indicated here : https://github.com/actions/runner-images/issues/2840#issuecomment-790492173
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+    - name: Install CUDA 12.1
+      run: |
+        bash -x .github/workflows/scripts/cuda-install.sh
+    - name: Install the project
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install .[test]
-        pytest
+        python -m pip install -r requirements.txt
+        python -m pip install .[test]
+    - name: Run tests
+      run: |
+        python -m pytest
         python -m mypy --ignore-missing-imports --allow-redefinition --no-strict-optional -p src
       env:
           HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
