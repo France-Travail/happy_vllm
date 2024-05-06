@@ -124,11 +124,13 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         tokenizer_revision: Optional[str] = default_args.tokenizer_revision
         quantization: Optional[str] = default_args.quantization
         enforce_eager: bool = False
-        max_context_len_to_capture: int = default_args.max_context_len_to_capture
+        max_context_len_to_capture: Optional[int] = default_args.max_context_len_to_capture
+        max_seq_len_to_capture: int = default_args.max_seq_len_to_capture
         disable_custom_all_reduce: bool = False
         enable_lora: bool = False
         max_loras: int = default_args.max_loras
         max_lora_rank: int = default_args.max_lora_rank
+        fully_sharded_loras: bool = False
         lora_extra_vocab_size: int = default_args.lora_extra_vocab_size
         lora_dtype: str = default_args.lora_dtype
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
@@ -155,6 +157,8 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         speculative_model: Optional[str] = default_args.speculative_model
         num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
         speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
+        ngram_prompt_lookup_max: Optional[int] = default_args.ngram_prompt_lookup_max
+        ngram_prompt_lookup_min: Optional[int] = default_args.ngram_prompt_lookup_min
 
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 

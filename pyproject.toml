@@ -8,14 +8,13 @@ description = "happy_vllm is a REST API for vLLM, production ready"
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "vllm>=0.4.1,<1.0",
-    "fastapi>=0.110.3,<1.0",
+    "vllm>=0.4.2,<1.0",
+    "fastapi>=0.111.0,<1.0",
     "pydantic_settings>=2.2.1,<3.0",
     "uvicorn[standard]>=0.29.0,<1.0",
     "prometheus_client>=0.20.0,<1.0",
     "numpy>=1.26.4",
-    "lm-format-enforcer>=0.9.8,<0.10.0",
-    "jsonschema>=4.2.1,<5.0"
+    "jsonschema>=4.22.0,<5.0"
 ]
 
 dynamic = ["version"]

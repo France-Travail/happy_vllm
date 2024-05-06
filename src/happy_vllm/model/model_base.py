@@ -32,11 +32,7 @@ from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGro
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
-# We use our own version of OpenAIServingChat to avoid this issue (https://github.com/vllm-project/vllm/issues/2683)
-# To solve this issue, we do what is described in this PR (https://github.com/vllm-project/vllm/pull/2727)
-# When it is resolved, please go back to the vLLM version of OpenAIServingChat and delete this one
-# from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
-from happy_vllm.model.openai_serving_chat_fixed import OpenAIServingChat
+from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 
 logger = logging.getLogger(__name__)
 

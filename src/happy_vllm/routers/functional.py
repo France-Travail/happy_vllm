@@ -338,10 +338,10 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
     if request.stream:
-        return StreamingResponse(content=generator,
+        return StreamingResponse(content=generator, # type: ignore
                                  media_type="text/event-stream")
     else:
-        return JSONResponse(content=generator.model_dump())
+        return JSONResponse(content=generator.model_dump()) # type: ignore
 
 
 @router.post("/v1/completions", response_model=functional_schema.HappyvllmCompletionResponse)
