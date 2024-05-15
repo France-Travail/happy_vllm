@@ -44,7 +44,7 @@ def init_model(truncation_side="left"):
 def test_is_model_loaded():
     model = init_model()
     assert not(model.is_model_loaded())
-    model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL']))
+    model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True))
     assert model.is_model_loaded()
 
 

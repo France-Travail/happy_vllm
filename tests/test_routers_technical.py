@@ -59,3 +59,13 @@ def test_info(test_complete_client: TestClient):
     assert response_json["model_name"] == "TEST MODEL"
     assert response_json["truncation_side"] == "right"
     assert response_json["max_length"] == 2048
+
+
+def test_launch_arguments(test_complete_client: TestClient):
+    """Test the technical route /v1/launch_arguments"""
+    response = test_complete_client.get("/tests/v1/launch_arguments")
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["app_name"] == "APP_TESTS"
+    assert response_json["model_name"] == "TEST MODEL"
+    assert response_json["with_launch_arguments"] == True

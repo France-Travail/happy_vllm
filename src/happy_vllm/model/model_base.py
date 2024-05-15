@@ -58,6 +58,10 @@ class Model:
         """load the model"""
         self._load_model(args, **kwargs)
         self._loaded = True
+        if args.with_launch_arguments:
+            self.launch_arguments = vars(args)
+        else:
+            self.launch_arguments = {}
 
     def _load_model(self, args: Namespace, **kwargs) -> None:
         """Load a model from a file

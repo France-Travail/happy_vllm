@@ -37,6 +37,7 @@ Here is a list of arguments useful for the application (they all have default va
  - `lora-modules`: LoRA module configurations in the format name=path
  - `chat-template`: The file path to the chat template, or the template in single-line form for the specified model (see [the documentation of vLLM](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#chat-template) for more details). Useful in the `/v1/chat/completions` endpoint
  - `response-role`: The role name to return if `request.add_generation_prompt=true`. Useful in the `/v1/chat/completions` endpoint
+ - `with-launch-arguments`: Whether the route `/v1/launch_arguments` gives the launch arguments or an empty json (default value is `False`)
 
 ### Model arguments
 

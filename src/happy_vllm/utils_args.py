@@ -46,6 +46,7 @@ DEFAULT_ROOT_PATH = None
 DEFAULT_LORA_MODULES = None
 DEFAULT_CHAT_TEMPLATE = None
 DEFAULT_RESPONSE_ROLE = "assistant"
+DEFAULT_WITH_LAUNCH_ARGUMENTS = False
 
 
 class ApplicationSettings(BaseSettings):
@@ -77,6 +78,7 @@ class ApplicationSettings(BaseSettings):
     lora_modules: Optional[str] = DEFAULT_LORA_MODULES
     chat_template : Optional[str] = DEFAULT_CHAT_TEMPLATE
     response_role: str = DEFAULT_RESPONSE_ROLE
+    with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -262,6 +264,9 @@ def get_parser() -> ArgumentParser:
                         default=application_settings.response_role,
                         help="The role name to return if "
                         "`request.add_generation_prompt=true`.")
+    parser.add_argument("--with-launch-arguments",
+                        action="store_true",
+                        help="Whether the route launch_arguments should display the launch arguments")
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
 

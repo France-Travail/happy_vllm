@@ -97,3 +97,10 @@ async def show_available_models():
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     models = await model.openai_serving_chat.show_available_models()
     return JSONResponse(content=models.model_dump())
+
+
+@router.get("/v1/launch_arguments")
+async def launch_arguments():
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    launch_arguments = model.launch_arguments
+    return JSONResponse(content=launch_arguments)

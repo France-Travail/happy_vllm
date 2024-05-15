@@ -86,7 +86,8 @@ def test_base_client() -> TestClient:
                                         allowed_origins=["*"],
                                         allowed_methods=["*"],
                                         allowed_headers=["*"],
-                                        root_path=None))
+                                        root_path=None,
+                                        with_launch_arguments=True))
     return TestClient(app)
 
 
@@ -112,7 +113,8 @@ def test_complete_client(monkeypatch) -> TestClient:
                                         allowed_origins=["*"],
                                         allowed_methods=["*"],
                                         allowed_headers=["*"],
-                                        root_path=None))
+                                        root_path=None,
+                                        with_launch_arguments=True))
     
     with TestClient(app) as client:
         yield client

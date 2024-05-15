@@ -24,6 +24,10 @@ The readiness endpoint (more details [here](technical.md))
 
 The Open AI compatible endpoint used, for example, to get the name of the model. Mimicks the vLLM implementation (more details [here](technical.md))
 
+### /v1/launch_arguments (GET)
+
+Gives all the arguments used when launching the application. `--with-launch-arguments` must be activated (more details [here](technical.md))
+
 ## Generating endpoints
 
 ### /v1/completions and /v1/chat/completions (POST)

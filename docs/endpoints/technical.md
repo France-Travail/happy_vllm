@@ -46,3 +46,7 @@ If the API is not ready, the value is "ko"
 ## /v1/models (GET)
 
 The Open AI compatible endpoint used, for example, to get the name of the model. Mimicks the vLLM implementation. Getting the name of the model is important since it is needed to use the [Open AI compatible generating endpoints](generate.md) 
+
+## /v1/launch_arguments (GET)
+
+If when launched the arguments `--with-launch-arguments` is given, this route gives all the parameters given when launching the application. In particular, the arguments given to the vLLM engine. It is useful for the benchmarks.
