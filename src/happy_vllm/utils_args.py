@@ -265,7 +265,8 @@ def get_parser() -> ArgumentParser:
                         help="The role name to return if "
                         "`request.add_generation_prompt=true`.")
     parser.add_argument("--with-launch-arguments",
-                        action="store_true",
+                        type=bool,
+                        default=application_settings.with_launch_arguments,
                         help="Whether the route launch_arguments should display the launch arguments")
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
