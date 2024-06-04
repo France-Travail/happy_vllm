@@ -42,7 +42,7 @@ def get_lifespan(args: Namespace) -> Callable:
     async def lifespan(app: FastAPI):
         # Load the ML model
         model = Model(app_name=args.app_name)
-        model.loading(args=args)
+        await model.loading(args=args)
         logger.info("Model loaded")
 
         RESOURCES[RESOURCE_MODEL] = model

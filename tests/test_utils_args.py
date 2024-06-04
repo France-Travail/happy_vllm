@@ -18,11 +18,13 @@ import os
 
 from happy_vllm import utils_args
 
+
 def test_get_parser():
     parser = utils_args.get_parser()
     application_settings = utils_args.ApplicationSettings()
     for key, value in application_settings.model_dump().items():
         assert parser.get_default(key) == value
+
 
 def test_get_model_settings():
     parser = utils_args.get_parser()

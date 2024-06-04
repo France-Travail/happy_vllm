@@ -18,7 +18,7 @@ import sys
 import ssl
 import json
 
-from typing import Optional
+from typing import Optional, Tuple
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from argparse import Namespace, ArgumentParser, BooleanOptionalAction
 
@@ -111,11 +111,13 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         seed: int = default_args.seed
         max_model_len: Optional[int] = default_args.max_model_len
         worker_use_ray: bool = False
+        distributed_executor_backend: Optional[str] = default_args.distributed_executor_backend
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
         max_parallel_loading_workers: Optional[int] = default_args.max_parallel_loading_workers
         block_size: int = default_args.block_size
         enable_prefix_caching: bool = False
+        disable_sliding_window: bool = False
         swap_space: int = default_args.swap_space
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
@@ -123,6 +125,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         disable_log_stats: bool = False
         revision: Optional[str] = default_args.revision
         code_revision: Optional[str] = default_args.code_revision
+        rope_scaling: Optional[dict] = default_args.rope_scaling
         tokenizer_revision: Optional[str] = default_args.tokenizer_revision
         quantization: Optional[str] = default_args.quantization
         enforce_eager: bool = False
@@ -134,6 +137,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         max_lora_rank: int = default_args.max_lora_rank
         fully_sharded_loras: bool = False
         lora_extra_vocab_size: int = default_args.lora_extra_vocab_size
+        long_lora_scaling_factors: Optional[Tuple[float]] = default_args.long_lora_scaling_factors
         lora_dtype: str = default_args.lora_dtype
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
         device: str = default_args.device
@@ -159,6 +163,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         speculative_model: Optional[str] = default_args.speculative_model
         num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
         speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
+        speculative_disable_by_batch_size: Optional[int] = default_args.speculative_disable_by_batch_size
         ngram_prompt_lookup_max: Optional[int] = default_args.ngram_prompt_lookup_max
         ngram_prompt_lookup_min: Optional[int] = default_args.ngram_prompt_lookup_min
 

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import pytest
 import shutil
 from argparse import Namespace
 from transformers import AutoTokenizer
@@ -41,10 +42,11 @@ def init_model(truncation_side="left"):
     return model
 
 
-def test_is_model_loaded():
+@pytest.mark.asyncio
+async def test_is_model_loaded():
     model = init_model()
     assert not(model.is_model_loaded())
-    model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True))
+    await model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True))
     assert model.is_model_loaded()
 
 
