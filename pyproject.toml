@@ -9,7 +9,6 @@ authors = [
   {name = "Agence Data Services FT"}
 ]
 description = "happy_vllm is a REST API for vLLM, production ready"
-description-file = "README.md"
 license = {file="LICENSE"}
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
