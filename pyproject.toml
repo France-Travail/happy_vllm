@@ -29,12 +29,11 @@ classifiers = [
 ]
 keywords = ["production", "transformers", "api-rest", "serving", "mlops", "llm", "llm-serving", "vllm"]
 
+dynamic = ["version"]
+
 [project.urls]
 Repository = "https://github.com/OSS-Pole-Emploi/happy_vllm"
 Documentation = "https://oss-pole-emploi.github.io/happy_vllm"
-
-
-dynamic = ["version"]
 
 [tool.setuptools.dynamic]
 version = {file = "version.txt"}
