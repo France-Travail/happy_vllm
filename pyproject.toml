@@ -4,7 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "happy_vllm"
+authors = [
+  {email = "drosdadssocle.00620@francetravail.fr"},
+  {name = "Agence Data Services FT"}
+]
 description = "happy_vllm is a REST API for vLLM, production ready"
+description-file = "README.md"
+license = {file="LICENSE"}
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
 dependencies = [
@@ -16,6 +22,17 @@ dependencies = [
     "numpy>=1.26.4",
     "jsonschema>=4.22.0,<5.0"
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+keywords = ["production", "transformers", "api-rest", "serving", "mlops", "llm", "llm-serving", "vllm"]
+
+[project.urls]
+Repository = "https://github.com/OSS-Pole-Emploi/happy_vllm"
+Documentation = "https://oss-pole-emploi.github.io/happy_vllm/"
+
 
 dynamic = ["version"]
 
