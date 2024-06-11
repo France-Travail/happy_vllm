@@ -31,8 +31,8 @@ keywords = ["production", "transformers", "api-rest", "serving", "mlops", "llm",
 dynamic = ["version"]
 
 [project.urls]
-Repository = "https://github.com/OSS-Pole-Emploi/happy_vllm"
-Documentation = "https://oss-pole-emploi.github.io/happy_vllm"
+Repository = "https://github.com/France-Travail/happy_vllm"
+Documentation = "https://france-travail.github.io/happy_vllm"
 
 [tool.setuptools.dynamic]
 version = {file = "version.txt"}

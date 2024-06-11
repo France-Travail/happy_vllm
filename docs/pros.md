@@ -16,3 +16,7 @@ If you would like to see an endpoint added, don't hesitate to open an issue or a
 ## Swagger
 
 A well documented swagger (the UI being reachable at the `/docs` endpoint) in order for users not so used to using API to be able to quickly get the hang of it and be as autonomous as possible in querying the LLM. 
+
+## Benchmarks
+
+We developped a library [benchmark_llm_serving](https://github.com/France-Travail/benchmark_llm_serving) which provides a more complete benchmark of the vLLM serving API than the vanilla one.

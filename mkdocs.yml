@@ -1,6 +1,6 @@
 site_name: happy-vllm documentation
-repo_url: https://github.com/OSS-Pole-Emploi/happy_vllm
-repo_name: OSS-Pole-Emploi/happy_vllm
+repo_url: https://github.com/France-Travail/happy_vllm
+repo_name: France-Travail/happy_vllm
 
 # see https://squidfunk.github.io/mkdocs-material/setup/
 theme:

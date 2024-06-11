@@ -13,7 +13,7 @@ pip install happy_vllm
 Or build it from source:
 
 ```bash
-git clone https://github.com/OSS-Pole-Emploi/happy_vllm.git
+git clone https://github.com/France-Travail/happy_vllm.git
 cd happy_vllm
 pip install -e .
 ```
@@ -42,10 +42,10 @@ if you want to generate your first LLM response using happy_vLLM. See [endpoints
 
 ## Deploy with Docker image
 
-A docker image is available from the [Github Container Registry](https://github.com/OSS-Pole-Emploi/happy_vllm/pkgs/container/happy_vllm) :  
+A docker image is available from the [Github Container Registry](https://github.com/France-Travail/happy_vllm/pkgs/container/happy_vllm) :  
 
 ```bash
-docker pull ghcr.io/oss-pole-emploi/happy_vllm:latest
+docker pull ghcr.io/france-travail/happy_vllm:latest
 ```
 See [deploying_with_docker](deploying_with_docker.md) for more details on how to serve happy_vLLM with docker. 
 

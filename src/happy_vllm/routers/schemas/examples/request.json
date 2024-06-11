@@ -218,7 +218,7 @@
     "tokenizer": {
         "nominal_case": {
             "summary": "Nominal case",
-            "description": "This is a nominal case. For more details on what is the vanilla version of the tokenizer or not, please read the documentation : https://oss-pole-emploi.github.io/happy_vllm/",
+            "description": "This is a nominal case. For more details on what is the vanilla version of the tokenizer or not, please read the documentation : https://france-travail.github.io/happy_vllm/",
             "value": {
                 "text": "This is a text example",
                 "with_tokens_str": true,
@@ -229,7 +229,7 @@
     "decode": {
         "nominal_case": {
             "summary": "Nominal case",
-            "description": "Decode a list of token ids. It is the inverse of the endpoint tokenizer. For more details on what is the vanilla version of the tokenizer or not, please read the documentation : https://oss-pole-emploi.github.io/happy_vllm/",
+            "description": "Decode a list of token ids. It is the inverse of the endpoint tokenizer. For more details on what is the vanilla version of the tokenizer or not, please read the documentation : https://france-travail.github.io/happy_vllm/",
             "value": {
                 "token_ids": [
                     1,

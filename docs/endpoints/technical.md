@@ -49,4 +49,4 @@ The Open AI compatible endpoint used, for example, to get the name of the model.
 
 ## /v1/launch_arguments (GET)
 
-If when launched the arguments `--with-launch-arguments` is given, this route gives all the parameters given when launching the application. In particular, the arguments given to the vLLM engine. It is useful for the benchmarks.
+If when launched the arguments `--with-launch-arguments` is given, this route gives all the parameters given when launching the application. In particular, the arguments given to the vLLM engine. It is useful for the benchmarks done by [benchmark_llm_serving](https://github.com/France-Travail/benchmark_llm_serving)
