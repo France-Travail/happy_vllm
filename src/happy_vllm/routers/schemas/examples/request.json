@@ -1,0 +1,123 @@
+{
+    "generate": {
+        "case1": {
+            "summary": "Case 1",
+            "description": "This is case 1 description",
+            "value": {
+                "prompt": "This is a prompt example",
+                "sampling_param": "This is a sampling param example"
+            }
+        },
+        "case2": {
+            "summary": "Case 2",
+            "description": "This is case 2 description",
+            "value": {
+                "prompt": "This is a second prompt example",
+                "sampling_param": "This is a second sampling param example"
+            }
+        }
+    },
+    "generate_stream": {
+        "case1": {
+            "summary": "Case 1",
+            "description": "This is case 1 description",
+            "value": {
+                "prompt": "This is a prompt example",
+                "sampling_param": "This is a sampling param example"
+            }
+        },
+        "case2": {
+            "summary": "Case 2",
+            "description": "This is case 2 description",
+            "value": {
+                "prompt": "This is a second prompt example",
+                "sampling_param": "This is a second sampling param example"
+            }
+        }
+    },
+    "tokenizer": {
+        "case1": {
+            "summary": "Case 1",
+            "description": "This is case 1 description",
+            "value": {
+                "text": "This is a text example",
+                "with_token_str": true,
+                "vanilla": true
+            }
+        },
+        "case2": {
+            "summary": "Case 2",
+            "description": "This is case 2 description",
+            "value": {
+                "text": "This is a second text example",
+                "with_token_str": false,
+                "vanilla": false
+            }
+        }
+    },
+    "decode": {
+        "case1": {
+            "summary": "Case 1",
+            "description": "This is case 1 description",
+            "value": {
+                "token_ids": "This is a token_ids example",
+                "with_token_str": true,
+                "vanilla": false
+            }
+        },
+        "case2": {
+            "summary": "Case 2",
+            "description": "This is case 2 description",
+            "value": {
+                "token_ids": "This is a second token_ids example",
+                "with_token_str": false,
+                "vanilla": true
+            }
+        }
+    },
+    "split_text": {
+        "case1": {
+            "summary": "Case 1",
+            "description": "This is case 1 description",
+            "value": {
+                "text": "This is a text example",
+                "num_tokens_in_chunk": 42,
+                "separators": [
+                    ","
+                ]
+            }
+        },
+        "case2": {
+            "summary": "Case 2",
+            "description": "This is case 2 description",
+            "value": {
+                "text": "This is a second text example",
+                "num_tokens_in_chunk": 420,
+                "separators": [
+                    ".",
+                    "!"
+                ]
+            }
+        }
+    },
+    "metadata_text": {
+        "case1": {
+            "summary": "Case 1",
+            "description": "This is case 1 description",
+            "value": {
+                "text": "This is a text example",
+                "truncation_side": "This is a truncation_side example",
+                "max_length": 42
+            }
+        },
+        "case2": {
+            "summary": "Case 2",
+            "description": "This is case 2 description",
+            "value": {
+                "text": "This is a second text example",
+                "truncation_side": "This is a second truncation_side example",
+                "max_length": 420
+            }
+        }
+    }
+}

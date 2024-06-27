@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
+import os
 import json
-from fastapi import APIRouter
 from vllm.utils import random_uuid
+from fastapi import APIRouter, Body
+from pydantic import BaseModel, Field
 from starlette.requests import Request
-from typing import AsyncGenerator, Tuple
 from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
+from typing import Annotated, AsyncGenerator, Tuple, List
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
@@ -32,6 +33,14 @@ from happy_vllm.logits_processors.utils_parse_logits_processors import logits_pr
 
 from ..model.model_base import Model
 from ..core.resources import RESOURCE_MODEL, RESOURCES
+from .schemas.functional import ResponseGenerate, RequestGenerate, ResponseTokenizer, RequestTokenizer, ResponseDecode, RequestDecode, ResponseSplitText, RequestSplitText, ResponseMetadata, RequestMetadata
+
+
+# Load the response examples
+directory = os.path.dirname(os.path.abspath(__file__))
+request_examples_path = os.path.join(directory, "schemas", "examples", "request.json")
+with open(request_examples_path, 'r') as file:
+    request_openapi_examples = json.load(file)
 
 # Functional router
 router = APIRouter()
@@ -108,8 +117,13 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
     return prompt, prompt_in_response, sampling_params
 
 
-@router.post("/generate")
-async def generate(request: Request) -> Response:
+@router.post("/generate", response_model=ResponseGenerate)
+async def generate(
+    request: Request,
+    request_type: Annotated[
+        RequestGenerate,
+        Body(openapi_examples=request_openapi_examples["generate"])] = None
+    ) -> Response:
     """Generate completion for the request.
 
     The request should be a JSON object with the following fields:
@@ -145,8 +159,12 @@ async def generate(request: Request) -> Response:
     return JSONResponse(ret)
 
 
-@router.post("/generate_stream")
-async def generate_stream(request: Request) -> StreamingResponse:
+@router.post("/generate_stream", response_model=ResponseGenerate)
+async def generate_stream(request: Request,
+    request_type: Annotated[
+        RequestGenerate,
+        Body(openapi_examples=request_openapi_examples["generate_stream"])] = None
+    ) -> StreamingResponse:
     """Generate completion for the request.
 
     The request should be a JSON object with the following fields:
@@ -176,8 +194,12 @@ async def generate_stream(request: Request) -> StreamingResponse:
     return StreamingResponse(stream_results())
 
 
-@router.post("/tokenizer")
-async def tokenizer(request: Request) -> Response:
+@router.post("/tokenizer", response_model=ResponseTokenizer)
+async def tokenizer(request: Request,
+    request_type: Annotated[
+        RequestTokenizer,
+        Body(openapi_examples=request_openapi_examples["tokenizer"])] = None
+    ) -> Response:
     """Tokenizes a text
 
     The request should be a JSON object with the following fields:
@@ -207,8 +229,12 @@ async def tokenizer(request: Request) -> Response:
     return JSONResponse(ret)
 
 
-@router.post("/decode")
-async def decode(request: Request) -> Response:
+@router.post("/decode", response_model=ResponseDecode)
+async def decode(request: Request,
+    request_type: Annotated[
+        RequestDecode,
+        Body(openapi_examples=request_openapi_examples["decode"])] = None
+    ) -> Response:
     """Decodes token ids
 
     The request should be a JSON object with the following fields:
@@ -238,8 +264,12 @@ async def decode(request: Request) -> Response:
     return JSONResponse(ret)
 
 
-@router.post("/split_text")
-async def split_text(request: Request):
+@router.post("/split_text", response_model=ResponseSplitText)
+async def split_text(request: Request,
+    request_type: Annotated[
+        RequestSplitText,
+        Body(openapi_examples=request_openapi_examples["split_text"])] = None
+    ):
     """Splits a text
 
     The request should be a JSON object with the following fields:
@@ -256,8 +286,11 @@ async def split_text(request: Request):
     return JSONResponse(response)
 
 
-@router.post("/metadata_text")
-async def metadata_text(request: Request):
+@router.post("/metadata_text", response_model=ResponseMetadata)
+async def metadata_text(request: Request,
+    request_type: Annotated[
+        RequestMetadata,
+        Body(openapi_examples=request_openapi_examples["metadata_text"])] = None):
     """Gives meta data on a text
 
     The request should be a JSON object with the following fields:

@@ -16,19 +16,40 @@
 
 
 """Technical schemas"""
+import os
+import json
 from pydantic import BaseModel, Field
+
+# Load the response examples
+directory = os.path.dirname(os.path.abspath(__file__))
+response_examples_path = os.path.join(directory, "examples", "response.json")
+with open(response_examples_path, 'r') as file:
+    response_examples = json.load(file)
 
 
 class ResponseLiveness(BaseModel):
     """Return object for liveness probe"""
 
     alive: str = Field(None, title="Message")
-
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                response_examples["liveness"]
+            ]
+        }
+    }
 
 class ResponseReadiness(BaseModel):
     """Return object for readiness probe"""
 
     ready: str = Field(None, title="Message")
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                response_examples["readiness"]
+            ]
+        }
+    }
 
 
 class ResponseInformation(BaseModel):
@@ -39,3 +60,27 @@ class ResponseInformation(BaseModel):
     model_name: str = Field(None, title="Model name")
     truncation_side: str = Field(None, title="Truncation side")
     max_length : int = Field(None, title="Max length")
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                response_examples["information"]
+            ]
+        }
+    }
+
+
+class ResponseLiveMetrics(BaseModel):
+    requests_running: int = Field(None, title="Number of running requests")
+    requests_swapped: int = Field(None, title="Number of swapped requests")
+    requests_pending: int = Field(None, title="Number of pending requests")
+    gpu_cache_usage: float = Field(None, title="GPU cache usage")
+    cpu_cache_usage: float = Field(None, title="CPU cache usage")
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                response_examples["live_metrics"]
+            ]
+        }
+    }
+
+

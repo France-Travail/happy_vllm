@@ -1,0 +1,48 @@
+{
+    "generate": {
+        "responses": ["response example"],
+        "finish_reasons": ["finish_reason example"],
+        "prompt": "prompt example"
+    },
+    "generate_stream": {
+        "responses": ["response example"],
+        "finish_reasons": ["finish_reason example"],
+        "prompt": "prompt example"
+    },
+    "tokenizer": {
+        "tokens_ids": [1,45021,3],
+        "tokens_nb": 3,
+        "tokens_str": "tokens_str example"
+    },
+    "decode": {
+        "decoded_string": "decoded_string example",
+        "tokens_str": ["decoded", "_string", " example"]
+    },
+    "split_text": {
+        "split_text": ["split_text example"]
+    },
+    "metadata_text": {
+        "tokens_nb": 42,
+        "truncated_text": "truncated_text example"
+    },
+    "liveness": {
+        "alive": "alive example"
+    },
+    "readiness": {
+        "ready": "ready example"
+    },
+    "information": {
+        "application": "application example",
+        "version": "version example",
+        "model_name": "model_name example",
+        "truncation_side": "truncation_side example",
+        "max_length": 100
+    },    
+    "live_metrics": {
+        "requests_running": 5,
+        "requests_swapped": 3,
+        "requests_pending": 2,
+        "gpu_cache_usage": 0.24,
+        "cpu_cache_usage": 0.36
+    }
+}

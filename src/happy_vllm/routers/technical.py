@@ -15,12 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+from typing import Annotated
 from fastapi import APIRouter
+from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
 
 from ..core.resources import RESOURCES, RESOURCE_MODEL
 from ..model.model_base import Model
-from .schemas.technical import ResponseInformation, ResponseLiveness, ResponseReadiness
+from .schemas.technical import ResponseInformation, ResponseLiveness, ResponseReadiness, ResponseLiveMetrics
 
 from happy_vllm import utils
 
@@ -75,7 +77,7 @@ async def info() -> ResponseInformation:
     )
 
 
-@router.get("/live_metrics")
+@router.get("/live_metrics", response_model=ResponseLiveMetrics)
 async def get_live_metrics() -> JSONResponse:
     model: Model = RESOURCES.get(RESOURCE_MODEL)
 
