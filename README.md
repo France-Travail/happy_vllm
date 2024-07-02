@@ -1,4 +1,4 @@
-![happy_vllm logo](https://github.com/France-Travail/happy_vllm/tree/main/docs/source/assets/logo)
+![happy_vllm logo](https://github.com/France-Travail/happy_vllm/tree/main/docs/source/assets/logo/logo_happy_vllm.svg)
 
 [![pypi badge](https://img.shields.io/pypi/v/happy_vllm.svg)](https://pypi.python.org/pypi/happy_vllm)
 [![Generic badge](https://img.shields.io/badge/python-3.10|3.11-blue.svg)](https://shields.io/)
