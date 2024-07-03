@@ -126,6 +126,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         revision: Optional[str] = default_args.revision
         code_revision: Optional[str] = default_args.code_revision
         rope_scaling: Optional[dict] = default_args.rope_scaling
+        rope_theta: Optional[float] = None
         tokenizer_revision: Optional[str] = default_args.tokenizer_revision
         quantization: Optional[str] = default_args.quantization
         enforce_eager: bool = False
@@ -145,6 +146,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
         num_lookahead_slots: int = default_args.num_lookahead_slots
         model_loader_extra_config: Optional[dict] = default_args.model_loader_extra_config
+        preemption_mode: Optional[str] = None
         max_log_len: Optional[int] = default_args.max_log_len
         disable_log_requests: bool = False
         engine_use_ray: bool = False
@@ -154,8 +156,12 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         tokenizer_pool_type: str = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
         image_input_type: Optional[str] = default_args.image_input_type
+        image_token_id: Optional[int] = None
         image_input_shape: Optional[str] = default_args.image_input_shape
         image_feature_size: Optional[int] = default_args.image_feature_size
+        image_processor: Optional[str] = None
+        image_processor_revision: Optional[str] = None
+        disable_image_processor: bool = False
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: bool = False
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -166,6 +172,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         speculative_disable_by_batch_size: Optional[int] = default_args.speculative_disable_by_batch_size
         ngram_prompt_lookup_max: Optional[int] = default_args.ngram_prompt_lookup_max
         ngram_prompt_lookup_min: Optional[int] = default_args.ngram_prompt_lookup_min
+        qlora_adapter_name_or_path: Optional[str] = None
 
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 

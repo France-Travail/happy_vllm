@@ -36,7 +36,7 @@ pip install -e .
 Just use the entrypoint `happy-vllm` (see [arguments](https://france-travail.github.io/happy_vllm/arguments/) for a list of all possible arguments)
 
 ```bash
-happy_vllm --model path_to_model --host 127.0.0.1 --port 5000 --model-name my_model
+happy-vllm --model path_to_model --host 127.0.0.1 --port 5000 --model-name my_model
 ```
 
 It will launch the API and you can directly query it for example with 
