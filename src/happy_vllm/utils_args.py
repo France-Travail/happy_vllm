@@ -156,6 +156,7 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         tokenizer_pool_type: str = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
         image_input_type: Optional[str] = default_args.image_input_type
+        image_token_id: Optional[int] = None
         image_input_shape: Optional[str] = default_args.image_input_shape
         image_feature_size: Optional[int] = default_args.image_feature_size
         image_processor: Optional[str] = None
