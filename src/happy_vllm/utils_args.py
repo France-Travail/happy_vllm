@@ -47,6 +47,8 @@ DEFAULT_LORA_MODULES = None
 DEFAULT_CHAT_TEMPLATE = None
 DEFAULT_RESPONSE_ROLE = "assistant"
 DEFAULT_WITH_LAUNCH_ARGUMENTS = False
+DEFAULT_TOOLS = None
+DEFAULT_TOOLS_CHOICE = None
 
 
 class ApplicationSettings(BaseSettings):
@@ -79,6 +81,8 @@ class ApplicationSettings(BaseSettings):
     chat_template : Optional[str] = DEFAULT_CHAT_TEMPLATE
     response_role: str = DEFAULT_RESPONSE_ROLE
     with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
+    tools: Optional[str] = DEFAULT_TOOLS
+    tools_choice: Optional[str] = DEFAULT_TOOLS_CHOICE
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -280,6 +284,18 @@ def get_parser() -> ArgumentParser:
                         type=bool,
                         default=application_settings.with_launch_arguments,
                         help="Whether the route launch_arguments should display the launch arguments")
+    parser.add_argument("--tools",
+                        nargs='+',
+                        type=str,
+                        default=application_settings.tools,
+                        help="List of function tools LLM model could use")
+    parser.add_argument("--tool-choice",
+                        nargs='+', 
+                        type=str,
+                        default=application_settings.tools_choice,
+                        help="Controls which (if any) tool is called by the model.")
+
+    
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
 
