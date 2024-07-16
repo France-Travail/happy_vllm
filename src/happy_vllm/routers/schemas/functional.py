@@ -143,25 +143,20 @@ class HappyvllmChatCompletionResponse(ChatCompletionResponse):
     model_config = {"json_schema_extra": {"examples": [response_examples["chat_completion_response"]]}}
 
 
-class HappyvllmChatCompletionRequest(ChatCompletionRequest):
-    added_info: Optional[str] = None
+# class HappyvllmChatCompletionRequest(ChatCompletionRequest):
+#     added_info: Optional[str] = None
 
 
 async def modify_data_if_tools_enabled(request: Request, data: ChatCompletionRequest):
     tools : Union[dict, None] = get_tools_prompt()
     if tools:
         data_dict = data.dict()
-        messages = data_dict['messages']
-        model = data_dict['model']
         if data_dict['tools']:
-            data_dict.clear()
             data_dict['tools'].extend(tools["tools"])
         else:
-            data_dict.clear()
             data_dict['tools'] = tools["tools"]
+        if data_dict['top_logprobs'] == 0:
+            data_dict['top_logprobs'] = None
         data_dict['tool_choice'] = tools["tool_choice"]
-        data_dict['messages'] = messages
-        data_dict['model'] = model
-        print(f"DATA DICT : {data_dict}")
-        return HappyvllmChatCompletionRequest(**data_dict)
+        return ChatCompletionRequest(**data_dict)
     return data
