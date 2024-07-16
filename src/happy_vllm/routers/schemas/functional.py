@@ -19,12 +19,16 @@
 
 import os
 import json
+from fastapi import Depends
+from starlette.requests import Request
 from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field, conint
 from typing import Any, List, Union, Optional
-from vllm.entrypoints.openai.protocol import ResponseFormat, CompletionResponse, ChatCompletionResponse
+from vllm.entrypoints.openai.protocol import ResponseFormat, CompletionResponse, ChatCompletionResponse, ChatCompletionRequest
 
 from .utils import NumpyArrayEncoder
+from ...function_tools.functions import get_tools_prompt
+
 
 # Load the response examples
 directory = os.path.dirname(os.path.abspath(__file__))
@@ -137,3 +141,27 @@ class HappyvllmCompletionResponse(CompletionResponse):
 
 class HappyvllmChatCompletionResponse(ChatCompletionResponse):
     model_config = {"json_schema_extra": {"examples": [response_examples["chat_completion_response"]]}}
+
+
+class HappyvllmChatCompletionRequest(ChatCompletionRequest):
+    added_info: Optional[str] = None
+
+
+async def modify_data_if_tools_enabled(request: Request, data: ChatCompletionRequest):
+    tools : Union[dict, None] = get_tools_prompt()
+    if tools:
+        data_dict = data.dict()
+        messages = data_dict['messages']
+        model = data_dict['model']
+        if data_dict['tools']:
+            data_dict.clear()
+            data_dict['tools'].extend(tools["tools"])
+        else:
+            data_dict.clear()
+            data_dict['tools'] = tools["tools"]
+        data_dict['tool_choice'] = tools["tool_choice"]
+        data_dict['messages'] = messages
+        data_dict['model'] = model
+        print(f"DATA DICT : {data_dict}")
+        return HappyvllmChatCompletionRequest(**data_dict)
+    return data
