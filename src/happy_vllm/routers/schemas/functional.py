@@ -144,6 +144,17 @@ class HappyvllmChatCompletionResponse(ChatCompletionResponse):
 
 
 async def update_chat_completion_request(request: Request, data: ChatCompletionRequest):
+    """
+    Updates a ChatCompletionRequest object with additional tools and settings if available.
+
+    Args:
+        request (Request): The incoming request object.
+        data (ChatCompletionRequest): The original ChatCompletionRequest object to be updated.
+
+    Returns:
+        ChatCompletionRequest: The updated ChatCompletionRequest object if tools are present,
+                               otherwise returns the original ChatCompletionRequest object.
+    """
     tools : Union[dict, None] = get_tools_prompt()
     if tools:
         data_dict = data.dict()
