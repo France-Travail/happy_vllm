@@ -5,6 +5,26 @@ from argparse import Namespace
 
 
 class ToolFunctions:
+    """
+    Represents a tool function with specific attributes.
+
+    Attributes:
+    description (str): Description of the tool function.
+    parameters (dict): Parameters required for the tool function.
+    name (str): Name of the tool function.
+    tool_type (str): Type of the tool function.
+
+    Methods:
+    __init__(description: Union[str, None], parameters: Union[dict, None], name: Union[str, None], tool_type: Union[str, None]):
+        Initializes a ToolFunctions instance with the provided attributes. Raises NotImplementedError if any attribute is None.
+    
+    _check_attributes():
+        Checks if the required attributes (description, parameters, name, tool_type) are not None.
+        Raises NotImplementedError if any attribute is None.
+
+    generate_dict() -> dict:
+        Generates and returns a dictionary representation of the tool function, including its type, name, description, and parameters.
+    """
     def __init__(self, description:Union[str, None], parameters:Union[dict, None], name:Union[str, None], tool_type:Union[str, None]):
         self.description:str = description
         self.parameters:dict = parameters
@@ -35,6 +55,9 @@ class ToolFunctions:
 
 
 class Weather(ToolFunctions):
+    """
+    Represents a example tool function about the weather.
+    """
     def __init__(self):
         tool_type = "function"
         name = "get_current_weather"
@@ -52,12 +75,15 @@ class Weather(ToolFunctions):
                         "description": "The temperature unit to use. Infer this from the users location.",
                     },
                 },
-                "required": ["location", "format"],
+                "required": ["location", "format"]
             }
         super().__init__(description=description, parameters=parameters, name=name, tool_type=tool_type)
 
 
 class Music(ToolFunctions):
+        """
+    Represents a example tool function about the music.
+    """
     def __init__(self):
         tool_type = "function"
         name = "ask_database"
@@ -75,7 +101,7 @@ class Music(ToolFunctions):
                                 """,
                     }
                 },
-                "required": ["query"],
+                "required": ["query"]
             }
         super().__init__(description=description, parameters=parameters, name=name, tool_type=tool_type)
 
@@ -86,27 +112,77 @@ TOOLS_DICT = {
 }
 TOOLS = []
 
+def reset_tools_dict_and_tools():
+    """
+    Resets the global variables TOOLS_DICT and TOOLS with new default values.
+
+    Returns:
+    tuple: A tuple containing the updated values of TOOLS_DICT and TOOLS. 
+           TOOLS_DICT is a dictionary with keys for different tools and corresponding values, 
+           and TOOLS is an empty list.
+    """
+    global TOOLS_DICT
+    global TOOLS
+    TOOLS_DICT = {
+        'weather': Weather,
+        'music': Music
+    }
+    TOOLS = []
+    return TOOLS_DICT, TOOLS
+
 
 def get_tools(args: Namespace):
+    """
+    Updates the global variables TOOLS_DICT and TOOLS based on the provided arguments.
+
+    Args:
+    args (Namespace): A Namespace object containing parsed command-line arguments.
+
+    Returns:
+    tuple: A tuple containing the updated values of TOOLS_DICT and TOOLS. 
+           TOOLS_DICT is updated with instances of selected tools or set to None if no tools are selected.
+           TOOLS is updated with names of selected tools or set to None if no tools are selected.
+    """
     global TOOLS_DICT
     global TOOLS
     if args.tools and 'none' not in args.tool_choice:
         tools = {}
         for t in args.tool_choice:
-            tools[t.lower()] = TOOLS_DICT[t.lower()]()
+            if TOOLS_DICT.get(t.lower(), None):
+                tools[t.lower()] = TOOLS_DICT[t.lower()]()
+            else:
+                raise KeyError(f"The tool '{t.lower()}' is not available in TOOLS_DICT")
         TOOLS_DICT = tools
         TOOLS = [t.lower() for t in args.tool_choice]
     else:
         TOOLS_DICT = None
         TOOLS = None
+    return TOOLS_DICT, TOOLS
 
 
 def clean_tools():
+    """
+    Clears the global variable TOOLS_DICT, removing all entries.
+
+    Returns:
+    dict: An empty dictionary representing the cleaned TOOLS_DICT after removal of all entries.
+    """
     global TOOLS_DICT
     TOOLS_DICT.clear()
+    return TOOLS_DICT
 
 
 def get_tools_prompt() -> dict:
+    """
+    Returns a dictionary containing information about selected tools.
+
+    Returns:
+    dict or None: A dictionary containing information about selected tools, structured as follows:
+                  - "tools": A list of dictionaries, each representing a tool's generated dictionary.
+                  - "tool_choice": A dictionary containing type and function details of the first tool in the list,
+                                   or None if TOOLS is empty.
+                  Returns None if TOOLS is empty.
+    """
     tools_dict = copy(TOOLS_DICT)
     tools = copy(TOOLS)
     if tools:
