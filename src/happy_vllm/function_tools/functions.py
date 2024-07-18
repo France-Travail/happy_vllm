@@ -173,7 +173,8 @@ def clean_tools():
     dict: An empty dictionary representing the cleaned TOOLS_DICT after removal of all entries.
     """
     global TOOLS_DICT
-    TOOLS_DICT.clear()
+    if TOOLS_DICT:
+        TOOLS_DICT.clear()
 
 
 def get_tools_prompt() -> dict:
