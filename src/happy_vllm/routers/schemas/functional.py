@@ -143,11 +143,7 @@ class HappyvllmChatCompletionResponse(ChatCompletionResponse):
     model_config = {"json_schema_extra": {"examples": [response_examples["chat_completion_response"]]}}
 
 
-# class HappyvllmChatCompletionRequest(ChatCompletionRequest):
-#     added_info: Optional[str] = None
-
-
-async def modify_data_if_tools_enabled(request: Request, data: ChatCompletionRequest):
+async def update_chat_completion_request(request: Request, data: ChatCompletionRequest):
     tools : Union[dict, None] = get_tools_prompt()
     if tools:
         data_dict = data.dict()

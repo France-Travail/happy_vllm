@@ -327,27 +327,11 @@ async def metadata_text(request: Request,
 
 
 @router.post("/v1/chat/completions", response_model=functional_schema.HappyvllmChatCompletionResponse)
-async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Depends(functional_schema.modify_data_if_tools_enabled)],
+async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Depends(functional_schema.update_chat_completion_request)],
                                  raw_request: Request):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
-    # tools : Union[dict, None] = get_tools_prompt()
-    # if tools:
-    #     request.tools = [
-    #         vllm_protocol.ChatCompletionToolsParam(
-    #             function=vllm_protocol.FunctionDefinition(
-    #                 name=t['function']['name'],
-    #                 description=t['function']['description'],
-    #                 parameters=t['function']['parameters']
-    #             )
-    #         )
-    #         for t in tools["tools"]
-    #     ]
-    #     request.tool_choice = vllm_protocol.ChatCompletionNamedToolChoiceParam(
-    #         function=vllm_protocol.ChatCompletionNamedFunction(name=tools["tool_choice"]['function']['name'])
-    #     )
-
     generator = await model.openai_serving_chat.create_chat_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
