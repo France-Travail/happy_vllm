@@ -81,7 +81,7 @@ class Weather(ToolFunctions):
 
 
 class Music(ToolFunctions):
-        """
+    """
     Represents a example tool function about the music.
     """
     def __init__(self):
@@ -112,6 +112,9 @@ TOOLS_DICT = {
 }
 TOOLS = []
 
+def get_tools():
+    return TOOLS_DICT, TOOLS
+
 def reset_tools_dict_and_tools():
     """
     Resets the global variables TOOLS_DICT and TOOLS with new default values.
@@ -128,10 +131,9 @@ def reset_tools_dict_and_tools():
         'music': Music
     }
     TOOLS = []
-    return TOOLS_DICT, TOOLS
 
 
-def get_tools(args: Namespace):
+def update_tools(args: Namespace):
     """
     Updates the global variables TOOLS_DICT and TOOLS based on the provided arguments.
 
@@ -145,7 +147,7 @@ def get_tools(args: Namespace):
     """
     global TOOLS_DICT
     global TOOLS
-    if args.tools and 'none' not in args.tool_choice:
+    if args.tools and args.tool_choice and 'none' not in args.tool_choice:
         tools = {}
         for t in args.tool_choice:
             if TOOLS_DICT.get(t.lower(), None):
@@ -155,9 +157,12 @@ def get_tools(args: Namespace):
         TOOLS_DICT = tools
         TOOLS = [t.lower() for t in args.tool_choice]
     else:
+        if args.tools and args.tool_choice is None:
+            raise ValueError("The argument '--tool-choice' is required when '--tools' is specified")
+        elif args.tools is None and args.tool_choice:
+            raise ValueError("The argument '--tools' is required when '--tool-choice' is specified")
         TOOLS_DICT = None
         TOOLS = None
-    return TOOLS_DICT, TOOLS
 
 
 def clean_tools():
@@ -169,7 +174,6 @@ def clean_tools():
     """
     global TOOLS_DICT
     TOOLS_DICT.clear()
-    return TOOLS_DICT
 
 
 def get_tools_prompt() -> dict:
