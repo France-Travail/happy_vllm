@@ -9,6 +9,7 @@ from vllm.entrypoints.openai.protocol import ChatCompletionRequest, ChatCompleti
 
 from happy_vllm.routers.schemas.functional import update_chat_completion_request
 
+
 TOOLS = [
 {
     "type": "function",
@@ -36,6 +37,7 @@ TOOL_CHOICE = {
     "type": "function",
     "function": {"name": "get_current_weather"}
 }
+
 
 @pytest.mark.asyncio
 async def test_update_chat_completion_request():
