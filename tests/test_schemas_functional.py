@@ -1,8 +1,6 @@
 import pytest
 
-
 from starlette.requests import Request
-from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from vllm.entrypoints.openai.protocol import ChatCompletionRequest, ChatCompletionToolsParam, ChatCompletionNamedToolChoiceParam
 
