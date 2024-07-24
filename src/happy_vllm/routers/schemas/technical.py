@@ -86,6 +86,16 @@ class ResponseLiveMetrics(BaseModel):
         }
     }
 
+class ResponseModelMemoryUsage(BaseModel):
+    model_memory_usage: str = Field(None, title="Model Memory Usage")
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                response_examples["model_memory_usage"]
+            ]
+        }
+    }
+
 
 class HappyvllmModelList(ModelList):
     model_config = {"json_schema_extra": {"examples": [response_examples["models"]]}}
