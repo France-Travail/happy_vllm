@@ -67,6 +67,7 @@ async def get_readiness() -> technical_schema.ResponseReadiness:
 async def info() -> technical_schema.ResponseInformation:
     """Rest resource for info"""
     model: Model = RESOURCES.get(RESOURCE_MODEL)
+    consumed_memory = model._model.engine.model_executor.driver_worker.model_runner.model_memory_usage
 
     return technical_schema.ResponseInformation(
         application=model.app_name,
@@ -74,7 +75,8 @@ async def info() -> technical_schema.ResponseInformation:
         model_name=model._model_conf.get("model_name", "?"),
         vllm_version=utils.get_vllm_version(),
         truncation_side=model.original_truncation_side,
-        max_length=model.max_model_len
+        max_length=model.max_model_len,
+        model_memory_usage=f"{consumed_memory / float(2**30):.4f} GB"
     )
 
 
@@ -90,14 +92,6 @@ async def get_live_metrics() -> JSONResponse:
     metrics["gpu_cache_usage"] = gpu_cache_usage
     metrics["cpu_cache_usage"] = cpu_cache_usage
     return JSONResponse(metrics)
-
-@router.get("/model_memory_usage", response_model=technical_schema.ResponseModelMemoryUsage)
-async def get_model_memory_usage() -> JSONResponse:
-    """GPU memory usage info for model weight loading in GB
-    """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
-    consumed_memory = model._model.engine.model_executor.driver_worker.model_runner.model_memory_usage
-    return JSONResponse(content=f"{consumed_memory / float(2**30):.4f} GB")
 
 
 @router.get("/v1/models", response_model=technical_schema.HappyvllmModelList)

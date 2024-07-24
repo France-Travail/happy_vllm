@@ -63,6 +63,7 @@ class ResponseInformation(BaseModel):
     model_name: str = Field(None, title="Model name")
     truncation_side: str = Field(None, title="Truncation side")
     max_length : int = Field(None, title="Max length")
+    model_memory_usage: str = Field(None, title="Model Memory Usage")
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -85,17 +86,7 @@ class ResponseLiveMetrics(BaseModel):
             ]
         }
     }
-
-class ResponseModelMemoryUsage(BaseModel):
-    model_memory_usage: str = Field(None, title="Model Memory Usage")
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                response_examples["model_memory_usage"]
-            ]
-        }
-    }
-
+    
 
 class HappyvllmModelList(ModelList):
     model_config = {"json_schema_extra": {"examples": [response_examples["models"]]}}

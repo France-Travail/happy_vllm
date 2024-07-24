@@ -85,7 +85,8 @@
         "vllm_version": "0.4.0.post1",
         "model_name": "my_model",
         "truncation_side": "right",
-        "max_length": 32768
+        "max_length": 32768,
+        "model_memory_usage": "4.35 GB"
     },
     "live_metrics": {
         "requests_running": 5,
@@ -93,9 +94,6 @@
         "requests_pending": 2,
         "gpu_cache_usage": 0.24,
         "cpu_cache_usage": 0.36
-    },
-    "model_memory_usage": {
-        "model_memory_usage": "4.35 GB"
     },
     "completion_response": {
         "id": "cmpl-2f9f838910034a63ba6abb98104f91ef",
