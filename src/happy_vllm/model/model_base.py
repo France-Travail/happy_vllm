@@ -36,6 +36,8 @@ from happy_vllm import utils
 from vllm.entrypoints.logger import RequestLogger
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 
+from prometheus_client import Gauge
+
 logger = logging.getLogger(__name__)
 
 
@@ -78,6 +80,8 @@ class Model:
         if args.model_name != "TEST MODEL":
             engine_args = AsyncEngineArgs.from_cli_args(args) 
             self._model = AsyncLLMEngine.from_engine_args(engine_args) # type: ignore
+            model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
+            model_consumed_memory.set(round(self._model.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2))
             if isinstance(self._model.engine.tokenizer, TokenizerGroup): # type: ignore
                 self._tokenizer = self._model.engine.tokenizer.tokenizer # type: ignore
             else:
