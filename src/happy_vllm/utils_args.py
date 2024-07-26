@@ -18,12 +18,15 @@ import sys
 import ssl
 import json
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from argparse import Namespace, ArgumentParser, BooleanOptionalAction
+from argparse import Namespace, BooleanOptionalAction
 
-from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.entrypoints.openai.cli_args import LoRAParserAction
+from vllm.utils import FlexibleArgumentParser
+from vllm.executor.executor_base import ExecutorBase
+from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
+from vllm.entrypoints.openai.cli_args import LoRAParserAction, PromptAdapterParserAction
+from vllm.transformers_utils.tokenizer_group.base_tokenizer_group import BaseTokenizerGroup
 
 
 DEFAULT_MODEL_NAME = '?'
@@ -47,6 +50,8 @@ DEFAULT_LORA_MODULES = None
 DEFAULT_CHAT_TEMPLATE = None
 DEFAULT_RESPONSE_ROLE = "assistant"
 DEFAULT_WITH_LAUNCH_ARGUMENTS = False
+DEFAULT_MAX_LOG_LEN = None
+DEFAULT_PROMPT_ADAPTERS = None
 
 
 class ApplicationSettings(BaseSettings):
@@ -79,17 +84,19 @@ class ApplicationSettings(BaseSettings):
     chat_template : Optional[str] = DEFAULT_CHAT_TEMPLATE
     response_role: str = DEFAULT_RESPONSE_ROLE
     with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
+    max_log_len: Optional[int] = DEFAULT_MAX_LOG_LEN
+    prompt_adapters: Optional[str] = DEFAULT_PROMPT_ADAPTERS
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
 
-def get_model_settings(parser: ArgumentParser) -> BaseSettings:
+def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
     """Gets the model settings. It corresponds to the variables added via AsyncEngineArgs.add_cli_args plus model-name.
     First we use the parser to get the default values of vLLM for these variables. We instantiate a BaseSettings model
     with these values as default. They are possibly overwritten by environnement variables or those of a .env
 
     Args:
-        parser (ArgumentParser) : The parser containing all the model variables with thei default values from vLLM 
+        parser (FlexibleArgumentParser) : The parser containing all the model variables with thei default values from vLLM 
     """
 
     default_args = parser.parse_args([])
@@ -111,14 +118,15 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         seed: int = default_args.seed
         max_model_len: Optional[int] = default_args.max_model_len
         worker_use_ray: bool = False
-        distributed_executor_backend: Optional[str] = default_args.distributed_executor_backend
+        distributed_executor_backend: Optional[Union[str, ExecutorBase]] = default_args.distributed_executor_backend
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
         max_parallel_loading_workers: Optional[int] = default_args.max_parallel_loading_workers
         block_size: int = default_args.block_size
         enable_prefix_caching: bool = False
         disable_sliding_window: bool = False
-        swap_space: int = default_args.swap_space
+        swap_space: int = default_args.swap_space # GiB
+        cpu_offload_gb: int = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
         max_num_seqs: int = default_args.max_num_seqs
@@ -136,6 +144,9 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         enable_lora: bool = False
         max_loras: int = default_args.max_loras
         max_lora_rank: int = default_args.max_lora_rank
+        enable_prompt_adapter: bool = False
+        max_prompt_adapters: int = default_args.max_prompt_adapters
+        max_prompt_adapter_token: int = default_args.max_prompt_adapter_token
         fully_sharded_loras: bool = False
         lora_extra_vocab_size: int = default_args.lora_extra_vocab_size
         long_lora_scaling_factors: Optional[Tuple[float]] = default_args.long_lora_scaling_factors
@@ -146,33 +157,33 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
         num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
         num_lookahead_slots: int = default_args.num_lookahead_slots
         model_loader_extra_config: Optional[dict] = default_args.model_loader_extra_config
-        preemption_mode: Optional[str] = None
-        max_log_len: Optional[int] = default_args.max_log_len
+        ignore_patterns:  Optional[Union[str, List[str]]] = default_args.ignore_patterns
+        preemption_mode: Optional[str] = default_args.preemption_mode
         disable_log_requests: bool = False
         engine_use_ray: bool = False
         use_v2_block_manager: bool = False
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
-        tokenizer_pool_type: str = default_args.tokenizer_pool_type
+        tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
-        image_input_type: Optional[str] = default_args.image_input_type
-        image_token_id: Optional[int] = None
-        image_input_shape: Optional[str] = default_args.image_input_shape
-        image_feature_size: Optional[int] = default_args.image_feature_size
-        image_processor: Optional[str] = None
-        image_processor_revision: Optional[str] = None
-        disable_image_processor: bool = False
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
-        enable_chunked_prefill: bool = False
+        enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
         # Speculative decoding configuration.
         speculative_model: Optional[str] = default_args.speculative_model
+        speculative_draft_tensor_parallel_size: Optional[int] = default_args.speculative_draft_tensor_parallel_size
         num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
         speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
         speculative_disable_by_batch_size: Optional[int] = default_args.speculative_disable_by_batch_size
         ngram_prompt_lookup_max: Optional[int] = default_args.ngram_prompt_lookup_max
         ngram_prompt_lookup_min: Optional[int] = default_args.ngram_prompt_lookup_min
-        qlora_adapter_name_or_path: Optional[str] = None
+        spec_decoding_acceptance_method: str = default_args.spec_decoding_acceptance_method
+        typical_acceptance_sampler_posterior_threshold: Optional[float] = default_args.typical_acceptance_sampler_posterior_threshold
+        typical_acceptance_sampler_posterior_alpha: Optional[float] = default_args.typical_acceptance_sampler_posterior_alpha
+        qlora_adapter_name_or_path: Optional[str] = default_args.qlora_adapter_name_or_path
+        disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
+
+        otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
 
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -181,15 +192,15 @@ def get_model_settings(parser: ArgumentParser) -> BaseSettings:
     return model_settings
 
 
-def get_parser() -> ArgumentParser:
+def get_parser() -> FlexibleArgumentParser:
     """Gets the parser. The default values of all application variables (see ApplicationSettings) are properly
     set to the BaseSetting value defined via pydantic. The default values of all model variables (ie those added
     via AsyncEngineArgs.add_cli_args plus model-name) are not properly set via pydantic at this point.
     
     Returns:
-        ArgumentParser : The argparse parser
+        FlexibleArgumentParser : The argparse parser
     """
-    parser = ArgumentParser(description="REST API server for vLLM, production ready")
+    parser = FlexibleArgumentParser(description="REST API server for vLLM, production ready")
 
     application_settings = ApplicationSettings(_env_parse_none_str='None') # type: ignore
 
@@ -280,8 +291,20 @@ def get_parser() -> ArgumentParser:
                         type=bool,
                         default=application_settings.with_launch_arguments,
                         help="Whether the route launch_arguments should display the launch arguments")
-
-    
+    parser.add_argument('--max-log-len',
+                        type=int,
+                        default=application_settings.max_log_len,
+                        help='Max number of prompt characters or prompt '
+                        'ID numbers being printed in log.'
+                        '\n\nDefault: Unlimited')
+    parser.add_argument(
+                "--prompt-adapters",
+                type=nullable_str,
+                default=application_settings.prompt_adapters,
+                nargs='+',
+                action=PromptAdapterParserAction,
+                help="Prompt adapter configurations in the format name=path. "
+                "Multiple adapters can be specified.")
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
 
