@@ -24,19 +24,21 @@ import asyncio
 import logging
 from pathlib import Path
 from argparse import Namespace
+from prometheus_client import Gauge
 from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List
+from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
-from vllm.entrypoints.logger import RequestLogger
-from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 
-from prometheus_client import Gauge
+
+
 
 logger = logging.getLogger(__name__)
 
