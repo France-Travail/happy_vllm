@@ -81,7 +81,7 @@ class Model:
             engine_args = AsyncEngineArgs.from_cli_args(args) 
             self._model = AsyncLLMEngine.from_engine_args(engine_args) # type: ignore
             model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-            model_consumed_memory.set(round(self._model.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2))
+            model_consumed_memory.set(round(self._model.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
             if isinstance(self._model.engine.tokenizer, TokenizerGroup): # type: ignore
                 self._tokenizer = self._model.engine.tokenizer.tokenizer # type: ignore
             else:
