@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from vllm.entrypoints.openai.protocol import ChatCompletionRequest, ChatCompletionToolsParam, ChatCompletionNamedToolChoiceParam
 
 
-from happy_vllm.routers.schemas.functional import update_chat_completion_request
+from routers.schemas.functional import update_chat_completion_request
 
 
 TOOLS = [
