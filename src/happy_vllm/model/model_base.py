@@ -38,8 +38,6 @@ from lmformatenforcer.integrations.transformers import build_token_enforcer_toke
 from happy_vllm import utils
 
 
-
-
 logger = logging.getLogger(__name__)
 
 
