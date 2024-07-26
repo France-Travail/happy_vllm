@@ -3,5 +3,5 @@ fastapi==0.111.1
 pydantic-settings==2.3.4
 uvicorn[standard]==0.30.3
 prometheus_client==0.20.0
-numpy==1.26.4
+numpy==2.0.1
 jsonschema==4.23.0
