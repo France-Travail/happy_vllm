@@ -31,7 +31,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from ..model.model_base import Model
-from ..function_tools.functions import update_tools, clean_tools
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +47,8 @@ def get_lifespan(args: Namespace) -> Callable:
 
         RESOURCES[RESOURCE_MODEL] = model
 
-        # Load the tools
-        update_tools(args=args)
-
         yield
 
         # Clean up the ML models and release the resources
         RESOURCES.clear()
-        clean_tools()
     return lifespan
