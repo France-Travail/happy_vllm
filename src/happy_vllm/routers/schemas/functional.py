@@ -157,7 +157,6 @@ async def update_chat_completion_request(request: Request, data: ChatCompletionR
     """
     tools : Union[dict, None] = get_tools_prompt()
     if tools:
-        data_dict = data.dict()
         if data_dict['tools']:
             data_dict['tools'].extend(tools["tools"])
         else:
@@ -166,4 +165,10 @@ async def update_chat_completion_request(request: Request, data: ChatCompletionR
             data_dict['top_logprobs'] = None
         data_dict['tool_choice'] = tools["tool_choice"]
         return ChatCompletionRequest(**data_dict)
+        # if data.tools : 
+        #     data.tools.extend(tools["tools"])
+        # else:
+        #     data.tools = tools["tools"]
+        # data.tool_choice = tools["tool_choice"]
+        # print(data.top_logprobs, data.logprobs)
     return data
