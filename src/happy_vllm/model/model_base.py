@@ -33,6 +33,7 @@ from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGro
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
+from vllm.entrypoints.logger import RequestLogger
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 
 logger = logging.getLogger(__name__)
@@ -85,11 +86,20 @@ class Model:
             self.max_model_len = self._model.engine.model_config.max_model_len # type: ignore
             self.original_truncation_side = self._tokenizer.truncation_side
             model_config = await self._model.get_model_config()
+            if args.disable_log_requests:
+                request_logger = None
+            else:
+                request_logger = RequestLogger(max_log_len=args.max_log_len)
             self.openai_serving_chat = OpenAIServingChat(self._model, model_config, [args.model_name],
                                                         args.response_role,
-                                                        args.lora_modules,
-                                                        args.chat_template)
-            self.openai_serving_completion = OpenAIServingCompletion(self._model, model_config, [args.model_name], args.lora_modules)
+                                                        lora_modules=args.lora_modules,
+                                                        prompt_adapters=args.prompt_adapters,
+                                                        request_logger=request_logger,
+                                                        chat_template=args.chat_template,)
+            self.openai_serving_completion = OpenAIServingCompletion(self._model, model_config, [args.model_name], 
+                                                                     lora_modules=args.lora_modules,
+                                                                     prompt_adapters=args.prompt_adapters,
+                                                                     request_logger=request_logger,)
         # For test purpose
         else:
             self.max_model_len = 2048

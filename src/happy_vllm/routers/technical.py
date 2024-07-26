@@ -95,7 +95,7 @@ async def get_live_metrics() -> JSONResponse:
 @router.get("/v1/models", response_model=technical_schema.HappyvllmModelList)
 async def show_available_models():
     model: Model = RESOURCES.get(RESOURCE_MODEL)
-    models = await model.openai_serving_chat.show_available_models()
+    models = await model.openai_serving_completion.show_available_models()
     return JSONResponse(content=models.model_dump())
 
 
