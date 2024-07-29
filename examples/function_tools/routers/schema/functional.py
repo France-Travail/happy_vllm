@@ -25,7 +25,14 @@ from typing import Any, List, Union, Optional
 from vllm.entrypoints.openai.protocol import ResponseFormat, CompletionResponse, ChatCompletionResponse
 
 from .utils import NumpyArrayEncoder
-from ...functions import get_tools_prompt
+from ...function_tools import Weather
+
+
+
+TOOLS_DICT = {
+    'weather': Weather(),
+}
+TOOLS = ['weather']
 
 # Load the response examples
 directory = os.path.dirname(os.path.abspath(__file__))
@@ -138,6 +145,34 @@ class HappyvllmCompletionResponse(CompletionResponse):
 
 class HappyvllmChatCompletionResponse(ChatCompletionResponse):
     model_config = {"json_schema_extra": {"examples": [response_examples["chat_completion_response"]]}} 
+
+
+def get_tools_prompt() -> Union[dict, None]:
+    """
+    Returns a dictionary containing information about selected tools.
+
+    Returns:
+    dict or None: A dictionary containing information about selected tools, structured as follows:
+                  - "tools": A list of dictionaries, each representing a tool's generated dictionary.
+                  - "tool_choice": A dictionary containing type and function details of the first tool in the list,
+                                   or None if TOOLS is empty.
+                  Returns None if TOOLS is empty.
+    """
+    tools_dict = copy(TOOLS_DICT)
+    tools = copy(TOOLS)
+    if tools:
+        return {
+            "tools": [tools_dict[t].generate_dict() for t in tools],
+            "tool_choice": [
+                {
+                    "type": tools_dict[t].tool_type, 
+                    "function": {"name":tools_dict[t].name}
+                }
+                for t in tools
+            ][0]
+        }
+    else:
+        return None
 
 
 async def update_chat_completion_request(request: Request, data: ChatCompletionRequest):
