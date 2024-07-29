@@ -17,9 +17,9 @@
 import os
 import json
 from vllm.utils import random_uuid
-from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
 from starlette.requests import Request
+from fastapi import APIRouter, Body, Depends
 from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
@@ -106,7 +106,6 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
         prompt_in_response = request_dict.pop('prompt_in_response')
     else:
         prompt_in_response = False
-    multi_modal_data = request_dict
     detect_logits_processors_incompatibilities(request_dict)
     logits_processors = parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
     sampling_params = SamplingParams(**request_dict)
@@ -325,7 +324,7 @@ async def metadata_text(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/v1/chat/completions_tools", response_model=functional_schema.HappyvllmChatCompletionResponse)
+@router.post("/v1/chat/completions", response_model=functional_schema.HappyvllmChatCompletionResponse)
 async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Body(openapi_examples=request_openapi_examples["chat_completions"])],
                                  raw_request: Request):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
@@ -343,10 +342,11 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
         return JSONResponse(content=generator.model_dump()) # type: ignore
 
 
-@router.post("/v1/chat/completions", response_model=functional_schema.HappyvllmChatCompletionResponse)
-async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Body(openapi_examples=request_openapi_examples["chat_completions"])],
+@router.post("/v1/chat/completions_tools", response_model=functional_schema.HappyvllmChatCompletionResponse)
+async def create_chat_completion_tools(request: Annotated[vllm_protocol.ChatCompletionRequest, Depends(functional_schema.update_chat_completion_request)],
                                  raw_request: Request):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
+        This route use FastApi Depend to update the request before call the route's function to add automtically tools and tool_choice attribute in the request's body
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     generator = await model.openai_serving_chat.create_chat_completion(

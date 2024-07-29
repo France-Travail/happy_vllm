@@ -12,11 +12,12 @@ You need to instantiate 4 attributes:
 Each attributes correpondings to [Openai api](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools)
 
 ## Called functions
+To use this implementation, you must replace ```routers.function.py``` and ```routers.schema.function.py``` with the respective files in the folder ```example.function_tools```.
 After deploying your REST API, you can call it with the following route ```/v1/chat/completions_tools```
 
 ## To know
 
-From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented. You can only use one function by deployement : 
+From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented. You can only use one function by deployement. Provide a complete body (asking for the temperature for example) : 
 
 ```
 {
