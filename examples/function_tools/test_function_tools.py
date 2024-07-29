@@ -1,12 +1,12 @@
 import pytest
-from argparse import Namespace
 
-from functions import ToolFunctions, Weather, Music, get_tools, get_tools_prompt, reset_tools_dict_and_tools
+from function_tools import FunctionTool, Weather
+from function_tools_util import get_tools, get_tools_prompt
 
 
-def test_toolfunctions():
-    # Test ToolFunctions class creation
-    tf = ToolFunctions(description="Test tool", parameters={"param1": "value1"}, name="TestTool", tool_type="Utility")
+def test_functiontool():
+    # Test FunctionTools class creation
+    tf = FunctionTool(description="Test tool", parameters={"param1": "value1"}, name="TestTool", tool_type="Utility")
     assert tf.description == "Test tool"
     assert tf.parameters == {"param1": "value1"}
     assert tf.name == "TestTool"
@@ -22,19 +22,18 @@ def test_toolfunctions():
     }
     assert tf.generate_dict() == expected_output
 
-    # Test ToolFunctions class creation with missing parameters
-    with pytest.raises(NotImplementedError, match="This attributes must be different to None"):
-        ToolFunctions(description=None, parameters={"param1": "value1"}, name="TestTool", tool_type="Utility")
-    with pytest.raises(NotImplementedError, match="This attributes must be different to None"):
-        ToolFunctions(description="Test tool", parameters=None, name="TestTool", tool_type="Utility")
-    with pytest.raises(NotImplementedError, match="This attributes must be different to None"):
-        ToolFunctions(description="Test tool", parameters={"param1": "value1"}, name=None, tool_type="Utility")
-    with pytest.raises(NotImplementedError, match="This attributes must be different to None"):
-        ToolFunctions(description="Test tool", parameters={"param1": "value1"}, name="TestTool", tool_type=None)
+    # Test FunctionTool class creation with missing parameters
+    with pytest.raises(AttributeError, match="This attributes must be different to None"):
+        FunctionTool(description=None, parameters={"param1": "value1"}, name="TestTool", tool_type="Utility")
+    with pytest.raises(AttributeError, match="This attributes must be different to None"):
+        FunctionTool(description="Test tool", parameters=None, name="TestTool", tool_type="Utility")
+    with pytest.raises(AttributeError, match="This attributes must be different to None"):
+        FunctionTool(description="Test tool", parameters={"param1": "value1"}, name=None, tool_type="Utility")
+    with pytest.raises(AttributeError, match="This attributes must be different to None"):
+        FunctionTool(description="Test tool", parameters={"param1": "value1"}, name="TestTool", tool_type=None)
 
 
 def test_get_tools_prompt():
-    reset_tools_dict_and_tools()
     # Test get_tools_prompt function with good arguments
     TOOLS_DICT, TOOLS = get_tools()
     expected_output = {
