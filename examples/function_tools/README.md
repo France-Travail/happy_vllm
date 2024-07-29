@@ -12,7 +12,7 @@ You need to instantiate 4 attributes:
 
 Each attributes corresponding to [Openai api](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools)
 
-After the class is created, you have to declare it in TOOLS_DICT and TOOLS global variables (add weather function tool for example).
+After the class is created, you have to declare it in TOOLS_DICT and TOOLS global variables in ```routers.shcema.functional``` (add weather function tool for example).
 
 ```
 TOOLS_DICT = {
@@ -22,7 +22,7 @@ TOOLS = ['weather']
 ```
 
 ## Called functions
-To use this implementation, you must replace ```routers.function.py``` and ```routers.schema.function.py``` with the respective files in the folder ```example.function_tools```.
+To use this implementation, you must replace the original ```routers.function.py``` and ```routers.schema.function.py``` files with the respective files in the folder ```example.function_tools```.
 After deploying your REST API, you can call it with the following route ```/v1/chat/completions_tools```
 
 ## To know
