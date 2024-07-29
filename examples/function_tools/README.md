@@ -1,7 +1,8 @@
 # Functions calling
+Function calling
 
 ## Deploy a new function
-To avoid repeatedly specifying all attributes related to tools and tool_choice when using functions calling, you can create a classe inheriting from ```functions.ToolFunctions```.
+To avoid repeatedly specifying all attributes related to tools and tool_choice when using functions calling, you can create a class inheriting from ```functions.ToolFunctions```. 
 
 You need to instantiate 4 attributes: 
  - description (string)
@@ -9,9 +10,9 @@ You need to instantiate 4 attributes:
  - name (string)
  - tool_type (string) 
 
-Each attributes correpondings to [Openai api](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools)
+Each attributes corresponding to [Openai api](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools)
 
-After the class is created, you have to declare in TOOLS_DICT and TOOLS global variables (add weather function tool for example).
+After the class is created, you have to declare it in TOOLS_DICT and TOOLS global variables (add weather function tool for example).
 
 ```
 TOOLS_DICT = {
@@ -26,10 +27,33 @@ After deploying your REST API, you can call it with the following route ```/v1/c
 
 ## To know
 
-From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented. You can only use one function by deployement. Provide a complete body (asking for the temperature for example) : 
+From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented. **You can only use one function by deployement**. An example of body request with ```tools``` and ```tool_choice```: 
 
 ```
+tools : [
 {
+    "type": "function",
+    "function": {
+        "name": "get_current_weather",
+        "description": "Get current weather",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The city and state, e.g. San Francisco, CA",
+                },
+                "format": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                    "description": "The temperature unit to use. Infer this from the users location.",
+                },
+            },
+            "required": ["location", "format"],
+        }
+    }
+}],
+tool_choice =:{
     "type": "function",
     "function": {"name": "get_current_weather"}
 }
