@@ -188,6 +188,7 @@ async def update_chat_completion_request(request: Request, data: ChatCompletionR
                                otherwise returns the original ChatCompletionRequest object.
     """
     tools : Union[dict, None] = get_tools_prompt()
+    data_dict = data.dict()
     if tools:
         if data_dict['tools']:
             data_dict['tools'].extend(tools["tools"])
