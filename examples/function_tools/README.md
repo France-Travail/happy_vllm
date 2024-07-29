@@ -1,5 +1,4 @@
 # Functions calling
-Function calling
 
 ## Deploy a new function
 To avoid repeatedly specifying all attributes related to tools and tool_choice when using functions calling, you can create a class inheriting from ```functions.ToolFunctions```. 
@@ -21,41 +20,42 @@ TOOLS_DICT = {
 TOOLS = ['weather']
 ```
 
+**You can only use one function by deployement**. 
+
 ## Called functions
 To use this implementation, you must replace the original ```routers.function.py``` and ```routers.schema.function.py``` files with the respective files in the folder ```example.function_tools```.
-After deploying your REST API, you can call it with the following route ```/v1/chat/completions_tools```
 
-## To know
 
-From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented. **You can only use one function by deployement**. An example of body request with ```tools``` and ```tool_choice```: 
+## How to use
+After deploying your REST API, you just need to call it with the following route ```/v1/chat/completions_tools``` and a body as follows:
 
 ```
-tools : [
 {
-    "type": "function",
-    "function": {
-        "name": "get_current_weather",
-        "description": "Get current weather",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA",
-                },
-                "format": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"],
-                    "description": "The temperature unit to use. Infer this from the users location.",
-                },
-            },
-            "required": ["location", "format"],
-        }
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant."
+    },
+    {
+      "role": "user",
+      "content": "Who won the world series in 2020?"
+    },
+    {
+      "role": "assistant",
+      "content": "The Los Angeles Dodgers won the World Series in 2020."
+    },
+    {
+      "role": "user",
+      "content": "How was the weather ?"
     }
-}],
-tool_choice =:{
-    "type": "function",
-    "function": {"name": "get_current_weather"}
+  ],
+  "model": "my_model"
 }
 ```
+
+The tool will be automatically called
+
+## Warning
+
+From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented.
 
