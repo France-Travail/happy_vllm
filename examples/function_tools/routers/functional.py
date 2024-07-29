@@ -345,8 +345,9 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
 @router.post("/v1/chat/completions_tools", response_model=functional_schema.HappyvllmChatCompletionResponse)
 async def create_chat_completion_tools(request: Annotated[vllm_protocol.ChatCompletionRequest, Depends(functional_schema.update_chat_completion_request)],
                                  raw_request: Request):
-    """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
-        This route use FastApi Depend to update the request before call the route's function to add automtically tools and tool_choice attribute in the request's body
+    """Route to use if you need to use function calling without add function calling information by yourself in body request
+    Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
+    This route use FastApi Depend to update the request before call the route's function to add automtically tools and tool_choice attribute in the request's body
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     generator = await model.openai_serving_chat.create_chat_completion(
