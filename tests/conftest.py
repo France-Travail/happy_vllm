@@ -87,7 +87,8 @@ def test_base_client() -> TestClient:
                                         allowed_methods=["*"],
                                         allowed_headers=["*"],
                                         root_path=None,
-                                        with_launch_arguments=True))
+                                        with_launch_arguments=True
+                                        ))
     return TestClient(app)
 
 

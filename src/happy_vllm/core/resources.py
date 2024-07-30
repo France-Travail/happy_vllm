@@ -46,6 +46,7 @@ def get_lifespan(args: Namespace) -> Callable:
         logger.info("Model loaded")
 
         RESOURCES[RESOURCE_MODEL] = model
+
         yield
 
         # Clean up the ML models and release the resources

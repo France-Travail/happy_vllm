@@ -23,7 +23,6 @@ from fastapi.testclient import TestClient
 from vllm.sampling_params import SamplingParams
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
-
 from happy_vllm import utils
 from .conftest import TEST_MODELS_DIR
 from happy_vllm.routers import functional
