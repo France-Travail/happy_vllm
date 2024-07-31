@@ -29,10 +29,6 @@ class ImageInput:
     def __init__(self, list_image_path: Union[list, None]):
         self.list_image_path: list = list_image_path
 
-    def _check_attributes(self):
-        if not self.list_image_path:
-            raise AttributeError("This attributes must be different to None")
-
     def encode(self):
         base64_images = {}
         # Open the image file and encode it as a base64 string

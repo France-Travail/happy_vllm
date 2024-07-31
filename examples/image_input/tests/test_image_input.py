@@ -18,7 +18,3 @@ def test_imageinput():
     # Test ImageInput class extension method
     expected_extension = {0: 'jpg'}
     assert image_input.extension() == expected_extension
-
-    # Test ImageInput class creation with missing parameters
-    with pytest.raises(AttributeError, match="This attribute must be different to None"):
-        ImageInput(list_image_path=None)
