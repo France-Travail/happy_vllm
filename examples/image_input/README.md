@@ -1,61 +1,34 @@
-# Functions calling
+# Image Input
 
-## Deploy a new function
-To avoid repeatedly specifying all attributes related to tools and tool_choice when using functions calling, you can create a class inheriting from ```functions.ToolFunctions```. 
+## Add image in put in a prompt
+To avoid repeatedly encoding an image and extracting the related extension, you can create a class inheriting from ```image_input.ImageInput```. 
 
-You need to instantiate 4 attributes: 
- - description (string)
- - parameters (dict)
- - name (string)
- - tool_type (string) 
-
-Each attributes corresponding to [Openai api](https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools)
-
-After the class is created, you have to declare it in TOOLS_DICT and TOOLS global variables in ```routers.shcema.functional``` (add weather function tool for example).
-
-```
-TOOLS_DICT = {
-    'weather': Weather(),
-}
-TOOLS = ['weather']
-```
-
-**You can only use one function by deployement**. 
-
-## Called functions
-To use this implementation, you must replace the original ```routers.function.py``` and ```routers.schema.function.py``` files with the respective files in the folder ```example.function_tools```.
-
+You need to instantiate the following attributes  : path of the image file (string)
 
 ## How to use
-After deploying your REST API, you just need to call it with the following route ```/v1/chat/completions_tools``` and a body as follows:
+After deploying your REST API, you just need to first call it with the method encode() and extension(), and then with the following route ```/v1/chat/completions``` and a body as follows:
 
 ```
-{
-  "messages": [
-    {
-      "role": "system",
-      "content": "You are a helpful assistant."
-    },
-    {
-      "role": "user",
-      "content": "Who won the world series in 2020?"
-    },
-    {
-      "role": "assistant",
-      "content": "The Los Angeles Dodgers won the World Series in 2020."
-    },
-    {
-      "role": "user",
-      "content": "How was the weather ?"
-    }
-  ],
-  "model": "my_model"
-}
+{"messages": [
+      {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Summarize all the information included in this image."},
+            {  "type": "image_url",
+                "image_url": {
+                    "url": "data:image/{image_extension[0]};base64,{image_base64[0]}"
+                }
+            }
+         ]
+      }
+    ],
+    "model": "llava-v1.6-mistral-7b-hf",
+    "max_tokens": 1024,
+    "temperature":0.0
+  }'''
 ```
-
-The tool will be automatically called
 
 ## Warning
 
-From vllm 0.5.0 to 0.5.3.post1, tool_choice's option ```auto``` and ```required``` are not yet implemented.
+From vllm 0.5.0 to 0.5.3.post1, only one image can be passed per call.
 

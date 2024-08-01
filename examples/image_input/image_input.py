@@ -10,10 +10,6 @@ class ImageInput:
     Methods:
     __init__(list_image_path: Union[str, None]):
         Initializes a ImageInput instance with the provided attribute. Raises NotImplementedError if any attribute is None.
-    
-    _check_attributes():
-        Checks if the required attribute List_image_path is not None.
-        Raises NotImplementedError if the attribute is None.
 
     encode() -> dict:
         Encodes and returns a dictionary representation of the images encoded in base 64.
