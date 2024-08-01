@@ -24,6 +24,8 @@ class ImageInput:
 
     def __init__(self, list_image_path: Union[list, None]):
         self.list_image_path: list = list_image_path
+        self.base64_images = self.encode()
+        self.extension_images = self.extension()
 
     def encode(self):
         base64_images = {}
