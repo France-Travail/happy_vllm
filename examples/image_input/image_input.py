@@ -27,17 +27,25 @@ class ImageInput:
         self.base64_images = self.encode()
         self.extension_images = self.extension()
 
-    def encode(self):
+    def encode(self) -> dict:
+        """Opens the image files and encode it as a base64 string
+        
+        Returns:
+            dict : The base 64 of all images
+        """
         base64_images = {}
-        # Open the image file and encode it as a base64 string
         for i in range(len(self.image_paths)):
             with open(self.image_paths[i], "rb") as image_file:
                 base64_images[i] = base64.b64encode(image_file.read()).decode("utf-8")
         return base64_images
 
-    def extension(self):
+    def extension(self) -> dict:
+        """Extracts the string of the extension of the image files
+        
+        Returns:
+            dict : The extension of all images
+        """
         extension_images = {}
-        # Extract the string of the extension of the image file
         for i in range(len(self.image_paths)):
             extension_images[i] = os.path.splitext(self.image_paths[i])[1][1:]
         return extension_images
