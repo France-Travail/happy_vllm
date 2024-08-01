@@ -35,7 +35,7 @@ class ImageInput:
 
     def extension(self):
         extension_images = {}
-        # Open the image file and encode it as a base64 string
+        # Extract the string of the extension of the image file
         for i in range(len(self.list_image_path)):
             extension_images[i] = os.path.splitext(self.list_image_path[i])[1][1:]
         return extension_images
