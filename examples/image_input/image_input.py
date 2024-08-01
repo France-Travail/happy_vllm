@@ -22,8 +22,8 @@ class ImageInput:
             "url": f"data:image/png;base64,{base64_images[0]}"}
     """
 
-    def __init__(self, image_paths: list]):
-        self.image_paths: list = image_paths
+    def __init__(self, image_paths: list):
+        self.image_paths: list = image_paths.copy()
         self.base64_images = self.__encode()
         self.extension_images = self.__extension()
 
