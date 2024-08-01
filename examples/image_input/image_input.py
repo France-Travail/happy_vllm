@@ -27,7 +27,7 @@ class ImageInput:
         self.base64_images = self.__encode()
         self.extension_images = self.__extension()
 
-    def __encode(self) -> dict:
+    def _encode(self) -> dict:
         """Opens the image files and encode it as a base64 string
         
         Returns:
@@ -40,7 +40,7 @@ class ImageInput:
                 base64_images[i] = base64.b64encode(image_file.read()).decode("utf-8")
         return base64_images
 
-    def __extension(self) -> dict:
+    def _extension(self) -> dict:
         """Extracts the string of the extension of the image files
         
         Returns:
