@@ -8,7 +8,7 @@ class ImageInput:
     Represents a class with specific methods to help to prepare a list of image inputs for vision models api call.
 
     Methods:
-    __init__(list_image_path: Union[str, None]):
+    __init__(image_paths: list):
         Initializes a ImageInput instance with the provided attribute. Raises NotImplementedError if any attribute is None.
 
     encode() -> dict:
@@ -22,22 +22,22 @@ class ImageInput:
             "url": f"data:image/png;base64,{base64_images[0]}"}
     """
 
-    def __init__(self, list_image_path: Union[list, None]):
-        self.list_image_path: list = list_image_path
+    def __init__(self, image_paths: list]):
+        self.image_paths: list = image_paths
         self.base64_images = self.encode()
         self.extension_images = self.extension()
 
     def encode(self):
         base64_images = {}
         # Open the image file and encode it as a base64 string
-        for i in range(len(self.list_image_path)):
-            with open(self.list_image_path[i], "rb") as image_file:
+        for i in range(len(self.image_paths)):
+            with open(self.image_paths[i], "rb") as image_file:
                 base64_images[i] = base64.b64encode(image_file.read()).decode("utf-8")
         return base64_images
 
     def extension(self):
         extension_images = {}
         # Extract the string of the extension of the image file
-        for i in range(len(self.list_image_path)):
-            extension_images[i] = os.path.splitext(self.list_image_path[i])[1][1:]
+        for i in range(len(self.image_paths)):
+            extension_images[i] = os.path.splitext(self.image_paths[i])[1][1:]
         return extension_images

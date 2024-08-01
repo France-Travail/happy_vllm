@@ -5,8 +5,8 @@ from happy_vllm.utils import ImageInput
 
 def test_imageinput():
     # Test ImageInput class creation
-    image_input = ImageInput(list_image_path=["./test.jpg"])
-    assert image_input.list_image_path == ["./test.jpg"]
+    image_input = ImageInput(image_paths=["./test.jpg"])
+    assert image_input.image_paths == ["./test.jpg"]
 
     # Test ImageInput class encode method
     file_base64 = open('./test_image_base64.txt')
