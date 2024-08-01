@@ -33,6 +33,7 @@ class ImageInput:
         Returns:
             dict : The base 64 of all images
         """
+        
         base64_images = {}
         for i in range(len(self.image_paths)):
             with open(self.image_paths[i], "rb") as image_file:
@@ -45,6 +46,7 @@ class ImageInput:
         Returns:
             dict : The extension of all images
         """
+
         extension_images = {}
         for i in range(len(self.image_paths)):
             extension_images[i] = os.path.splitext(self.image_paths[i])[1][1:]
