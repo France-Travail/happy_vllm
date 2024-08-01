@@ -24,8 +24,8 @@ class ImageInput:
 
     def __init__(self, image_paths: list):
         self.image_paths: list = image_paths.copy()
-        self.base64_images = self.__encode()
-        self.extension_images = self.__extension()
+        self.base64_images = self._encode()
+        self.extension_images = self._extension()
 
     def _encode(self) -> dict:
         """Opens the image files and encode it as a base64 string
