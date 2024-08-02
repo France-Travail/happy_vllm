@@ -361,3 +361,9 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
                                  media_type="text/event-stream")
     else:
         return JSONResponse(content=generator.model_dump())
+
+
+@router.post("/v1/abort_request")
+async def abort_request(request: functional_schema.RequestAbortRequest):
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model._model.engine.abort_request(request.request_id)
