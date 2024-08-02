@@ -137,3 +137,7 @@ class HappyvllmCompletionResponse(CompletionResponse):
 
 class HappyvllmChatCompletionResponse(ChatCompletionResponse):
     model_config = {"json_schema_extra": {"examples": [response_examples["chat_completion_response"]]}} 
+
+
+class RequestAbortRequest(BaseModel):
+    request_id: str

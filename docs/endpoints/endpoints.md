@@ -32,7 +32,11 @@ Gives all the arguments used when launching the application. `--with-launch-argu
 
 ### /v1/completions and /v1/chat/completions (POST)
 
-These two endpoints mimick the one of vLLM. They follow the Open AI contract and you can find more details in [the vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html)
+These two endpoints mimick the ones of vLLM. They follow the Open AI contract and you can find more details in [the vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html)
+
+### /v1/abort_request (POST)
+
+Aborts a running request 
 
 ### DEPRECATED /v1/generate and /v1/generate_stream (POST)
 
