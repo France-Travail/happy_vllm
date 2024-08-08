@@ -114,6 +114,19 @@ class Model:
             self._model = MockModel(self._tokenizer, self.app_name)
         logger.info(f"Model loaded")
 
+
+    async def purge_requests(self, request_types: Union[list, set, None] = None):
+        if request_types is None:
+            request_types = {"waiting", "running", "swapped"}
+        requests_to_purge = []
+        for scheduler in self._model.engine.scheduler:
+            for request_type in request_types:
+                requests_to_purge += getattr(scheduler, request_type)
+        for request in requests_to_purge:
+            self._model.engine.abort_request(request.request_id)
+
+
+
     def tokenize(self, text: str) -> List[int]:
         """Tokenizes a text
         

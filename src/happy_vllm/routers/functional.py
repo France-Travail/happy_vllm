@@ -367,3 +367,9 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
 async def abort_request(request: functional_schema.RequestAbortRequest):
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     model._model.engine.abort_request(request.request_id)
+
+
+@router.post("/v1/purge_requests")
+async def purge_requests(request: functional_schema.RequestPurgeRequests):
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    await model.purge_requests(request.request_types)

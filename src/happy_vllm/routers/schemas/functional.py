@@ -141,3 +141,6 @@ class HappyvllmChatCompletionResponse(ChatCompletionResponse):
 
 class RequestAbortRequest(BaseModel):
     request_id: str
+
+class RequestPurgeRequests(BaseModel):
+    request_types: List[str] = Field(None, title="Types of request to purge")
