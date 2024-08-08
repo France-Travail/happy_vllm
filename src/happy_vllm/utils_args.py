@@ -52,6 +52,8 @@ DEFAULT_RESPONSE_ROLE = "assistant"
 DEFAULT_WITH_LAUNCH_ARGUMENTS = False
 DEFAULT_MAX_LOG_LEN = None
 DEFAULT_PROMPT_ADAPTERS = None
+DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
+DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 
 
 class ApplicationSettings(BaseSettings):
@@ -86,6 +88,9 @@ class ApplicationSettings(BaseSettings):
     with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
     max_log_len: Optional[int] = DEFAULT_MAX_LOG_LEN
     prompt_adapters: Optional[str] = DEFAULT_PROMPT_ADAPTERS
+    return_tokens_as_token_ids: bool = DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS
+    disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
+
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -305,6 +310,20 @@ def get_parser() -> FlexibleArgumentParser:
                 action=PromptAdapterParserAction,
                 help="Prompt adapter configurations in the format name=path. "
                 "Multiple adapters can be specified.")
+    parser.add_argument(
+        "--return-tokens-as-token-ids",
+        default=application_settings.return_tokens_as_token_ids,
+        action=BooleanOptionalAction,
+        help="When --max-logprobs is specified, represents single tokens as "
+        "strings of the form 'token_id:{token_id}' so that tokens that "
+        "are not JSON-encodable can be identified.")
+    parser.add_argument(
+        "--disable-frontend-multiprocessing",
+        default=application_settings.disable_frontend_multiprocessing,
+        action=BooleanOptionalAction,
+        help="If specified, will run the OpenAI frontend server in the same "
+        "process as the model serving engine.")
+
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
 

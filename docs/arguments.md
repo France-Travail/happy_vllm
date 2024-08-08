@@ -38,6 +38,8 @@ Here is a list of arguments useful for the application (they all have default va
  - `chat-template`: The file path to the chat template, or the template in single-line form for the specified model (see [the documentation of vLLM](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#chat-template) for more details). Useful in the `/v1/chat/completions` endpoint
  - `response-role`: The role name to return if `request.add_generation_prompt=true`. Useful in the `/v1/chat/completions` endpoint
  - `with-launch-arguments`: Whether the route `/v1/launch_arguments` gives the launch arguments or an empty json (default value is `False`)
+ - `return-tokens-as-token-ids`: "When `--max-logprobs`  is specified, represents single tokens as strings of the form 'token_id:{token_id}' so that tokens that are not JSON-encodable can be identified (default value is `False`)
+ - `disable-frontend-multiprocessing`: If specified, will run the OpenAI frontend server in the same process as the model serving engine (default value is `False`)
 
 ### Model arguments
 

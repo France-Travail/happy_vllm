@@ -31,6 +31,7 @@ from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from vllm.entrypoints.openai.api_server import build_async_engine_client
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
@@ -78,32 +79,36 @@ class Model:
 
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
-            engine_args = AsyncEngineArgs.from_cli_args(args) 
-            self._model = AsyncLLMEngine.from_engine_args(engine_args) # type: ignore
-            model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-            model_consumed_memory.set(round(self._model.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
-            if isinstance(self._model.engine.tokenizer, TokenizerGroup): # type: ignore
-                self._tokenizer = self._model.engine.tokenizer.tokenizer # type: ignore
-            else:
-                self._tokenizer = self._model.engine.tokenizer # type: ignore
-            self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
-            self.max_model_len = self._model.engine.model_config.max_model_len # type: ignore
-            self.original_truncation_side = self._tokenizer.truncation_side
-            model_config = await self._model.get_model_config()
-            if args.disable_log_requests:
-                request_logger = None
-            else:
-                request_logger = RequestLogger(max_log_len=args.max_log_len)
-            self.openai_serving_chat = OpenAIServingChat(self._model, model_config, [args.model_name],
-                                                        args.response_role,
-                                                        lora_modules=args.lora_modules,
-                                                        prompt_adapters=args.prompt_adapters,
-                                                        request_logger=request_logger,
-                                                        chat_template=args.chat_template,)
-            self.openai_serving_completion = OpenAIServingCompletion(self._model, model_config, [args.model_name], 
-                                                                     lora_modules=args.lora_modules,
-                                                                     prompt_adapters=args.prompt_adapters,
-                                                                     request_logger=request_logger,)
+            # engine_args = AsyncEngineArgs.from_cli_args(args) 
+            # self._model = AsyncLLMEngine.from_engine_args(engine_args) # type: ignore
+            async with build_async_engine_client(args) as model:
+                self._model = model 
+                # model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
+                # model_consumed_memory.set(round(self._model.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
+                if isinstance(self._model.tokenizer, TokenizerGroup): # type: ignore
+                    self._tokenizer = self._model.tokenizer.tokenizer # type: ignore
+                else:
+                    self._tokenizer = self._model.tokenizer # type: ignore
+                self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
+                self.max_model_len = self._model.model_config.max_model_len # type: ignore
+                self.original_truncation_side = self._tokenizer.truncation_side
+                model_config = await self._model._get_model_config_rpc()
+                if args.disable_log_requests:
+                    request_logger = None
+                else:
+                    request_logger = RequestLogger(max_log_len=args.max_log_len)
+                self.openai_serving_chat = OpenAIServingChat(model, model_config, [args.model_name],
+                                                            args.response_role,
+                                                            lora_modules=args.lora_modules,
+                                                            prompt_adapters=args.prompt_adapters,
+                                                            request_logger=request_logger,
+                                                            chat_template=args.chat_template,
+                                                            return_tokens_as_token_ids=args.return_tokens_as_token_ids)
+                self.openai_serving_completion = OpenAIServingCompletion(model, model_config, [args.model_name], 
+                                                                        lora_modules=args.lora_modules,
+                                                                        prompt_adapters=args.prompt_adapters,
+                                                                        request_logger=request_logger,
+                                                                        return_tokens_as_token_ids=args.return_tokens_as_token_ids)
         # For test purpose
         else:
             self.max_model_len = 2048
