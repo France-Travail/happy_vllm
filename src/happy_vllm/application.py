@@ -21,11 +21,13 @@ from .routers import main_routeur
 from .core.resources import get_lifespan
 from prometheus_client import make_asgi_app
 from fastapi.middleware.cors import CORSMiddleware
+from vllm.engine.protocol import AsyncEngineClient
 
 from happy_vllm import utils
 from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
 
-def declare_application(args: Namespace) -> FastAPI:
+
+async def declare_application(async_engine_client: AsyncEngineClient, args: Namespace) -> FastAPI:
     """Create the FastAPI application
 
     See https://fastapi.tiangolo.com/tutorial/first-steps/ to learn how to
@@ -34,7 +36,7 @@ def declare_application(args: Namespace) -> FastAPI:
     app = FastAPI(
         title=f"A REST API for vLLM",
         description=f"A REST API for vLLM, production ready",
-        lifespan=get_lifespan(args=args),
+        lifespan=get_lifespan(async_engine_client, args=args),
         version=utils.get_package_version()
     )
 

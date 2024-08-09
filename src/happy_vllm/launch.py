@@ -14,27 +14,38 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 import uvicorn
 import argparse
-from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.entrypoints.launcher import serve_http 
+from vllm.entrypoints.openai.api_server import build_async_engine_client
 
 from happy_vllm.utils_args import parse_args
 from happy_vllm.application import declare_application
 
 
+TIMEOUT_KEEP_ALIVE = 5 # seconds
 
-def main() -> None:
+def main(**uvicorn_kwargs) -> None:
     args = parse_args()
+    asyncio.run(launch_app(args, **uvicorn_kwargs))
+    
 
-    app = declare_application(args=args)
-    uvicorn.run(app,
-                host=args.host,
-                port=args.port,
-                log_level=args.uvicorn_log_level,
-                ssl_keyfile=args.ssl_keyfile,
-                ssl_certfile=args.ssl_certfile,
-                ssl_ca_certs=args.ssl_ca_certs,
-                ssl_cert_reqs=args.ssl_cert_reqs)
+async def launch_app(args, **uvicorn_kwargs):
+    async with build_async_engine_client(args) as async_engine_client:
+        app = await declare_application(async_engine_client, args=args)
+
+        shutdown_task = await serve_http(app,
+                                        host=args.host,
+                                        port=args.port,
+                                        log_level=args.uvicorn_log_level,
+                                        timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
+                                        ssl_keyfile=args.ssl_keyfile,
+                                        ssl_certfile=args.ssl_certfile,
+                                        ssl_ca_certs=args.ssl_ca_certs,
+                                        ssl_cert_reqs=args.ssl_cert_reqs,
+                                        **uvicorn_kwargs)
+    await shutdown_task
 
 if __name__ == "__main__":
     main()
