@@ -32,6 +32,7 @@ from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 from vllm.entrypoints.openai.api_server import build_async_engine_client
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
+from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 from vllm.entrypoints.openai.rpc import RPCUtilityRequest
@@ -111,6 +112,11 @@ class Model:
                                                                     prompt_adapters=args.prompt_adapters,
                                                                     request_logger=request_logger,
                                                                     return_tokens_as_token_ids=args.return_tokens_as_token_ids)
+            self.openai_serving_tokenization  = OpenAIServingTokenization(self._model, model_config, [args.model_name],
+                                                                        lora_modules=args.lora_modules,
+                                                                        request_logger=request_logger,
+                                                                        chat_template=args.chat_template)
+
         # For test purpose
         else:
             self.max_model_len = 2048

@@ -226,6 +226,27 @@
             }
         }
     },
+    "vllm_tokenizer": {
+        "completions": {
+            "summary": "Completion",
+            "description": "Completion case from vllm tokenizer request, check https://github.com/vllm-project/vllm/blob/1a36287b89f337057ebeb5d1bee30567e985b444/vllm/entrypoints/openai/protocol.py#L729C1-L729C17",
+            "value": {
+                "model": "my_model",
+                "prompt": "This is a text example",
+                "add_special_tokens": true
+            }
+        },
+        "chat_completions": {
+            "summary": "Chat completion",
+            "description": "Chat completion case from vllm tokenizer request, check https://github.com/vllm-project/vllm/blob/1a36287b89f337057ebeb5d1bee30567e985b444/vllm/entrypoints/openai/protocol.py#L729C1-L729C17",
+            "value": {
+                "model": "my_model",
+                "prompt": "This is a text example",
+                "add_special_tokens": true,
+                "add_generation_prompt": true
+            }
+        }
+    },
     "decode": {
         "nominal_case": {
             "summary": "Nominal case",
@@ -242,6 +263,24 @@
                 ],
                 "with_tokens_str": true,
                 "vanilla": true
+            }
+        }
+    },
+    "vllm_decode": {
+        "nominal_case": {
+            "summary": "Nominal case",
+            "description": "Decode a list of token ids. It is the inverse of the endpoint tokenizer. For more details on what is the vanilla version of the tokenizer or not, please read the documentation : https://france-travail.github.io/happy_vllm/",
+            "value": {
+                "tokens": [
+                    "1",
+                    "17162",
+                    "28725",
+                    "910",
+                    "460",
+                    "368",
+                    "1550"
+                ],
+                "model": "my_model"
             }
         }
     },
