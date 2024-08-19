@@ -24,7 +24,6 @@ import asyncio
 import logging
 from pathlib import Path
 from argparse import Namespace
-from prometheus_client import Gauge
 from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List
 from vllm.entrypoints.logger import RequestLogger
@@ -80,14 +79,14 @@ class Model:
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
             self._model = async_engine_client 
-            model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-            model_consumed_memory_value = await self._model._send_get_data_rpc_request(
-                RPCUtilityRequest.IS_TRACING_ENABLED,
-                expected_type=float,
-                error_message=-1
-                "Server"
-            )
-            model_consumed_memory.set(self._model.engine) # type: ignore
+            # model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
+            # model_consumed_memory_value = await self._model._send_get_data_rpc_request(
+            #     RPCUtilityRequest.IS_TRACING_ENABLED,
+            #     expected_type=float,
+            #     error_message=-1
+            #     "Server"
+            # )
+            # model_consumed_memory.set(model_consumed_memory_value) # type: ignore
             if isinstance(self._model.tokenizer, TokenizerGroup): # type: ignore
                 self._tokenizer = self._model.tokenizer.tokenizer # type: ignore
             else:
