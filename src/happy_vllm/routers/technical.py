@@ -78,18 +78,18 @@ async def info() -> technical_schema.ResponseInformation:
     )
 
 
-@router.get("/live_metrics", response_model=technical_schema.ResponseLiveMetrics)
-async def get_live_metrics() -> JSONResponse:
-    """Deprecated. You should use now the /metrics endpoint
-    """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+# @router.get("/live_metrics", response_model=technical_schema.ResponseLiveMetrics)
+# async def get_live_metrics() -> JSONResponse:
+#     """Deprecated. You should use now the /metrics endpoint
+#     """
+#     model: Model = RESOURCES.get(RESOURCE_MODEL)
 
-    gpu_cache_usage = model.get_gpu_kv_cache_usage()
-    cpu_cache_usage = model.get_cpu_kv_cache_usage()
-    metrics = model.get_status_requests()
-    metrics["gpu_cache_usage"] = gpu_cache_usage
-    metrics["cpu_cache_usage"] = cpu_cache_usage
-    return JSONResponse(metrics)
+#     gpu_cache_usage = model.get_gpu_kv_cache_usage()
+#     cpu_cache_usage = model.get_cpu_kv_cache_usage()
+#     metrics = model.get_status_requests()
+#     metrics["gpu_cache_usage"] = gpu_cache_usage
+#     metrics["cpu_cache_usage"] = cpu_cache_usage
+#     return JSONResponse(metrics)
 
 
 @router.get("/v1/models", response_model=technical_schema.HappyvllmModelList)

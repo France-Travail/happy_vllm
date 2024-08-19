@@ -13,14 +13,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import asyncio
 import uvicorn
 import argparse
 from vllm.entrypoints.launcher import serve_http 
-from vllm.entrypoints.openai.api_server import build_async_engine_client
+import vllm.entrypoints.openai.api_server as vllm_api_server
 
 from happy_vllm.utils_args import parse_args
+from happy_vllm.rpc.server import run_rpc_server
 from happy_vllm.application import declare_application
 
 
@@ -32,9 +32,9 @@ def main(**uvicorn_kwargs) -> None:
     
 
 async def launch_app(args, **uvicorn_kwargs):
-    async with build_async_engine_client(args) as async_engine_client:
+    vllm_api_server.run_rpc_server  = run_rpc_server
+    async with vllm_api_server.build_async_engine_client(args) as async_engine_client:
         app = await declare_application(async_engine_client, args=args)
-
         shutdown_task = await serve_http(app,
                                         host=args.host,
                                         port=args.port,

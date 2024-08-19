@@ -29,13 +29,13 @@ from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.protocol import AsyncEngineClient
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 from vllm.entrypoints.openai.api_server import build_async_engine_client
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
-
+from vllm.entrypoints.openai.rpc import RPCUtilityRequest
 from happy_vllm import utils
 
 
@@ -59,7 +59,7 @@ class Model:
         """return the state of the model"""
         return self._loaded
 
-    async def loading(self, async_engine_client: AsyncEngineClient, args: Namespace, **kwargs):
+    async def loading(self, async_engine_client: AsyncEngineRPCClient, args: Namespace, **kwargs):
         """load the model"""
         await self._load_model(async_engine_client, args, **kwargs)
         self._loaded = True
@@ -68,7 +68,7 @@ class Model:
         else:
             self.launch_arguments = {}
 
-    async def _load_model(self, async_engine_client: AsyncEngineClient, args: Namespace, **kwargs) -> None:
+    async def _load_model(self, async_engine_client: AsyncEngineRPCClient, args: Namespace, **kwargs) -> None:
         """Load a model from a file
 
         Returns:
@@ -80,8 +80,14 @@ class Model:
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
             self._model = async_engine_client 
-            # model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-            # model_consumed_memory.set(round(self._model.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
+            model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
+            model_consumed_memory_value = await self._model._send_get_data_rpc_request(
+                RPCUtilityRequest.IS_TRACING_ENABLED,
+                expected_type=float,
+                error_message=-1
+                "Server"
+            )
+            model_consumed_memory.set(self._model.engine) # type: ignore
             if isinstance(self._model.tokenizer, TokenizerGroup): # type: ignore
                 self._tokenizer = self._model.tokenizer.tokenizer # type: ignore
             else:
@@ -200,45 +206,45 @@ class Model:
         self._tokenizer.truncation_side = self.original_truncation_side
         return truncated_str
 
-    def get_gpu_kv_cache_usage(self) -> float:
-        """Gets the GPU KV cache usage
+    # def get_gpu_kv_cache_usage(self) -> float:
+    #     """Gets the GPU KV cache usage
 
-        Returns:
-            The GPU KV cache usage
-        """
-        total_num_gpu_blocks = self._model.engine.cache_config.num_gpu_blocks
-        num_free_gpu_blocks = (
-            self._model.engine.scheduler.block_manager.get_num_free_gpu_blocks())
-        num_used_gpu_blocks = total_num_gpu_blocks - num_free_gpu_blocks
-        gpu_cache_usage = num_used_gpu_blocks / total_num_gpu_blocks
-        return gpu_cache_usage
+    #     Returns:
+    #         The GPU KV cache usage
+    #     """
+    #     total_num_gpu_blocks = self._model.engine.cache_config.num_gpu_blocks
+    #     num_free_gpu_blocks = (
+    #         self._model.engine.scheduler.block_manager.get_num_free_gpu_blocks())
+    #     num_used_gpu_blocks = total_num_gpu_blocks - num_free_gpu_blocks
+    #     gpu_cache_usage = num_used_gpu_blocks / total_num_gpu_blocks
+    #     return gpu_cache_usage
 
-    def get_cpu_kv_cache_usage(self) -> float:
-        """Gets the CPU KV cache usage
+    # def get_cpu_kv_cache_usage(self) -> float:
+    #     """Gets the CPU KV cache usage
 
-        Returns:
-            The CPU KV cache usage
-        """
-        total_num_cpu_blocks = self._model.engine.cache_config.num_cpu_blocks
-        if total_num_cpu_blocks > 0:
-            num_free_cpu_blocks = (
-                self._model.engine.scheduler.block_manager.get_num_free_cpu_blocks())
-            num_used_cpu_blocks = total_num_cpu_blocks - num_free_cpu_blocks
-            cpu_cache_usage = num_used_cpu_blocks / total_num_cpu_blocks
-        else:
-            cpu_cache_usage = 0.0
-        return cpu_cache_usage
+    #     Returns:
+    #         The CPU KV cache usage
+    #     """
+    #     total_num_cpu_blocks = self._model.engine.cache_config.num_cpu_blocks
+    #     if total_num_cpu_blocks > 0:
+    #         num_free_cpu_blocks = (
+    #             self._model.engine.scheduler.block_manager.get_num_free_cpu_blocks())
+    #         num_used_cpu_blocks = total_num_cpu_blocks - num_free_cpu_blocks
+    #         cpu_cache_usage = num_used_cpu_blocks / total_num_cpu_blocks
+    #     else:
+    #         cpu_cache_usage = 0.0
+    #     return cpu_cache_usage
 
-    def get_status_requests(self) -> dict:
-        """Gets the status of the different requests being processed
+    # def get_status_requests(self) -> dict:
+    #     """Gets the status of the different requests being processed
 
-        Returns:
-            A dictionary containing the number of requests in the different status (running, swapped and pending)
-        """
-        status_requests = {"requests_running": len(self._model.engine.scheduler.running),
-                            "requests_swapped": len(self._model.engine.scheduler.swapped),
-                            "requests_pending": len(self._model.engine.scheduler.waiting)}
-        return status_requests
+    #     Returns:
+    #         A dictionary containing the number of requests in the different status (running, swapped and pending)
+    #     """
+    #     status_requests = {"requests_running": len(self._model.engine.scheduler.running),
+    #                         "requests_swapped": len(self._model.engine.scheduler.swapped),
+    #                         "requests_pending": len(self._model.engine.scheduler.waiting)}
+    #     return status_requests
 
 
 def find_indices_sub_list_in_list(big_list: list, sub_list: list) -> list:

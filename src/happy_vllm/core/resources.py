@@ -28,17 +28,19 @@ import logging
 from typing import Callable
 from argparse import Namespace
 from contextlib import asynccontextmanager
-from vllm.engine.protocol import AsyncEngineClient
 
 from fastapi import FastAPI
 from ..model.model_base import Model
+
+from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
+
 
 logger = logging.getLogger(__name__)
 
 RESOURCES = {}
 RESOURCE_MODEL = "model"
 
-def get_lifespan(async_engine_client: AsyncEngineClient, args: Namespace) -> Callable:
+def get_lifespan(async_engine_client: AsyncEngineRPCClient, args: Namespace) -> Callable:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Load the ML model
