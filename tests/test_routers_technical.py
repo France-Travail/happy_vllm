@@ -16,8 +16,12 @@
 
 import os
 import shutil
+import pytest
+from httpx import AsyncClient
+
 from .conftest import TEST_MODELS_DIR
 from fastapi.testclient import TestClient
+
 
 from happy_vllm import utils
 
@@ -27,31 +31,35 @@ def teardown_module():
         if os.path.isdir(TEST_MODELS_DIR):
             shutil.rmtree(TEST_MODELS_DIR)
 
-
-def test_get_liveness(test_base_client: TestClient):
+@pytest.mark.asyncio
+async def test_get_liveness(test_base_client: AsyncClient):
     """Test the technical route /liveness"""
-    response = test_base_client.get("/tests/liveness")
+   
+    response = await test_base_client.get("/tests/liveness")
     assert response.status_code == 200
     assert response.json() == {"alive": "ok"}
 
 
-def test_get_readiness_ko(test_base_client: TestClient):
+@pytest.mark.asyncio
+async def test_get_readiness_ko(test_base_client: AsyncClient):
     """Test the technical route /readiness when the model is not loaded"""
-    response = test_base_client.get("/tests/readiness")
+    response = await test_base_client.get("/tests/readiness")
     assert response.status_code == 200
     assert response.json() == {"ready": "ko"}
 
 
-def test_get_readiness_ok(test_complete_client: TestClient):
+@pytest.mark.asyncio
+async def test_get_readiness_ok(test_complete_client: AsyncClient):
     """Test the technical route /readiness when the model is fully loaded"""
-    response = test_complete_client.get("/tests/readiness")
+    response = await test_complete_client.get("/tests/readiness")
     assert response.status_code == 200
     assert response.json() == {"ready": "ok"}
 
 
-def test_info(test_complete_client: TestClient):
+@pytest.mark.asyncio
+async def test_info(test_complete_client: AsyncClient):
     """Test the technical route /v1/info"""
-    response = test_complete_client.get("/tests/v1/info")
+    response = await test_complete_client.get("/tests/v1/info")
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["application"] == "APP_TESTS"
@@ -61,9 +69,10 @@ def test_info(test_complete_client: TestClient):
     assert response_json["max_length"] == 2048
 
 
-def test_launch_arguments(test_complete_client: TestClient):
+@pytest.mark.asyncio
+async def test_launch_arguments(test_complete_client: AsyncClient):
     """Test the technical route /v1/launch_arguments"""
-    response = test_complete_client.get("/tests/v1/launch_arguments")
+    response = await test_complete_client.get("/tests/v1/launch_arguments")
     assert response.status_code == 200
     response_json = response.json()
     assert response_json["app_name"] == "APP_TESTS"

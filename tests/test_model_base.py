@@ -44,9 +44,13 @@ def init_model(truncation_side="left"):
 
 @pytest.mark.asyncio
 async def test_is_model_loaded():
+    from happy_vllm.rpc.server import run_rpc_server
+    import vllm.entrypoints.openai.api_server as vllm_api_server
+    vllm_api_server.run_rpc_server  = run_rpc_server
+    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True)
     model = init_model()
     assert not(model.is_model_loaded())
-    await model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True))
+    await model.loading(vllm_api_server.build_async_engine_client(args), args)
     assert model.is_model_loaded()
 
 

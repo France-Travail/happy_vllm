@@ -166,7 +166,8 @@ def test_parse_generate_parameters():
         prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
 
 
-def test_generate(test_complete_client: TestClient):
+@pytest.mark.asyncio
+async def test_generate(test_complete_client: TestClient):
     """Test the route /v1/generate thanks to the test_complete_client we created in conftest.py"""
     model = init_model()
     tokenizer = model._tokenizer
@@ -181,7 +182,7 @@ def test_generate(test_complete_client: TestClient):
     max_tokens = 500
     prompt = "Hey"
     body = {"prompt": prompt, "max_tokens": max_tokens}
-    response = test_complete_client.post("/tests/v1/generate", json=body)
+    response = await test_complete_client.post("/tests/v1/generate", json=body)
     assert response.status_code == 200
     response_json = response.json()
     nb_token_prompt = len(tokenizer(prompt)['input_ids'])

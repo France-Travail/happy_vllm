@@ -40,11 +40,16 @@ We use it to :
 
 import os
 import pytest
+import pytest_asyncio
 from typing import Union
 from pathlib import Path
+from asgi_lifespan import LifespanManager
+from httpx import AsyncClient, ASGITransport
+
 from argparse import Namespace
 from fastapi.testclient import TestClient
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 # Manage the huggingface token
 class HuggingfaceSettings(BaseSettings):
@@ -66,6 +71,7 @@ os.environ["api_endpoint_prefix"] = "/tests"
 os.environ["MODEL_NAME"] = "TEST MODEL"
 os.environ["MODEL"] = "test"
 os.environ["TEST_MODELS_DIR"] = str(TEST_MODELS_DIR)
+os.environ["TEST_MODE"] = str(True)
 
 # We must import the utils module after setting the environnement variables because
 # it also imports the .core folder via the __init__ and it may impact the other tests
@@ -73,49 +79,68 @@ from happy_vllm import utils
 os.environ["tokenizer_name"] = utils.TEST_TOKENIZER_NAME
 
 
-@pytest.fixture(scope="session")
-def test_base_client() -> TestClient:
+@pytest_asyncio.fixture(scope="session")
+async def test_base_client() -> AsyncClient:
     """Basic TestClient that do not run startup and shutdown events"""
+    import vllm.entrypoints.openai.api_server as vllm_api_server
+
+    from happy_vllm.rpc.server import run_rpc_server
     from happy_vllm.application import declare_application
-    app = declare_application(Namespace(explicit_errors=False,
-                                        model_name=os.environ['MODEL_NAME'],
-                                        model=os.environ['MODEL'],
-                                        app_name=os.environ["app_name"],
-                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"],
-                                        allow_credentials=True,
-                                        allowed_origins=["*"],
-                                        allowed_methods=["*"],
-                                        allowed_headers=["*"],
-                                        root_path=None,
-                                        with_launch_arguments=True
-                                        ))
-    return TestClient(app)
+
+    vllm_api_server.run_rpc_server  = run_rpc_server
+    args = Namespace(
+        explicit_errors=False,
+        model_name=os.environ['MODEL_NAME'],
+        model=os.environ['MODEL'],
+        app_name=os.environ["app_name"],
+        api_endpoint_prefix=os.environ["api_endpoint_prefix"],
+        allow_credentials=True,
+        allowed_origins=["*"],
+        allowed_methods=["*"],
+        allowed_headers=["*"],
+        root_path=None,
+        with_launch_arguments=True
+    )
+    app = await declare_application(vllm_api_server.build_async_engine_client(args), args)
+    return AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True)
 
 
-@pytest.fixture()
-def test_complete_client(monkeypatch) -> TestClient:
+
+@pytest_asyncio.fixture()
+async def test_complete_client(monkeypatch) -> AsyncClient:
     """Complete TestClient that do run startup and shutdown events to load
     the model
     """
     
     from happy_vllm.core import resources
     from happy_vllm.model.model_base import Model
+    from happy_vllm.rpc.server import run_rpc_server
+
+    import vllm.entrypoints.openai.api_server as vllm_api_server
+
+    vllm_api_server.run_rpc_server  = run_rpc_server
 
     # Use base model for tests
     monkeypatch.setattr(resources, "Model", Model)
 
     from happy_vllm.application import declare_application
-    app = declare_application(Namespace(explicit_errors=False,
-                                        model_name=os.environ['MODEL_NAME'],
-                                        model=os.environ['MODEL'],
-                                        app_name=os.environ["app_name"],
-                                        api_endpoint_prefix=os.environ["api_endpoint_prefix"],
-                                        allow_credentials=True,
-                                        allowed_origins=["*"],
-                                        allowed_methods=["*"],
-                                        allowed_headers=["*"],
-                                        root_path=None,
-                                        with_launch_arguments=True))
-    
-    with TestClient(app) as client:
-        yield client
+
+    args = Namespace(
+        explicit_errors=False,
+        model_name=os.environ['MODEL_NAME'],
+        model=os.environ['MODEL'],
+        app_name=os.environ["app_name"],
+        api_endpoint_prefix=os.environ["api_endpoint_prefix"],
+        allow_credentials=True,
+        allowed_origins=["*"],
+        allowed_methods=["*"],
+        allowed_headers=["*"],
+        root_path=None,
+        with_launch_arguments=True
+    )
+
+    app = await declare_application(vllm_api_server.build_async_engine_client(args), args)
+    async with LifespanManager(app) as manager:
+        async with AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test", follow_redirects=True) as client:
+            print(f"RESSOURCE : {resources.RESOURCES}")
+            yield client
