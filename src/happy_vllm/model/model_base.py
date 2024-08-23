@@ -32,6 +32,7 @@ from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 from vllm.entrypoints.openai.api_server import build_async_engine_client
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
+from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
@@ -125,6 +126,7 @@ class Model:
                                                      cache_dir=os.environ["TEST_MODELS_DIR"], truncation_side=self.original_truncation_side)
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self._model = MockModel(self._tokenizer, self.app_name)
+            self.openai_serving_tokenization = MockOpenAIServingTokenization(self._tokenizer)
         logger.info(f"Model loaded")
 
     def tokenize(self, text: str) -> List[int]:
@@ -270,6 +272,22 @@ def find_indices_sub_list_in_list(big_list: list, sub_list: list) -> list:
         if big_list[index - len_sub_list + 1: index + 1] == sub_list:
             indices.append(index)
     return indices
+
+
+class MockOpenAIServingTokenization():
+
+    def __init__(self, tokenizer):
+        self.tokenizer=tokenizer
+
+    async def create_tokenize(self, request):
+        token = self.tokenizer(request.prompt, add_special_tokens=request.add_special_tokens)['input_ids']
+        return TokenizeResponse(tokens=token,
+                                count=len(token),
+                                max_model_len=1)
+
+    async def create_detokenize(self, request):
+        decode = self.tokenizer.decode(request.tokens)
+        return DetokenizeResponse(prompt=decode)
 
 
 class MockModel():
