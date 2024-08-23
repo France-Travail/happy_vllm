@@ -241,7 +241,10 @@
             "description": "Chat completion case from vllm tokenizer request, check https://github.com/vllm-project/vllm/blob/1a36287b89f337057ebeb5d1bee30567e985b444/vllm/entrypoints/openai/protocol.py#L729C1-L729C17",
             "value": {
                 "model": "my_model",
-                "prompt": "This is a text example",
+                "messages": [
+                    "This is a text example",
+                    "and another"
+                ],
                 "add_special_tokens": true,
                 "add_generation_prompt": true
             }
