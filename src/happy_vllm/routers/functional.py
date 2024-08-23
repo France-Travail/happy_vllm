@@ -251,9 +251,15 @@ async def tokenizer(request: Annotated[vllm_protocol.TokenizeRequest,
     """Tokenizes a text
 
     The request should be a JSON object with the following fields:
-    - text: The text to tokenize
-    - with_tokens_str (optional): Whether we want the tokens strings in the output
-    - vanilla (optional) : Whether we want the vanilla version of the tokenizers
+    Completions :
+    - model : ID of the model to use
+    - prompt : The text to tokenize
+    - add_special_tokens : Add a special tokens to the begin
+    Chat Completions:
+    - model : ID of the model to use
+    - messages: The texts to tokenize
+    - add_special_tokens : Add a special tokens to the begin
+    - add_generation_prompt : TODO: Useless parameters, no change True or False
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     generator = await model.openai_serving_tokenization.create_tokenize(request)
@@ -305,12 +311,11 @@ async def tokenizer(request :Annotated[
         vllm_protocol.DetokenizeRequest,
         Body(openapi_examples=request_openapi_examples["vllm_decode"])]
     ):
-    """Tokenizes a text
+    """Decodes token ids
 
     The request should be a JSON object with the following fields:
-    - text: The text to tokenize
-    - with_tokens_str (optional): Whether we want the tokens strings in the output
-    - vanilla (optional) : Whether we want the vanilla version of the tokenizers
+    - tokens: The ids of the tokens
+    - model : ID of the model to use
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     generator = await model.openai_serving_tokenization.create_detokenize(request)
