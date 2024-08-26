@@ -16,11 +16,14 @@
 import asyncio
 import uvicorn
 import argparse
+
 from vllm.entrypoints.launcher import serve_http 
+import vllm.entrypoints.openai.api_server as vllm_api_server
+
 
 from happy_vllm.utils_args import parse_args
+from happy_vllm.rpc.server import run_rpc_server
 from happy_vllm.application import declare_application
-from happy_vllm.utils import happy_vllm_build_async_engine_client
 
 
 TIMEOUT_KEEP_ALIVE = 5 # seconds
@@ -29,6 +32,13 @@ def main(**uvicorn_kwargs) -> None:
     args = parse_args()
     asyncio.run(launch_app(args, **uvicorn_kwargs))
     
+
+def happy_vllm_build_async_engine_client(args):
+    """Replace vllm.entrypoints.openai.api_server.run_rpc_server by happy_vllm.run_rpc_server
+    """
+    vllm_api_server.run_rpc_server  = run_rpc_server
+    return vllm_api_server.build_async_engine_client(args)
+
 
 async def launch_app(args, **uvicorn_kwargs):
     async with happy_vllm_build_async_engine_client(args) as async_engine_client:
