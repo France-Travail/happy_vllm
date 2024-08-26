@@ -52,8 +52,6 @@ from httpx import AsyncClient, ASGITransport
 from argparse import Namespace
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from happy_vllm.utils import happy_vllm_build_async_engine_client
-
 
 # Manage the huggingface token
 class HuggingfaceSettings(BaseSettings):
@@ -88,7 +86,7 @@ async def test_base_client() -> AsyncClient:
     """Basic AsyncClient that do not run startup and shutdown events"""
 
     from happy_vllm.application import declare_application
-    from happy_vllm.utils import happy_vllm_build_async_engine_client
+    from happy_vllm.launch import happy_vllm_build_async_engine_client
 
     args = Namespace(
         explicit_errors=False,
@@ -118,7 +116,7 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
     from happy_vllm.model.model_base import Model
     
     from happy_vllm.application import declare_application
-    from happy_vllm.utils import happy_vllm_build_async_engine_client
+    from happy_vllm.launch import happy_vllm_build_async_engine_client
 
     # Use base model for tests
     monkeypatch.setattr(resources, "Model", Model)
