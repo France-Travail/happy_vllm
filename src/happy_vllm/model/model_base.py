@@ -54,6 +54,8 @@ class Model:
         self._tokenizer = None
         self._model_conf = None
         self._model_explainer = None
+        self.openai_serving_chat = None
+        self.openai_serving_completion = None
         self.openai_serving_tokenization = None
         self._loaded = False
         self.app_name = kwargs.get('app_name', "happy_vllm")
@@ -83,14 +85,6 @@ class Model:
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
             self._model = async_engine_client 
-            # model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-            # model_consumed_memory_value = await self._model._send_get_data_rpc_request(
-            #     RPCUtilityRequest.IS_TRACING_ENABLED,
-            #     expected_type=float,
-            #     error_message=-1
-            #     "Server"
-            # )
-            # model_consumed_memory.set(model_consumed_memory_value) # type: ignore
             if isinstance(self._model.tokenizer, TokenizerGroup): # type: ignore
                 self._tokenizer = self._model.tokenizer.tokenizer # type: ignore
             else:

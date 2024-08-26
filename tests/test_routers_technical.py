@@ -20,7 +20,6 @@ import pytest
 from httpx import AsyncClient
 
 from .conftest import TEST_MODELS_DIR
-from fastapi.testclient import TestClient
 
 
 from happy_vllm import utils

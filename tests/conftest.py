@@ -23,19 +23,22 @@ https://docs.pytest.org/en/7.2.x/reference/fixtures.html#conftest-py-sharing-fix
 
 We use it to :
 - create a test model
-- create a TestClient named test_base_client which does not load the test model
-- create a TestClient named test_complete_client which does load the test model
+- create a AsyncClient named test_base_client which does not load the test model
+- create a AsyncClient named test_complete_client which does load the test model
 - set some environment variables to check if they are well set in the app settings
 
 > More details about test_base_client and test_complete_client:
 >
-> By default a TestClient does not fire events so the startup and shutdown events are never fired
+> By default a AsyncClient does not triggered lifespan so the startup and shutdown events are never fired
 > and the model is never loaded.
-> We can fire thoses events by using TestClient as a context manager so we use two TestClient in
+> We can fire thoses events by using AsyncClient as a context manager so we use two AsyncClient in
 > our tests : a test_base_client that does not load the model and test_complete_client that does
 > load the model thanks to a context manager. It allows us to test the behavior of our application
 > when a model is not loaded (which should not happen).
-
+>
+> AsyncClient need to use ASGITransport to be sure the routes are available and avoid 404 response
+> As AsyncClient don't trigger the lifespan by default in httpx, we have to use asgi_lifespan package
+> (source httpx.AsyncClient doc) to init a LifespanManager and trigger the lifespan
 """
 
 import os
@@ -47,8 +50,9 @@ from asgi_lifespan import LifespanManager
 from httpx import AsyncClient, ASGITransport
 
 from argparse import Namespace
-from fastapi.testclient import TestClient
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from happy_vllm.utils import happy_vllm_build_async_engine_client
 
 
 # Manage the huggingface token
@@ -81,13 +85,11 @@ os.environ["tokenizer_name"] = utils.TEST_TOKENIZER_NAME
 
 @pytest_asyncio.fixture(scope="session")
 async def test_base_client() -> AsyncClient:
-    """Basic TestClient that do not run startup and shutdown events"""
-    import vllm.entrypoints.openai.api_server as vllm_api_server
+    """Basic AsyncClient that do not run startup and shutdown events"""
 
-    from happy_vllm.rpc.server import run_rpc_server
     from happy_vllm.application import declare_application
+    from happy_vllm.utils import happy_vllm_build_async_engine_client
 
-    vllm_api_server.run_rpc_server  = run_rpc_server
     args = Namespace(
         explicit_errors=False,
         model_name=os.environ['MODEL_NAME'],
@@ -101,24 +103,22 @@ async def test_base_client() -> AsyncClient:
         root_path=None,
         with_launch_arguments=True
     )
-    app = await declare_application(vllm_api_server.build_async_engine_client(args), args)
+    app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True)
 
 
 
 @pytest_asyncio.fixture()
 async def test_complete_client(monkeypatch) -> AsyncClient:
-    """Complete TestClient that do run startup and shutdown events to load
+    """Complete AsyncClient that do run startup and shutdown events to load
     the model
     """
     
     from happy_vllm.core import resources
     from happy_vllm.model.model_base import Model
-    from happy_vllm.rpc.server import run_rpc_server
-
-    import vllm.entrypoints.openai.api_server as vllm_api_server
-
-    vllm_api_server.run_rpc_server  = run_rpc_server
+    
+    from happy_vllm.application import declare_application
+    from happy_vllm.utils import happy_vllm_build_async_engine_client
 
     # Use base model for tests
     monkeypatch.setattr(resources, "Model", Model)
@@ -139,7 +139,7 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
         with_launch_arguments=True
     )
 
-    app = await declare_application(vllm_api_server.build_async_engine_client(args), args)
+    app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     async with LifespanManager(app) as manager:
         async with AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test", follow_redirects=True) as client:
             print(f"RESSOURCE : {resources.RESOURCES}")

@@ -17,11 +17,10 @@ import asyncio
 import uvicorn
 import argparse
 from vllm.entrypoints.launcher import serve_http 
-import vllm.entrypoints.openai.api_server as vllm_api_server
 
 from happy_vllm.utils_args import parse_args
-from happy_vllm.rpc.server import run_rpc_server
 from happy_vllm.application import declare_application
+from happy_vllm.utils import happy_vllm_build_async_engine_client
 
 
 TIMEOUT_KEEP_ALIVE = 5 # seconds
@@ -32,8 +31,7 @@ def main(**uvicorn_kwargs) -> None:
     
 
 async def launch_app(args, **uvicorn_kwargs):
-    vllm_api_server.run_rpc_server  = run_rpc_server
-    async with vllm_api_server.build_async_engine_client(args) as async_engine_client:
+    async with happy_vllm_build_async_engine_client(args) as async_engine_client:
         app = await declare_application(async_engine_client, args=args)
         shutdown_task = await serve_http(app,
                                         host=args.host,

@@ -18,8 +18,8 @@ import os
 import shutil
 import pytest
 
+from httpx import AsyncClient
 from transformers import AutoTokenizer
-from fastapi.testclient import TestClient
 from vllm.sampling_params import SamplingParams
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
@@ -167,7 +167,7 @@ def test_parse_generate_parameters():
 
 
 @pytest.mark.asyncio
-async def test_generate(test_complete_client: TestClient):
+async def test_generate(test_complete_client: AsyncClient):
     """Test the route /v1/generate thanks to the test_complete_client we created in conftest.py"""
     model = init_model()
     tokenizer = model._tokenizer
@@ -264,7 +264,7 @@ async def test_generate(test_complete_client: TestClient):
 
 
 @pytest.mark.asyncio
-async def test_tokenizer(test_complete_client: TestClient):
+async def test_tokenizer(test_complete_client: AsyncClient):
     """Test the functional route /v1/tokenizer"""
     model = init_model()
     # Vanilla
@@ -312,7 +312,10 @@ async def test_tokenizer(test_complete_client: TestClient):
         tokens_str = [utils.proper_decode(model._tokenizer, token_id) for token_id in target_tokens_ids]
         assert response_json["tokens_str"] == tokens_str
         assert set(response_json) == {"tokens_ids", "tokens_nb", "tokens_str"}
-    
+
+
+@pytest.mark.asyncio
+async def test_tokenizer_v2(test_complete_client: AsyncClient):
     """Test the functional route /v2/tokenizer"""
     model = init_model()
     # completions
@@ -327,7 +330,7 @@ async def test_tokenizer(test_complete_client: TestClient):
         assert response_json["count"] == len(target_tokens_ids)
         assert set(response_json) == {"count", "max_model_len", "tokens"}
 
-        # Without with_tokens_str
+        # Without add_special_tokens
         body = {"model": "test", "prompt": text, "add_special_tokens": False}
         response = await test_complete_client.post("/tests/v2/tokenizer", json=body)
         assert response.status_code == 200
@@ -337,59 +340,9 @@ async def test_tokenizer(test_complete_client: TestClient):
         assert response_json["count"] == len(target_tokens_ids)
         assert set(response_json) == {"count", "max_model_len", "tokens"}
 
-    #Chat Completions
-    # for text in ["How do you do?", "I am Lliam. How are you ?", "Marvelous, it works !"]:
-    #     # With add_generation_prompt
-    #     body = {
-    #         "model": "test", 
-    #         "messages": [
-    #             {
-    #                 "role": "system",
-    #                 "content": "You are a helpful assistant."
-    #             },
-    #             {
-    #                 "role": "user",
-    #                 "content": text
-    #             }
-    #         ], 
-    #         "add_special_tokens": False, 
-    #         "add_generation_prompt": True
-    #     }
-    #     response = await test_complete_client.post("/tests/v2/tokenizer", json=body)
-    #     assert response.status_code == 200
-    #     response_json = response.json()
-    #     target_tokens_ids = list(utils.proper_tokenization(model._tokenizer, text))
-    #     # assert response_json["tokens_ids"] == target_tokens_ids
-    #     # assert response_json["tokens_nb"] == len(target_tokens_ids)
-    #     assert set(response_json) == {"count", "max_model_len", "tokens"}
-
-    #     # Without add_generation_prompt
-    #     body = {
-    #         "model": "test", 
-    #         "messages": [
-    #             {
-    #                 "role": "system",
-    #                 "content": "You are a helpful assistant."
-    #             },
-    #             {
-    #                 "role": "user",
-    #                 "content": text
-    #             }
-    #         ], 
-    #         "add_special_tokens": False, 
-    #         "add_generation_prompt": False
-    #     }
-    #     response = await test_complete_client.post("/tests/v2/tokenizer", json=body)
-    #     assert response.status_code == 200
-    #     response_json = response.json()
-    #     target_tokens_ids = list(utils.proper_tokenization(model._tokenizer, text))
-    #     # assert response_json["tokens_ids"] == target_tokens_ids
-    #     # assert response_json["tokens_nb"] == len(target_tokens_ids)
-    #     assert set(response_json) == {"count", "max_model_len", "tokens"}
-
 
 @pytest.mark.asyncio
-async def test_decode(test_complete_client: TestClient):
+async def test_decode(test_complete_client: AsyncClient):
     """Test the functional route /v1/decode"""
     model = init_model()
 
@@ -433,6 +386,9 @@ async def test_decode(test_complete_client: TestClient):
         assert response_json["tokens_str"] == [utils.proper_decode(model._tokenizer, token_id) for token_id in token_ids]
         assert set(response_json) == {"decoded_string", "tokens_str"}
 
+
+@pytest.mark.asyncio
+async def test_decode_v2(test_complete_client: AsyncClient):
     """Test the functional route /v2/decode"""
     model = init_model()
 
@@ -448,7 +404,7 @@ async def test_decode(test_complete_client: TestClient):
 
 
 @pytest.mark.asyncio
-async def test_split_text(test_complete_client: TestClient):
+async def test_split_text(test_complete_client: AsyncClient):
     """Test the route /v1/split_text thanks to the test_complete_client we created in conftest.py"""
     text = "Hey, my name is LLM. How are you ? Fine, you ? That's wonderful news : I'm also fine. But do you think it will last ?"
 
@@ -496,7 +452,7 @@ async def test_split_text(test_complete_client: TestClient):
 
 
 @pytest.mark.asyncio
-async def test_metadata_text(test_complete_client: TestClient):
+async def test_metadata_text(test_complete_client: AsyncClient):
     """Test the route /v1/metadata_text thanks to the test_complete_client we created in conftest.py"""
     text = "Hey, my name is LLM. How are you ? Fine, and you ? Great."
     model = init_model()

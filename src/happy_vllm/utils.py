@@ -19,6 +19,10 @@ from pathlib import Path
 import importlib.metadata
 from typing import List, Union
 
+import vllm.entrypoints.openai.api_server as vllm_api_server
+
+from happy_vllm.rpc.server import run_rpc_server
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,3 +85,10 @@ def proper_decode(tokenizer, token_ids: Union[int, List[int]]) -> str:
     extra_token_id = proper_tokenization(tokenizer, 'c')[0]
     token_ids = [extra_token_id] + token_ids
     return tokenizer.decode(token_ids)[1:]
+
+
+def happy_vllm_build_async_engine_client(args):
+    """Replace vllm.entrypoints.openai.api_server.run_rpc_server by happy_vllm.run_rpc_server to use happy_vllm.CustomAsyncEngineRPCServer
+    """
+    vllm_api_server.run_rpc_server  = run_rpc_server
+    return vllm_api_server.build_async_engine_client(args)
