@@ -25,9 +25,10 @@ import logging
 from pathlib import Path
 from argparse import Namespace
 from transformers import AutoTokenizer
-from typing import Any, Tuple, Union, List
+from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.engine.protocol import AsyncEngineClient
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 from vllm.entrypoints.openai.api_server import build_async_engine_client
@@ -53,6 +54,7 @@ class Model:
         self._tokenizer = None
         self._model_conf = None
         self._model_explainer = None
+        self.openai_serving_tokenization = None
         self._loaded = False
         self.app_name = kwargs.get('app_name', "happy_vllm")
 
@@ -101,19 +103,19 @@ class Model:
                 request_logger = None
             else:
                 request_logger = RequestLogger(max_log_len=args.max_log_len)
-            self.openai_serving_chat = OpenAIServingChat(self._model, model_config, [args.model_name],
+            self.openai_serving_chat = OpenAIServingChat(cast(AsyncEngineClient,self._model), model_config, [args.model_name],
                                                         args.response_role,
                                                         lora_modules=args.lora_modules,
                                                         prompt_adapters=args.prompt_adapters,
                                                         request_logger=request_logger,
                                                         chat_template=args.chat_template,
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids)
-            self.openai_serving_completion = OpenAIServingCompletion(self._model, model_config, [args.model_name], 
+            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncEngineClient,self._model), model_config, [args.model_name], 
                                                                     lora_modules=args.lora_modules,
                                                                     prompt_adapters=args.prompt_adapters,
                                                                     request_logger=request_logger,
                                                                     return_tokens_as_token_ids=args.return_tokens_as_token_ids)
-            self.openai_serving_tokenization  = OpenAIServingTokenization(self._model, model_config, [args.model_name],
+            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncEngineClient,self._model), model_config, [args.model_name],
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
                                                                         chat_template=args.chat_template)
@@ -212,46 +214,6 @@ class Model:
         truncated_str = self._tokenizer.decode(truncated)
         self._tokenizer.truncation_side = self.original_truncation_side
         return truncated_str
-
-    # def get_gpu_kv_cache_usage(self) -> float:
-    #     """Gets the GPU KV cache usage
-
-    #     Returns:
-    #         The GPU KV cache usage
-    #     """
-    #     total_num_gpu_blocks = self._model.engine.cache_config.num_gpu_blocks
-    #     num_free_gpu_blocks = (
-    #         self._model.engine.scheduler.block_manager.get_num_free_gpu_blocks())
-    #     num_used_gpu_blocks = total_num_gpu_blocks - num_free_gpu_blocks
-    #     gpu_cache_usage = num_used_gpu_blocks / total_num_gpu_blocks
-    #     return gpu_cache_usage
-
-    # def get_cpu_kv_cache_usage(self) -> float:
-    #     """Gets the CPU KV cache usage
-
-    #     Returns:
-    #         The CPU KV cache usage
-    #     """
-    #     total_num_cpu_blocks = self._model.engine.cache_config.num_cpu_blocks
-    #     if total_num_cpu_blocks > 0:
-    #         num_free_cpu_blocks = (
-    #             self._model.engine.scheduler.block_manager.get_num_free_cpu_blocks())
-    #         num_used_cpu_blocks = total_num_cpu_blocks - num_free_cpu_blocks
-    #         cpu_cache_usage = num_used_cpu_blocks / total_num_cpu_blocks
-    #     else:
-    #         cpu_cache_usage = 0.0
-    #     return cpu_cache_usage
-
-    # def get_status_requests(self) -> dict:
-    #     """Gets the status of the different requests being processed
-
-    #     Returns:
-    #         A dictionary containing the number of requests in the different status (running, swapped and pending)
-    #     """
-    #     status_requests = {"requests_running": len(self._model.engine.scheduler.running),
-    #                         "requests_swapped": len(self._model.engine.scheduler.swapped),
-    #                         "requests_pending": len(self._model.engine.scheduler.waiting)}
-    #     return status_requests
 
 
 def find_indices_sub_list_in_list(big_list: list, sub_list: list) -> list:

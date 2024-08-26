@@ -245,7 +245,7 @@ async def tokenizer(request: Request,
 
 
 @router.post("/v2/tokenizer", response_model=vllm_protocol.TokenizeResponse)
-async def tokenizer(request: Annotated[vllm_protocol.TokenizeRequest,
+async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
         Body(openapi_examples=request_openapi_examples["vllm_tokenizer"])]
     ):
     """Tokenizes a text
@@ -307,7 +307,7 @@ async def decode(request: Request,
 
 
 @router.post("/v2/decode", response_model=vllm_protocol.DetokenizeResponse)
-async def tokenizer(request :Annotated[
+async def decode_v2(request :Annotated[
         vllm_protocol.DetokenizeRequest,
         Body(openapi_examples=request_openapi_examples["vllm_decode"])]
     ):
