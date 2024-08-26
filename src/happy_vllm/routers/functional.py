@@ -267,7 +267,8 @@ async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
     else:
-        assert isinstance(generator, vllm_protocol.TokenizeResponse)
+        if not isinstance(generator, vllm_protocol.TokenizeResponse):
+            raise TypeError("Expected generator to be an instance of vllm_protocol.TokenizeResponse")
         return JSONResponse(content=generator.model_dump())
     
 
@@ -323,7 +324,8 @@ async def decode_v2(request :Annotated[
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
     else:
-        assert isinstance(generator, vllm_protocol.DetokenizeResponse)
+        if not isinstance(generator, vllm_protocol.DetokenizeResponse):
+            raise TypeError("Expected generator to be an instance of vllm_protocol.DetokenizeResponse")
         return JSONResponse(content=generator.model_dump())
 
 
