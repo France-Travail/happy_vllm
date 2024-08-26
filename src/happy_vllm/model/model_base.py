@@ -29,15 +29,15 @@ from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.protocol import AsyncEngineClient
+from vllm.entrypoints.openai.rpc import RPCUtilityRequest
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
-from vllm.entrypoints.openai.api_server import build_async_engine_client
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
-from vllm.entrypoints.openai.rpc import RPCUtilityRequest
+
 from happy_vllm import utils
 
 
