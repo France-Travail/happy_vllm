@@ -88,7 +88,7 @@ def proper_decode(tokenizer, token_ids: Union[int, List[int]]) -> str:
 
 
 def happy_vllm_build_async_engine_client(args):
-    """Replace vllm.entrypoints.openai.api_server.run_rpc_server by happy_vllm.run_rpc_server to use happy_vllm.CustomAsyncEngineRPCServer
+    """Replace vllm.entrypoints.openai.api_server.run_rpc_server by happy_vllm.run_rpc_server
     """
     vllm_api_server.run_rpc_server  = run_rpc_server
     return vllm_api_server.build_async_engine_client(args)
