@@ -80,14 +80,15 @@ os.environ["TEST_MODE"] = str(True)
 from happy_vllm import utils
 os.environ["tokenizer_name"] = utils.TEST_TOKENIZER_NAME
 
+from happy_vllm.core import resources
+from happy_vllm.model.model_base import Model
+from happy_vllm.application import declare_application
+from happy_vllm.launch import happy_vllm_build_async_engine_client
+
 
 @pytest_asyncio.fixture(scope="session")
 async def test_base_client() -> AsyncClient:
     """Basic AsyncClient that do not run startup and shutdown events"""
-
-    from happy_vllm.application import declare_application
-    from happy_vllm.launch import happy_vllm_build_async_engine_client
-
     args = Namespace(
         explicit_errors=False,
         model_name=os.environ['MODEL_NAME'],
@@ -105,24 +106,13 @@ async def test_base_client() -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True)
 
 
-
 @pytest_asyncio.fixture()
 async def test_complete_client(monkeypatch) -> AsyncClient:
     """Complete AsyncClient that do run startup and shutdown events to load
     the model
     """
-    
-    from happy_vllm.core import resources
-    from happy_vllm.model.model_base import Model
-    
-    from happy_vllm.application import declare_application
-    from happy_vllm.launch import happy_vllm_build_async_engine_client
-
     # Use base model for tests
     monkeypatch.setattr(resources, "Model", Model)
-
-    from happy_vllm.application import declare_application
-
     args = Namespace(
         explicit_errors=False,
         model_name=os.environ['MODEL_NAME'],
@@ -136,7 +126,6 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
         root_path=None,
         with_launch_arguments=True
     )
-
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     async with LifespanManager(app) as manager:
         async with AsyncClient(transport=ASGITransport(app=manager.app), base_url="http://test", follow_redirects=True) as client:
