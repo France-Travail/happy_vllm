@@ -28,7 +28,6 @@ from typing import Annotated, AsyncGenerator, Tuple, List, Union
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
-
 from happy_vllm import utils
 from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
 from happy_vllm.logits_processors.utils_parse_logits_processors import logits_processors_parser, detect_logits_processors_incompatibilities
@@ -245,6 +244,34 @@ async def tokenizer(request: Request,
     return JSONResponse(ret)
 
 
+@router.post("/v2/tokenizer", response_model=vllm_protocol.TokenizeResponse)
+async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
+        Body(openapi_examples=request_openapi_examples["vllm_tokenizer"])]
+    ):
+    """Tokenizes a text
+
+    The request should be a JSON object with the following fields:
+    Completions :
+    - model : ID of the model to use
+    - prompt : The text to tokenize
+    - add_special_tokens : Add a special tokens to the begin
+    Chat Completions:
+    - model : ID of the model to use
+    - messages: The texts to tokenize
+    - add_special_tokens : Add a special tokens to the begin
+    - add_generation_prompt : TODO: Useless parameters, no change True or False
+    """
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    generator = await model.openai_serving_tokenization.create_tokenize(request)
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+    else:
+        if not isinstance(generator, vllm_protocol.TokenizeResponse):
+            raise TypeError("Expected generator to be an instance of vllm_protocol.TokenizeResponse")
+        return JSONResponse(content=generator.model_dump())
+    
+
 @router.post("/v1/decode", response_model=functional_schema.ResponseDecode)
 async def decode(request: Request,
     request_type: Annotated[
@@ -278,6 +305,28 @@ async def decode(request: Request,
     if with_tokens_str:
         ret[ "tokens_str"] = tokens_str
     return JSONResponse(ret)
+
+
+@router.post("/v2/decode", response_model=vllm_protocol.DetokenizeResponse)
+async def decode_v2(request :Annotated[
+        vllm_protocol.DetokenizeRequest,
+        Body(openapi_examples=request_openapi_examples["vllm_decode"])]
+    ):
+    """Decodes token ids
+
+    The request should be a JSON object with the following fields:
+    - tokens: The ids of the tokens
+    - model : ID of the model to use
+    """
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    generator = await model.openai_serving_tokenization.create_detokenize(request)
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+    else:
+        if not isinstance(generator, vllm_protocol.DetokenizeResponse):
+            raise TypeError("Expected generator to be an instance of vllm_protocol.DetokenizeResponse")
+        return JSONResponse(content=generator.model_dump())
 
 
 @router.post("/v1/split_text", response_model=functional_schema.ResponseSplitText)
