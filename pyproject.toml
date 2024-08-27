@@ -13,10 +13,10 @@ license = {file="LICENSE"}
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "vllm>=0.5.4,<1.0",
+    "vllm>=0.5.5,<1.0",
     "fastapi>=0.112.0,<1.0",
     "pydantic_settings>=2.4.0,<3.0",
-    "uvicorn[standard]>=0.30.5,<1.0",
+    "uvicorn[standard]>=0.30.6,<1.0",
     "prometheus_client>=0.20.0,<1.0",
     "numpy>=1.26.4,<2.0",
     "jsonschema>=4.23.0,<5.0"
