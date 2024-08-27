@@ -2,10 +2,96 @@
 
 ## Tokenizer endpoints
 
-The tokenizer endpoints allow to use the tokenizer underlying the model. These endpoints are [`/v1/tokenizer`](#v1tokenizer-post) and [`/v1/decode`](#v1decode-post) and you can find more details on each below.
+The tokenizer endpoints allow to use the tokenizer underlying the model. These endpoints are [`/v2/tokenizer`](#v2tokenizer-post) and [`/v2/decode`](#v2decode-post) and you can find more details on each below.
 
+**[!IMPORTANT]** These endpoints [`/v1/tokenizer`](#v1tokenizer-post) and [`/v1/decode`](#v1decode-post) are deprecated
+
+### /v2/tokenizer (POST)
+Tokenizes the given text. The format of the input is as follows according to the method:
+
+#### Completions
+
+```
+{
+  "model": "my_model",
+  "prompt": "This is a text example",
+  "add_special_tokens": true
+}
+```
+
+  - `model`: ID of the model to use
+  - `prompt` : The text to tokenize
+  - `add_special_tokens` : Add a special tokens to the begin (optional, default value : `true`)
+
+ #### Chat/Completions
+
+```
+{
+  "model": "my_model",
+  "messages": [
+    {
+      "role": "system",
+      "content": "This is an example"
+    },
+    {
+      "role": "user",
+      "content": "This is an example"
+    }
+  ],
+  "add_special_tokens": true,
+  "add_generation_prompt": true
+}
+```
+
+ - `model` : ID of the model to use
+ - `messages` : The texts to tokenize
+ - `add_special_tokens` : Add a special tokens to the begin (optional, default value : `false`)
+ - `add_generation_prompt` : Add generation prompt's model in decode response (optional, default value : `true`)
+
+The format of the output is as follows :
+
+```
+{
+  "count": [
+    23
+  ],
+  "max_model_len": 8192,
+  "tokens": [128000, 2028, 374, 264, 1495, 318]
+}
+```
+
+ - `count`: The number of token in the input
+ - `max_model_len`: Max model length in config
+ - `tokens`: The list of token ids given by the tokenizer (give one extra token only if `add_special_tokens` was set to `true` in the request)
+
+
+### /v2/decode (POST)
+
+Decodes the given token ids. The format of the input is as follows :
+
+```
+{
+  "tokens": [128000, 2028, 374, 264, 1495, 318],
+  "model": "my_model"
+}
+```
+
+ - `tokens`: The ids of the tokens we want to decode
+ - `model`: ID of the model to use
+
+The format of the output is as follows:
+
+```
+{
+  "prompt": "<s> Hey, how are you ?"
+}
+```
+
+ - `prompt`: The decoded string corresponding to the token ids
+
+**[!IMPORTANT] Deprecated**
 ### /v1/tokenizer (POST)
-
+**[!IMPORTANT] Deprecated**
 Tokenizes the given text. The format of the input is as follows :
 
 ```
@@ -51,6 +137,7 @@ The format of the output is as follows :
  - `tokens_str`: The string representation of each token (given only if `with_tokens_str` was set to `true` in the request)
 
 ### /v1/decode (POST)
+**[!IMPORTANT] Deprecated**
 
 Decodes the given token ids. The format of the input is as follows :
 
