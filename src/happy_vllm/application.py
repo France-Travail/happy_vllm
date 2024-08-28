@@ -21,6 +21,7 @@ from .routers import main_routeur
 from .core.resources import get_lifespan
 from prometheus_client import make_asgi_app
 from fastapi.middleware.cors import CORSMiddleware
+from vllm.entrypoints.openai.api_server import mount_metrics
 from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 
 from happy_vllm import utils
@@ -41,8 +42,7 @@ async def declare_application(async_engine_client: AsyncEngineRPCClient, args: N
     )
 
     # Add prometheus asgi middleware to route /metrics requests
-    metrics_app = make_asgi_app()
-    app.mount("/metrics", metrics_app)
+    mount_metrics(app)
 
     # CORS middleware that allows all origins to avoid CORS problems
     # see https://fastapi.tiangolo.com/tutorial/cors/#use-corsmiddleware
