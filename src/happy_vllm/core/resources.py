@@ -50,6 +50,9 @@ def get_lifespan(async_engine_client: AsyncEngineRPCClient, args: Namespace) -> 
 
         RESOURCES[RESOURCE_MODEL] = model
 
+        # Force log once to have informations in /metrics before requests
+        await model._model.do_log_stats()
+
         yield
 
         # Clean up the ML models and release the resources

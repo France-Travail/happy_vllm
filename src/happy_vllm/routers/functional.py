@@ -251,15 +251,17 @@ async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
     """Tokenizes a text
 
     The request should be a JSON object with the following fields:
+
     Completions :
     - model : ID of the model to use
     - prompt : The text to tokenize
-    - add_special_tokens : Add a special tokens to the begin
+    - add_special_tokens : Add a special tokens to the begin (optional, default value : `true`)
+    
     Chat Completions:
     - model : ID of the model to use
     - messages: The texts to tokenize
-    - add_special_tokens : Add a special tokens to the begin
-    - add_generation_prompt : TODO: Useless parameters, no change True or False
+    - add_special_tokens : Add a special tokens to the begin (optional, default value : `false`)
+    - add_generation_prompt : Add generation prompt's model in decode response (optional, default value : `true`)
     """
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     generator = await model.openai_serving_tokenization.create_tokenize(request)
