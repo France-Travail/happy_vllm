@@ -18,7 +18,7 @@ dependencies = [
     "pydantic_settings>=2.4.0,<3.0",
     "uvicorn[standard]>=0.30.6,<1.0",
     "prometheus_client>=0.20.0,<1.0",
-    "numpy>=1.26.4,<2.0",
+    "numpy>=1.26.4,<3.0",
     "jsonschema>=4.23.0,<5.0"
 ]
 classifiers = [
