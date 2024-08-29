@@ -4,7 +4,7 @@
 
 The tokenizer endpoints allow to use the tokenizer underlying the model. These endpoints are [`/v2/tokenizer`](#v2tokenizer-post) and [`/v2/decode`](#v2decode-post) and you can find more details on each below.
 
-**[!IMPORTANT]** These endpoints [`/v1/tokenizer`](#v1tokenizer-post) and [`/v1/decode`](#v1decode-post) are deprecated
+:warning: **Deprecated** These endpoints [`/v1/tokenizer`](#v1tokenizer-post) and [`/v1/decode`](#v1decode-post) are deprecated
 
 ### /v2/tokenizer (POST)
 Tokenizes the given text. The format of the input is as follows according to the method:
@@ -23,7 +23,7 @@ Tokenizes the given text. The format of the input is as follows according to the
   - `prompt` : The text to tokenize
   - `add_special_tokens` : Add a special tokens to the begin (optional, default value : `true`)
 
- #### Chat/Completions
+#### Chat/Completions
 
 ```
 {
@@ -89,9 +89,9 @@ The format of the output is as follows:
 
  - `prompt`: The decoded string corresponding to the token ids
 
-**[!IMPORTANT] Deprecated**
-### /v1/tokenizer (POST)
-**[!IMPORTANT] Deprecated**
+
+### /v1/tokenizer (POST) :warning: **Deprecated**
+
 Tokenizes the given text. The format of the input is as follows :
 
 ```
@@ -136,8 +136,7 @@ The format of the output is as follows :
  - `tokens_nb`: The number of tokens in the input
  - `tokens_str`: The string representation of each token (given only if `with_tokens_str` was set to `true` in the request)
 
-### /v1/decode (POST)
-**[!IMPORTANT] Deprecated**
+### /v1/decode (POST) :warning: **Deprecated**
 
 Decodes the given token ids. The format of the input is as follows :
 
