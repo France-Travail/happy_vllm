@@ -44,8 +44,7 @@ DEPRECATED : These two routes take a prompt and completes it (more details [here
 
 ## Tokenizer endpoints
 
-### /v1/tokenizer (POST)
-**[!IMPORTANT] Deprecated**
+### /v1/tokenizer (POST) :warning: **Deprecated**
 
 Used to tokenizer a text (more details [here](tokenizer.md))
 
@@ -53,8 +52,7 @@ Used to tokenizer a text (more details [here](tokenizer.md))
 
 Used to tokenizer a text (more details [here](tokenizer.md))
 
-### /v1/decode (POST)
-**[!IMPORTANT] Deprecated**
+### /v1/decode (POST) :warning: **Deprecated**
 
 Used to decode a list of token ids (more details [here](tokenizer.md))
 
