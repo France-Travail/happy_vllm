@@ -23,6 +23,8 @@ from transformers import AutoTokenizer
 from happy_vllm import utils
 from happy_vllm.model import model_base
 from happy_vllm.model.model_base import Model
+from happy_vllm.launch import happy_vllm_build_async_engine_client
+
 
 from .conftest import TEST_MODELS_DIR
 
@@ -44,9 +46,10 @@ def init_model(truncation_side="left"):
 
 @pytest.mark.asyncio
 async def test_is_model_loaded():
+    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True)
     model = init_model()
     assert not(model.is_model_loaded())
-    await model.loading(Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True))
+    await model.loading(happy_vllm_build_async_engine_client(args), args)
     assert model.is_model_loaded()
 
 

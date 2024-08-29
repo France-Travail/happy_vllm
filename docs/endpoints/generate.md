@@ -6,6 +6,16 @@ There are four endpoints used to generate content. The first two are direct copi
 
 For these two endpoints (`/v1/completions` and `/v1/chat/completions`) we refer you to the [vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html). Some examples on how to use them are available in the swagger (whose adress is `127.0.0.1:5000/docs` by default)
 
+## /v1/abort_request (POST)
+
+By sending the `request_id`, you will abort the currently running request. The format of the input is as follows :
+
+```
+{
+  "request_id": "The id of the request you want to abort"
+}
+```
+
 ## Deprecated generating endpoints
 
 They have the same contract, the only difference is in the response.

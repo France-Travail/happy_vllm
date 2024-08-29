@@ -17,8 +17,9 @@
 import sys
 import ssl
 import json
+import torch
 
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union, List, Mapping
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from argparse import Namespace, BooleanOptionalAction
 
@@ -52,6 +53,8 @@ DEFAULT_RESPONSE_ROLE = "assistant"
 DEFAULT_WITH_LAUNCH_ARGUMENTS = False
 DEFAULT_MAX_LOG_LEN = None
 DEFAULT_PROMPT_ADAPTERS = None
+DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
+DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 
 
 class ApplicationSettings(BaseSettings):
@@ -86,6 +89,9 @@ class ApplicationSettings(BaseSettings):
     with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
     max_log_len: Optional[int] = DEFAULT_MAX_LOG_LEN
     prompt_adapters: Optional[str] = DEFAULT_PROMPT_ADAPTERS
+    return_tokens_as_token_ids: bool = DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS
+    disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
+
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -106,6 +112,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
     class ModelSettings(BaseSettings):
         model: str = default_args.model
         model_name: str = default_args.model_name
+        served_model_name: Optional[Union[str, List[str]]] = None
         tokenizer: Optional[str] = default_args.tokenizer
         skip_tokenizer_init: bool = False
         tokenizer_mode: str = default_args.tokenizer_mode
@@ -125,8 +132,8 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         block_size: int = default_args.block_size
         enable_prefix_caching: bool = False
         disable_sliding_window: bool = False
-        swap_space: int = default_args.swap_space # GiB
-        cpu_offload_gb: int = default_args.cpu_offload_gb  # GiB
+        swap_space: float = default_args.swap_space # GiB
+        cpu_offload_gb: float = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
         max_num_seqs: int = default_args.max_num_seqs
@@ -137,7 +144,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         rope_theta: Optional[float] = None
         tokenizer_revision: Optional[str] = default_args.tokenizer_revision
         quantization: Optional[str] = default_args.quantization
-        enforce_eager: bool = False
+        enforce_eager: Optional[bool] = default_args.enforce_eager
         max_context_len_to_capture: Optional[int] = default_args.max_context_len_to_capture
         max_seq_len_to_capture: int = default_args.max_seq_len_to_capture
         disable_custom_all_reduce: bool = False
@@ -150,9 +157,10 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         fully_sharded_loras: bool = False
         lora_extra_vocab_size: int = default_args.lora_extra_vocab_size
         long_lora_scaling_factors: Optional[Tuple[float]] = default_args.long_lora_scaling_factors
-        lora_dtype: str = default_args.lora_dtype
+        lora_dtype: Optional[Union[str, torch.dtype]] = default_args.lora_dtype
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
         device: str = default_args.device
+        num_scheduler_steps: int = default_args.num_scheduler_steps
         ray_workers_use_nsight: bool = False
         num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
         num_lookahead_slots: int = default_args.num_lookahead_slots
@@ -166,11 +174,13 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
+        limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
         # Speculative decoding configuration.
         speculative_model: Optional[str] = default_args.speculative_model
+        speculative_model_quantization: Optional[str] = default_args.speculative_model_quantization
         speculative_draft_tensor_parallel_size: Optional[int] = default_args.speculative_draft_tensor_parallel_size
         num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
         speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
@@ -184,6 +194,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
 
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
+        collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
 
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
@@ -305,6 +316,20 @@ def get_parser() -> FlexibleArgumentParser:
                 action=PromptAdapterParserAction,
                 help="Prompt adapter configurations in the format name=path. "
                 "Multiple adapters can be specified.")
+    parser.add_argument(
+        "--return-tokens-as-token-ids",
+        default=application_settings.return_tokens_as_token_ids,
+        action=BooleanOptionalAction,
+        help="When --max-logprobs is specified, represents single tokens as "
+        "strings of the form 'token_id:{token_id}' so that tokens that "
+        "are not JSON-encodable can be identified.")
+    parser.add_argument(
+        "--disable-frontend-multiprocessing",
+        default=application_settings.disable_frontend_multiprocessing,
+        action=BooleanOptionalAction,
+        help="If specified, will run the OpenAI frontend server in the same "
+        "process as the model serving engine.")
+
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
 

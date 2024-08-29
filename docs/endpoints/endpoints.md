@@ -32,7 +32,11 @@ Gives all the arguments used when launching the application. `--with-launch-argu
 
 ### /v1/completions and /v1/chat/completions (POST)
 
-These two endpoints mimick the one of vLLM. They follow the Open AI contract and you can find more details in [the vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html)
+These two endpoints mimick the ones of vLLM. They follow the Open AI contract and you can find more details in [the vLLM documentation](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html)
+
+### /v1/abort_request (POST)
+
+Aborts a running request 
 
 ### DEPRECATED /v1/generate and /v1/generate_stream (POST)
 
@@ -40,11 +44,19 @@ DEPRECATED : These two routes take a prompt and completes it (more details [here
 
 ## Tokenizer endpoints
 
-### /v1/tokenizer (POST)
+### /v1/tokenizer (POST) :warning: **Deprecated**
 
 Used to tokenizer a text (more details [here](tokenizer.md))
 
-### /v1/decode (POST)
+### /v2/tokenizer (POST)
+
+Used to tokenizer a text (more details [here](tokenizer.md))
+
+### /v1/decode (POST) :warning: **Deprecated**
+
+Used to decode a list of token ids (more details [here](tokenizer.md))
+
+### /v2/decode (POST)
 
 Used to decode a list of token ids (more details [here](tokenizer.md))
 

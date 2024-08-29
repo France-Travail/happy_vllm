@@ -17,9 +17,9 @@
 import os
 import json
 from vllm.utils import random_uuid
-from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
 from starlette.requests import Request
+from fastapi import APIRouter, Body, Depends
 from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
@@ -28,14 +28,13 @@ from typing import Annotated, AsyncGenerator, Tuple, List, Union
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
+
 from happy_vllm import utils
+from happy_vllm.model.model_base import Model
+from happy_vllm.core.resources import RESOURCE_MODEL, RESOURCES
+from routers.schemas import functional as functional_schema
 from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
 from happy_vllm.logits_processors.utils_parse_logits_processors import logits_processors_parser, detect_logits_processors_incompatibilities
-
-from ..model.model_base import Model
-from ..core.resources import RESOURCE_MODEL, RESOURCES
-from happy_vllm.routers.schemas import functional as functional_schema
-
 
 
 # Load the response examples
@@ -107,7 +106,6 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
         prompt_in_response = request_dict.pop('prompt_in_response')
     else:
         prompt_in_response = False
-    multi_modal_data = request_dict
     detect_logits_processors_incompatibilities(request_dict)
     logits_processors = parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
     sampling_params = SamplingParams(**request_dict)
@@ -244,36 +242,6 @@ async def tokenizer(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/v2/tokenizer", response_model=vllm_protocol.TokenizeResponse)
-async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
-        Body(openapi_examples=request_openapi_examples["vllm_tokenizer"])]
-    ):
-    """Tokenizes a text
-
-    The request should be a JSON object with the following fields:
-
-    Completions :
-    - model : ID of the model to use
-    - prompt : The text to tokenize
-    - add_special_tokens : Add a special tokens to the begin (optional, default value : `true`)
-    
-    Chat Completions:
-    - model : ID of the model to use
-    - messages: The texts to tokenize
-    - add_special_tokens : Add a special tokens to the begin (optional, default value : `false`)
-    - add_generation_prompt : Add generation prompt's model in decode response (optional, default value : `true`)
-    """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
-    generator = await model.openai_serving_tokenization.create_tokenize(request)
-    if isinstance(generator, vllm_protocol.ErrorResponse):
-        return JSONResponse(content=generator.model_dump(),
-                            status_code=generator.code)
-    else:
-        if not isinstance(generator, vllm_protocol.TokenizeResponse):
-            raise TypeError("Expected generator to be an instance of vllm_protocol.TokenizeResponse")
-        return JSONResponse(content=generator.model_dump())
-    
-
 @router.post("/v1/decode", response_model=functional_schema.ResponseDecode)
 async def decode(request: Request,
     request_type: Annotated[
@@ -307,28 +275,6 @@ async def decode(request: Request,
     if with_tokens_str:
         ret[ "tokens_str"] = tokens_str
     return JSONResponse(ret)
-
-
-@router.post("/v2/decode", response_model=vllm_protocol.DetokenizeResponse)
-async def decode_v2(request :Annotated[
-        vllm_protocol.DetokenizeRequest,
-        Body(openapi_examples=request_openapi_examples["vllm_decode"])]
-    ):
-    """Decodes token ids
-
-    The request should be a JSON object with the following fields:
-    - tokens: The ids of the tokens
-    - model : ID of the model to use
-    """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
-    generator = await model.openai_serving_tokenization.create_detokenize(request)
-    if isinstance(generator, vllm_protocol.ErrorResponse):
-        return JSONResponse(content=generator.model_dump(),
-                            status_code=generator.code)
-    else:
-        if not isinstance(generator, vllm_protocol.DetokenizeResponse):
-            raise TypeError("Expected generator to be an instance of vllm_protocol.DetokenizeResponse")
-        return JSONResponse(content=generator.model_dump())
 
 
 @router.post("/v1/split_text", response_model=functional_schema.ResponseSplitText)
@@ -396,6 +342,26 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
         return JSONResponse(content=generator.model_dump()) # type: ignore
 
 
+@router.post("/v1/chat/completions_tools", response_model=functional_schema.HappyvllmChatCompletionResponse)
+async def create_chat_completion_tools(request: Annotated[vllm_protocol.ChatCompletionRequest, Depends(functional_schema.update_chat_completion_request)],
+                                 raw_request: Request):
+    """Route to use if you need to use function calling without add function calling information by yourself in body request
+    Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
+    This route use FastApi Depend to update the request before call the route's function to add automtically tools and tool_choice attribute in the request's body
+    """
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    generator = await model.openai_serving_chat.create_chat_completion(
+        request, raw_request)
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+    if request.stream:
+        return StreamingResponse(content=generator, # type: ignore
+                                 media_type="text/event-stream")
+    else:
+        return JSONResponse(content=generator.model_dump()) # type: ignore
+
+
 @router.post("/v1/completions", response_model=functional_schema.HappyvllmCompletionResponse)
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
@@ -412,9 +378,3 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
                                  media_type="text/event-stream")
     else:
         return JSONResponse(content=generator.model_dump())
-
-
-@router.post("/v1/abort_request")
-async def abort_request(request: functional_schema.RequestAbortRequest):
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
-    model._model.engine.abort_request(request.request_id)

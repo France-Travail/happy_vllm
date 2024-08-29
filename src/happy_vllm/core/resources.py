@@ -32,20 +32,27 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from ..model.model_base import Model
 
+from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
+
+
 logger = logging.getLogger(__name__)
 
 RESOURCES = {}
 RESOURCE_MODEL = "model"
 
-def get_lifespan(args: Namespace) -> Callable:
+def get_lifespan(async_engine_client: AsyncEngineRPCClient, args: Namespace) -> Callable:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Load the ML model
         model = Model(app_name=args.app_name)
-        await model.loading(args=args)
+        await model.loading(async_engine_client, args=args)
         logger.info("Model loaded")
 
         RESOURCES[RESOURCE_MODEL] = model
+
+        # Force log once to have informations in /metrics before requests
+        await model._model.do_log_stats()
+
         yield
 
         # Clean up the ML models and release the resources

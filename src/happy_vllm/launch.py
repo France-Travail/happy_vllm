@@ -13,28 +13,48 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import asyncio
 import uvicorn
 import argparse
-from vllm.engine.arg_utils import AsyncEngineArgs
+
+from vllm.entrypoints.launcher import serve_http 
+import vllm.entrypoints.openai.api_server as vllm_api_server
+
 
 from happy_vllm.utils_args import parse_args
+from happy_vllm.rpc.server import run_rpc_server
 from happy_vllm.application import declare_application
 
 
+TIMEOUT_KEEP_ALIVE = 5 # seconds
 
-def main() -> None:
+def main(**uvicorn_kwargs) -> None:
     args = parse_args()
+    asyncio.run(launch_app(args, **uvicorn_kwargs))
+    
 
-    app = declare_application(args=args)
-    uvicorn.run(app,
-                host=args.host,
-                port=args.port,
-                log_level=args.uvicorn_log_level,
-                ssl_keyfile=args.ssl_keyfile,
-                ssl_certfile=args.ssl_certfile,
-                ssl_ca_certs=args.ssl_ca_certs,
-                ssl_cert_reqs=args.ssl_cert_reqs)
+def happy_vllm_build_async_engine_client(args):
+    """Replace vllm.entrypoints.openai.api_server.run_rpc_server by happy_vllm.run_rpc_server
+    """
+    vllm_api_server.run_rpc_server  = run_rpc_server
+    return vllm_api_server.build_async_engine_client(args)
+
+
+async def launch_app(args, **uvicorn_kwargs):
+    async with happy_vllm_build_async_engine_client(args) as async_engine_client:
+        app = await declare_application(async_engine_client, args=args)
+        shutdown_task = await serve_http(app,
+                                        engine=async_engine_client,
+                                        host=args.host,
+                                        port=args.port,
+                                        log_level=args.uvicorn_log_level,
+                                        timeout_keep_alive=TIMEOUT_KEEP_ALIVE,
+                                        ssl_keyfile=args.ssl_keyfile,
+                                        ssl_certfile=args.ssl_certfile,
+                                        ssl_ca_certs=args.ssl_ca_certs,
+                                        ssl_cert_reqs=args.ssl_cert_reqs,
+                                        **uvicorn_kwargs)
+    await shutdown_task
 
 if __name__ == "__main__":
     main()

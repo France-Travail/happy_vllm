@@ -25,16 +25,21 @@ import logging
 from pathlib import Path
 from argparse import Namespace
 from transformers import AutoTokenizer
-from typing import Any, Tuple, Union, List
+from typing import Any, Tuple, Union, List, cast
+from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.engine.protocol import AsyncEngineClient
+from vllm.entrypoints.openai.rpc import RPCUtilityRequest
+from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
+from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
+from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
-from vllm.entrypoints.logger import RequestLogger
-from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +54,9 @@ class Model:
         self._tokenizer = None
         self._model_conf = None
         self._model_explainer = None
+        self.openai_serving_chat = None
+        self.openai_serving_completion = None
+        self.openai_serving_tokenization = None
         self._loaded = False
         self.app_name = kwargs.get('app_name', "happy_vllm")
 
@@ -56,16 +64,16 @@ class Model:
         """return the state of the model"""
         return self._loaded
 
-    async def loading(self, args: Namespace, **kwargs):
+    async def loading(self, async_engine_client: AsyncEngineRPCClient, args: Namespace, **kwargs):
         """load the model"""
-        await self._load_model(args, **kwargs)
+        await self._load_model(async_engine_client, args, **kwargs)
         self._loaded = True
         if args.with_launch_arguments:
             self.launch_arguments = vars(args)
         else:
             self.launch_arguments = {}
 
-    async def _load_model(self, args: Namespace, **kwargs) -> None:
+    async def _load_model(self, async_engine_client: AsyncEngineRPCClient, args: Namespace, **kwargs) -> None:
         """Load a model from a file
 
         Returns:
@@ -76,30 +84,36 @@ class Model:
 
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
-            engine_args = AsyncEngineArgs.from_cli_args(args) 
-            self._model = AsyncLLMEngine.from_engine_args(engine_args) # type: ignore
-            if isinstance(self._model.engine.tokenizer, TokenizerGroup): # type: ignore
-                self._tokenizer = self._model.engine.tokenizer.tokenizer # type: ignore
+            self._model = async_engine_client 
+            if isinstance(self._model.tokenizer, TokenizerGroup): # type: ignore
+                self._tokenizer = self._model.tokenizer.tokenizer # type: ignore
             else:
-                self._tokenizer = self._model.engine.tokenizer # type: ignore
+                self._tokenizer = self._model.tokenizer # type: ignore
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
-            self.max_model_len = self._model.engine.model_config.max_model_len # type: ignore
+            self.max_model_len = self._model.model_config.max_model_len # type: ignore
             self.original_truncation_side = self._tokenizer.truncation_side
-            model_config = await self._model.get_model_config()
+            model_config = await self._model._get_model_config_rpc()
             if args.disable_log_requests:
                 request_logger = None
             else:
                 request_logger = RequestLogger(max_log_len=args.max_log_len)
-            self.openai_serving_chat = OpenAIServingChat(self._model, model_config, [args.model_name],
+            self.openai_serving_chat = OpenAIServingChat(cast(AsyncEngineClient,self._model), model_config, [args.model_name],
                                                         args.response_role,
                                                         lora_modules=args.lora_modules,
                                                         prompt_adapters=args.prompt_adapters,
                                                         request_logger=request_logger,
-                                                        chat_template=args.chat_template,)
-            self.openai_serving_completion = OpenAIServingCompletion(self._model, model_config, [args.model_name], 
-                                                                     lora_modules=args.lora_modules,
-                                                                     prompt_adapters=args.prompt_adapters,
-                                                                     request_logger=request_logger,)
+                                                        chat_template=args.chat_template,
+                                                        return_tokens_as_token_ids=args.return_tokens_as_token_ids)
+            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncEngineClient,self._model), model_config, [args.model_name], 
+                                                                    lora_modules=args.lora_modules,
+                                                                    prompt_adapters=args.prompt_adapters,
+                                                                    request_logger=request_logger,
+                                                                    return_tokens_as_token_ids=args.return_tokens_as_token_ids)
+            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncEngineClient,self._model), model_config, [args.model_name],
+                                                                        lora_modules=args.lora_modules,
+                                                                        request_logger=request_logger,
+                                                                        chat_template=args.chat_template)
+
         # For test purpose
         else:
             self.max_model_len = 2048
@@ -108,6 +122,7 @@ class Model:
                                                      cache_dir=os.environ["TEST_MODELS_DIR"], truncation_side=self.original_truncation_side)
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self._model = MockModel(self._tokenizer, self.app_name)
+            self.openai_serving_tokenization = MockOpenAIServingTokenization(self._tokenizer)
         logger.info(f"Model loaded")
 
     def tokenize(self, text: str) -> List[int]:
@@ -194,46 +209,6 @@ class Model:
         self._tokenizer.truncation_side = self.original_truncation_side
         return truncated_str
 
-    def get_gpu_kv_cache_usage(self) -> float:
-        """Gets the GPU KV cache usage
-
-        Returns:
-            The GPU KV cache usage
-        """
-        total_num_gpu_blocks = self._model.engine.cache_config.num_gpu_blocks
-        num_free_gpu_blocks = (
-            self._model.engine.scheduler.block_manager.get_num_free_gpu_blocks())
-        num_used_gpu_blocks = total_num_gpu_blocks - num_free_gpu_blocks
-        gpu_cache_usage = num_used_gpu_blocks / total_num_gpu_blocks
-        return gpu_cache_usage
-
-    def get_cpu_kv_cache_usage(self) -> float:
-        """Gets the CPU KV cache usage
-
-        Returns:
-            The CPU KV cache usage
-        """
-        total_num_cpu_blocks = self._model.engine.cache_config.num_cpu_blocks
-        if total_num_cpu_blocks > 0:
-            num_free_cpu_blocks = (
-                self._model.engine.scheduler.block_manager.get_num_free_cpu_blocks())
-            num_used_cpu_blocks = total_num_cpu_blocks - num_free_cpu_blocks
-            cpu_cache_usage = num_used_cpu_blocks / total_num_cpu_blocks
-        else:
-            cpu_cache_usage = 0.0
-        return cpu_cache_usage
-
-    def get_status_requests(self) -> dict:
-        """Gets the status of the different requests being processed
-
-        Returns:
-            A dictionary containing the number of requests in the different status (running, swapped and pending)
-        """
-        status_requests = {"requests_running": len(self._model.engine.scheduler.running),
-                            "requests_swapped": len(self._model.engine.scheduler.swapped),
-                            "requests_pending": len(self._model.engine.scheduler.waiting)}
-        return status_requests
-
 
 def find_indices_sub_list_in_list(big_list: list, sub_list: list) -> list:
     """Find the indices of the presence of a sub list in a bigger list. For example
@@ -253,6 +228,22 @@ def find_indices_sub_list_in_list(big_list: list, sub_list: list) -> list:
         if big_list[index - len_sub_list + 1: index + 1] == sub_list:
             indices.append(index)
     return indices
+
+
+class MockOpenAIServingTokenization():
+
+    def __init__(self, tokenizer):
+        self.tokenizer=tokenizer
+
+    async def create_tokenize(self, request):
+        token = self.tokenizer(request.prompt, add_special_tokens=request.add_special_tokens)['input_ids']
+        return TokenizeResponse(tokens=token,
+                                count=len(token),
+                                max_model_len=1)
+
+    async def create_detokenize(self, request):
+        decode = self.tokenizer.decode(request.tokens)
+        return DetokenizeResponse(prompt=decode)
 
 
 class MockModel():
@@ -278,6 +269,9 @@ class MockModel():
     async def async_iter(self, my_list):
         for element in my_list:
             yield element
+
+    async def do_log_stats(self):
+        pass
 
 
 class MockGenerateResponse():
