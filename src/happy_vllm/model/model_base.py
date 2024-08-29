@@ -270,6 +270,9 @@ class MockModel():
         for element in my_list:
             yield element
 
+    async def do_log_stats(self):
+        pass
+
 
 class MockGenerateResponse():
 
