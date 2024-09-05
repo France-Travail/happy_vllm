@@ -91,7 +91,7 @@ class Model:
                 self._tokenizer = self._model.tokenizer # type: ignore
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self.max_model_len = self._model.model_config.max_model_len # type: ignore
-            self.original_truncation_side = self._tokenizer.truncation_side
+            self.original_truncation_side = self._tokenizer.truncation_side # type: ignore
             model_config = await self._model._get_model_config_rpc()
             if args.disable_log_requests:
                 request_logger = None
@@ -103,7 +103,9 @@ class Model:
                                                         prompt_adapters=args.prompt_adapters,
                                                         request_logger=request_logger,
                                                         chat_template=args.chat_template,
-                                                        return_tokens_as_token_ids=args.return_tokens_as_token_ids)
+                                                        return_tokens_as_token_ids=args.return_tokens_as_token_ids,
+                                                        enable_auto_tools=args.enable_auto_tool_choice,
+                                                        tool_parser=args.tool_call_parser)
             self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncEngineClient,self._model), model_config, [args.model_name], 
                                                                     lora_modules=args.lora_modules,
                                                                     prompt_adapters=args.prompt_adapters,
