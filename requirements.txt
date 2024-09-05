@@ -1,4 +1,4 @@
-vllm==0.5.5
+vllm==0.6.0
 fastapi==0.112.2
 pydantic-settings==2.4.0
 uvicorn[standard]==0.30.6
