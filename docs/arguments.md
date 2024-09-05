@@ -41,7 +41,7 @@ Here is a list of arguments useful for the application (they all have default va
  - `return-tokens-as-token-ids`: "When `--max-logprobs`  is specified, represents single tokens as strings of the form 'token_id:{token_id}' so that tokens that are not JSON-encodable can be identified (default value is `False`)
  - `disable-frontend-multiprocessing`: If specified, will run the OpenAI frontend server in the same process as the model serving engine (default value is `False`)
  - `enable-auto-tool-choice`: Enable auto tool choice for supported models. Use --tool-call-parser" "to specify which parser to use" (default value is `False`)
- - `tool-call-parser`: Select the tool call parser depending on the model that you're using. This is used to parse the model-generated tool call. Required for --enable-auto-tool-choice. (default value is `None`)
+ - `tool-call-parser`: Select the tool call parser depending on the model that you're using. This is used to parse the model-generated tool call. Required for --enable-auto-tool-choice. (default value is `None`, only `mistral` and `hermes` are allowed)
 
 ### Model arguments
 
