@@ -19,9 +19,9 @@ import ssl
 import json
 import torch
 
-from typing import Optional, Tuple, Union, List, Mapping
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from argparse import Namespace, BooleanOptionalAction
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional, Tuple, Union, List, Mapping, Dict, Any
 
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
@@ -55,6 +55,8 @@ DEFAULT_MAX_LOG_LEN = None
 DEFAULT_PROMPT_ADAPTERS = None
 DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
+DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
+DEFAULT_TOOL_CALL_PARSER = None
 
 
 class ApplicationSettings(BaseSettings):
@@ -91,6 +93,8 @@ class ApplicationSettings(BaseSettings):
     prompt_adapters: Optional[str] = DEFAULT_PROMPT_ADAPTERS
     return_tokens_as_token_ids: bool = DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
+    enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
+    tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -192,6 +196,8 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         typical_acceptance_sampler_posterior_alpha: Optional[float] = default_args.typical_acceptance_sampler_posterior_alpha
         qlora_adapter_name_or_path: Optional[str] = default_args.qlora_adapter_name_or_path
         disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
+        disable_async_output_proc: bool = False
+        override_neuron_config: Optional[Dict[str, Any]] = default_args.override_neuron_config
 
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
@@ -329,6 +335,22 @@ def get_parser() -> FlexibleArgumentParser:
         action=BooleanOptionalAction,
         help="If specified, will run the OpenAI frontend server in the same "
         "process as the model serving engine.")
+    parser.add_argument(
+        "--enable-auto-tool-choice",
+        default=application_settings.enable_auto_tool_choice,
+        action=BooleanOptionalAction,
+        help=
+        "Enable auto tool choice for supported models. Use --tool-call-parser"
+        "to specify which parser to use")
+    parser.add_argument(
+        "--tool-call-parser",
+        type=str,
+        choices=["mistral", "hermes"],
+        default=application_settings.tool_call_parser,
+        help=
+        "Select the tool call parser depending on the model that you're using."
+        " This is used to parse the model-generated tool call into OpenAI API "
+        "format. Required for --enable-auto-tool-choice.")
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
