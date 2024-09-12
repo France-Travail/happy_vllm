@@ -69,3 +69,13 @@ Used to know which part of a prompt will be truncated (more details [here](data_
 ### /v1/split_text (POST)
 
 Splits a text on some separators, for example to prepare for some RAG (more details [here](data_manipulation.md))
+
+## Lora endpoints
+
+### /v1/load_lora_adapter (POST)
+
+Load a specific Lora adapter (more details in [vLLM documentation](https://docs.vllm.ai/en/latest/models/lora.html))
+
+### /v1/unload_lora_adapter (POST)
+
+Unload a Lora adapter (more details in [vLLM documentation](https://docs.vllm.ai/en/latest/models/lora.html))
