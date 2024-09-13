@@ -123,6 +123,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         trust_remote_code: bool = False
         download_dir: Optional[str] = default_args.download_dir
         load_format: str = default_args.load_format
+        config_format: str = default_args.config_format
         dtype: str = default_args.dtype
         kv_cache_dtype: str = default_args.kv_cache_dtype
         quantization_param_path: Optional[str] = default_args.quantization_param_path

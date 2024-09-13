@@ -16,6 +16,7 @@
 
 import os
 import json
+import vllm.envs as envs
 from vllm.utils import random_uuid
 from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
@@ -418,3 +419,36 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
 async def abort_request(request: functional_schema.RequestAbortRequest):
     model: Model = RESOURCES.get(RESOURCE_MODEL)
     model._model.engine.abort_request(request.request_id)
+
+
+if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
+
+    @router.post("/v1/load_lora_adapter")
+    async def load_lora_adapter(request: vllm_protocol.LoadLoraAdapterRequest):
+        model: Model = RESOURCES.get(RESOURCE_MODEL)
+        response = await model.openai_serving_chat.load_lora_adapter(request)
+        if isinstance(response, vllm_protocol.ErrorResponse):
+            return JSONResponse(content=response.model_dump(),
+                                status_code=response.code)
+
+        response = await model.openai_serving_completion.load_lora_adapter(request)
+        if isinstance(response, vllm_protocol.ErrorResponse):
+            return JSONResponse(content=response.model_dump(),
+                                status_code=response.code)
+
+        return Response(status_code=200, content=response)
+
+    @router.post("/v1/unload_lora_adapter")
+    async def unload_lora_adapter(request: vllm_protocol.UnloadLoraAdapterRequest):
+        model: Model = RESOURCES.get(RESOURCE_MODEL)
+        response = await model.openai_serving_chat.unload_lora_adapter(request)
+        if isinstance(response, vllm_protocol.ErrorResponse):
+            return JSONResponse(content=response.model_dump(),
+                                status_code=response.code)
+
+        response = await model.openai_serving_completion.unload_lora_adapter(request)
+        if isinstance(response, vllm_protocol.ErrorResponse):
+            return JSONResponse(content=response.model_dump(),
+                                status_code=response.code)
+
+        return Response(status_code=200, content=response)
