@@ -94,7 +94,7 @@ class Model:
                 self.original_truncation_side = self._tokenizer.truncation_side # type: ignore
             except:
                 self.original_truncation_side = "left"
-            model_config = await self._model._get_model_config_rpc()
+            model_config = await self._model.get_model_config()
             if args.disable_log_requests:
                 request_logger = None
             else:
