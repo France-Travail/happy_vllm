@@ -46,7 +46,6 @@ async def launch_app(args, **uvicorn_kwargs):
     async with happy_vllm_build_async_engine_client(args) as async_engine_client:
         app = await declare_application(async_engine_client, args=args)
         shutdown_task = await serve_http(app,
-                                        engine=async_engine_client,
                                         host=args.host,
                                         port=args.port,
                                         log_level=args.uvicorn_log_level,
