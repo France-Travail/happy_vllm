@@ -29,6 +29,7 @@ from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from vllm.engine.multiprocessing.client import MQLLMEngineClient
+from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
@@ -99,7 +100,12 @@ class Model:
                 request_logger = None
             else:
                 request_logger = RequestLogger(max_log_len=args.max_log_len)
-            self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, [args.model_name],
+            served_model_names = [args.model_name]
+            base_model_paths = [
+                BaseModelPath(name=name, model_path=args.model)
+                for name in served_model_names
+            ]
+            self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                         args.response_role,
                                                         lora_modules=args.lora_modules,
                                                         prompt_adapters=args.prompt_adapters,
@@ -108,12 +114,12 @@ class Model:
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids,
                                                         enable_auto_tools=args.enable_auto_tool_choice,
                                                         tool_parser=args.tool_call_parser)
-            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncLLMEngine,self._model), model_config, [args.model_name], 
+            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncLLMEngine,self._model), model_config, base_model_paths, 
                                                                     lora_modules=args.lora_modules,
                                                                     prompt_adapters=args.prompt_adapters,
                                                                     request_logger=request_logger,
                                                                     return_tokens_as_token_ids=args.return_tokens_as_token_ids)
-            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, [args.model_name],
+            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
                                                                         chat_template=args.chat_template)
