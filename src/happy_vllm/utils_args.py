@@ -377,8 +377,6 @@ def parse_args() -> Namespace:
     parser.set_defaults(**model_settings.model_dump())
     # Gets the args
     args = parser.parse_args()
-    print(args)
-    exit()
     # Explicitly check for help flag for the providing help message to the entrypoint
     if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
         parser.print_help()
