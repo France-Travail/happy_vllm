@@ -182,9 +182,9 @@ class Model:
                 index_beginning_chunk = index_current_used_separator + 1
             current_used_separator += 1
         chunks.append(tokens[index_beginning_chunk:])
-        chunks = [utils.proper_decode(self._tokenizer, chunk) for chunk in chunks]
-        chunks = [element for element in chunks if element!= ""]
-        return chunks
+        chunks_decoded = [utils.proper_decode(self._tokenizer, chunk) for chunk in chunks]
+        chunks_decoded = [element for element in chunks_decoded if element!= ""]
+        return chunks_decoded
 
     def extract_text_outside_truncation(self, text: str, truncation_side: Union[str, None] = None, max_length: Union[int, None] = None) -> str:
         """Extracts the part of the prompt not kept after truncation, which will not be infered by the model.

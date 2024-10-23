@@ -20,7 +20,7 @@ import uvloop
 from prometheus_client import Gauge
 from vllm.usage.usage_lib import UsageContext
 from vllm import AsyncEngineArgs
-from vllm.engine.multiprocessing.engine import MQLLMEngine, run_mp_engine
+from vllm.engine.multiprocessing.engine import MQLLMEngine
 
 
 def run_mp_engine(engine_args: AsyncEngineArgs,
