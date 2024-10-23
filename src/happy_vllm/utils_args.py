@@ -166,6 +166,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
         device: str = default_args.device
         num_scheduler_steps: int = default_args.num_scheduler_steps
+        multi_step_stream_outputs: bool = default_args.multi_step_stream_outputs
         ray_workers_use_nsight: bool = False
         num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
         num_lookahead_slots: int = default_args.num_lookahead_slots
@@ -180,6 +181,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
         limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
+        mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -206,7 +208,6 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
     model_settings = ModelSettings()
-
     return model_settings
 
 
@@ -376,7 +377,8 @@ def parse_args() -> Namespace:
     parser.set_defaults(**model_settings.model_dump())
     # Gets the args
     args = parser.parse_args()
-
+    print(args)
+    exit()
     # Explicitly check for help flag for the providing help message to the entrypoint
     if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
         parser.print_help()
