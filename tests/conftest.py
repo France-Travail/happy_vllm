@@ -50,6 +50,7 @@ from asgi_lifespan import LifespanManager
 from httpx import AsyncClient, ASGITransport
 
 from argparse import Namespace
+from vllm.config import ConfigFormat
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -124,7 +125,9 @@ async def test_base_client() -> AsyncClient:
         trust_remote_code=False,
         download_dir=None,
         load_format='auto',
-        config_format='auto',
+        speculative_disable_mqa_scorer=False,
+        scheduling_policy="fcfs",
+        config_format=ConfigFormat.AUTO,
         dtype='auto',
         kv_cache_dtype='auto',
         quantization_param_path=None,
@@ -248,7 +251,9 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
         trust_remote_code=False,
         download_dir=None,
         load_format='auto',
-        config_format='auto',
+        speculative_disable_mqa_scorer=False,
+        scheduling_policy="fcfs",
+        config_format=ConfigFormat.AUTO,
         dtype='auto',
         kv_cache_dtype='auto',
         quantization_param_path=None,

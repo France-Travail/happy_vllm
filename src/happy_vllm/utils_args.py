@@ -21,8 +21,9 @@ import torch
 
 from argparse import Namespace, BooleanOptionalAction
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, Tuple, Union, List, Mapping, Dict, Any
+from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal
 
+from vllm.config import ConfigFormat
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
 from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
@@ -123,7 +124,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         trust_remote_code: bool = False
         download_dir: Optional[str] = default_args.download_dir
         load_format: str = default_args.load_format
-        config_format: str = default_args.config_format
+        config_format: ConfigFormat = default_args.config_format
         dtype: str = default_args.dtype
         kv_cache_dtype: str = default_args.kv_cache_dtype
         quantization_param_path: Optional[str] = default_args.quantization_param_path
@@ -182,6 +183,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
         limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
         mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
+        scheduling_policy: Literal["fcfs", "priority"] = default_args.scheduling_policy
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -190,6 +192,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         speculative_model_quantization: Optional[str] = default_args.speculative_model_quantization
         speculative_draft_tensor_parallel_size: Optional[int] = default_args.speculative_draft_tensor_parallel_size
         num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
+        speculative_disable_mqa_scorer: Optional[bool] = default_args.speculative_disable_mqa_scorer
         speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
         speculative_disable_by_batch_size: Optional[int] = default_args.speculative_disable_by_batch_size
         ngram_prompt_lookup_max: Optional[int] = default_args.ngram_prompt_lookup_max

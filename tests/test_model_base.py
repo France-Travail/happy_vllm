@@ -20,6 +20,7 @@ import shutil
 from argparse import Namespace
 from transformers import AutoTokenizer
 
+from vllm.config import ConfigFormat
 from vllm.engine.arg_utils import AsyncEngineArgs
 
 from happy_vllm import utils
@@ -84,7 +85,9 @@ async def test_is_model_loaded():
         trust_remote_code=False,
         download_dir=None,
         load_format='auto',
-        config_format='auto',
+        speculative_disable_mqa_scorer=False,
+        scheduling_policy="fcfs",
+        config_format=ConfigFormat.AUTO,
         dtype='auto',
         kv_cache_dtype='auto',
         quantization_param_path=None,
