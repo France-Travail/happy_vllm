@@ -25,7 +25,7 @@ from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
 from vllm.entrypoints.openai import protocol as vllm_protocol
-from typing import Annotated, AsyncGenerator, Tuple, List, Union
+from typing import Annotated, AsyncGenerator, Tuple, List
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
