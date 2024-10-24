@@ -83,11 +83,17 @@ class Model:
 
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
-            self._model = async_engine_client 
-            if isinstance(self._model.tokenizer, TokenizerGroup): # type: ignore
-                self._tokenizer = self._model.tokenizer.tokenizer # type: ignore
+            self._model = async_engine_client
+            model_config = await self._model.get_model_config()
+            # Define the tokenizer differently if we have an AsyncLLMEngine
+            if isinstance(self._model, AsyncLLMEngine):
+                tokenizer_tmp = self._model.engine.tokenizer
             else:
-                self._tokenizer = self._model.tokenizer # type: ignore
+                tokenizer_tmp = self._model.tokenizer
+            if isinstance(tokenizer_tmp, TokenizerGroup): # type: ignore
+                self._tokenizer = tokenizer_tmp.tokenizer # type: ignore
+            else:
+                self._tokenizer = tokenizer_tmp # type: ignore
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self.max_model_len = self._model.model_config.max_model_len # type: ignore
             # To take into account Mistral tokenizers
