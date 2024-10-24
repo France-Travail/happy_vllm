@@ -22,13 +22,13 @@ from .core.resources import get_lifespan
 from prometheus_client import make_asgi_app
 from fastapi.middleware.cors import CORSMiddleware
 from vllm.entrypoints.openai.api_server import mount_metrics
-from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
+from vllm.engine.multiprocessing.client import MQLLMEngineClient
 
 from happy_vllm import utils
 from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
 
 
-async def declare_application(async_engine_client: AsyncEngineRPCClient, args: Namespace) -> FastAPI:
+async def declare_application(async_engine_client: MQLLMEngineClient, args: Namespace) -> FastAPI:
     """Create the FastAPI application
 
     See https://fastapi.tiangolo.com/tutorial/first-steps/ to learn how to

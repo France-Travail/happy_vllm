@@ -32,7 +32,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from ..model.model_base import Model
 
-from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
+from vllm.engine.multiprocessing.client import MQLLMEngineClient
+
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 RESOURCES = {}
 RESOURCE_MODEL = "model"
 
-def get_lifespan(async_engine_client: AsyncEngineRPCClient, args: Namespace) -> Callable:
+def get_lifespan(async_engine_client: MQLLMEngineClient, args: Namespace) -> Callable:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Load the ML model

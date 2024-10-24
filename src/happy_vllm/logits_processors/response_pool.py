@@ -83,8 +83,7 @@ class VLLMLogitsProcessorResponsePool:
                     # We are in the middle of the response -> give the following token in the response
                     else:
                         allowed_tokens.add(possible_responses_ids[i_current_token])
-        allowed_tokens = list(allowed_tokens)
-        return allowed_tokens
+        return list(allowed_tokens)
 
     def _get_common_tokens_ids_end_begin(self, list_end: list, list_begin: list) -> int:
         """Gives the index where we are with common elements at the end of list_end and at the beginning of list_begin. For
