@@ -50,10 +50,7 @@ async def get_liveness() -> technical_schema.ResponseLiveness:
 )
 async def get_readiness() -> technical_schema.ResponseReadiness:
     """Readiness probe for k8s"""
-    try :
-        model: Model = RESOURCES[RESOURCE_MODEL]
-    except KeyError:
-        raise KeyError(f"Key : {RESOURCE_MODEL} not found")
+    model: Model = RESOURCES.get(RESOURCE_MODEL)
 
     if model and model.is_model_loaded():
         return technical_schema.ResponseReadiness(ready="ok")
