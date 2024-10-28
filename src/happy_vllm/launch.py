@@ -38,8 +38,7 @@ def happy_vllm_build_async_engine_client(args):
     """Replace vllm.entrypoints.openai.api_server.run_rpc_server by happy_vllm.run_rpc_server
     """
     vllm_api_server.run_mp_engine  = run_mp_engine
-    engine_args = AsyncEngineArgs.from_cli_args(args)
-    return vllm_api_server.build_async_engine_client_from_engine_args(engine_args)
+    return vllm_api_server.build_async_engine_client(args)
 
 
 async def launch_app(args, **uvicorn_kwargs):
