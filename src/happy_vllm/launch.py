@@ -23,7 +23,7 @@ import vllm.entrypoints.openai.api_server as vllm_api_server
 
 
 from happy_vllm.utils_args import parse_args
-from happy_vllm.rpc.server import run_mp_engine
+from happy_vllm.engine.mp_engine import run_mp_engine
 from happy_vllm.application import declare_application
 
 
