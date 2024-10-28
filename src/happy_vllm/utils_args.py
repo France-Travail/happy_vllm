@@ -95,7 +95,7 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
-    disable_fastapi_docs : bool = DEFAULT_DISABLE_FASTAPI_DOCS
+    disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -357,7 +357,7 @@ def get_parser() -> FlexibleArgumentParser:
     parser.add_argument(
             "--disable-fastapi-docs",
             action='store_true',
-            default=False,
+            default=application_settings.disable_fastapi_docs,
             help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint"
     )
 
