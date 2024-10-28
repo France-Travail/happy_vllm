@@ -57,7 +57,7 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
 DEFAULT_TOOL_CALL_PARSER = None
-
+DEFAULT_DISABLE_FASTAPI_DOCS = False
 
 class ApplicationSettings(BaseSettings):
     """Application settings
@@ -95,6 +95,7 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
+    disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -166,6 +167,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
         device: str = default_args.device
         num_scheduler_steps: int = default_args.num_scheduler_steps
+        multi_step_stream_outputs: bool = default_args.multi_step_stream_outputs
         ray_workers_use_nsight: bool = False
         num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
         num_lookahead_slots: int = default_args.num_lookahead_slots
@@ -180,6 +182,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
         limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
+        mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -206,7 +209,6 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
     model_settings = ModelSettings()
-
     return model_settings
 
 
@@ -352,6 +354,12 @@ def get_parser() -> FlexibleArgumentParser:
         "Select the tool call parser depending on the model that you're using."
         " This is used to parse the model-generated tool call into OpenAI API "
         "format. Required for --enable-auto-tool-choice.")
+    parser.add_argument(
+            "--disable-fastapi-docs",
+            action='store_true',
+            default=application_settings.disable_fastapi_docs,
+            help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint"
+    )
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
@@ -376,7 +384,6 @@ def parse_args() -> Namespace:
     parser.set_defaults(**model_settings.model_dump())
     # Gets the args
     args = parser.parse_args()
-
     # Explicitly check for help flag for the providing help message to the entrypoint
     if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
         parser.print_help()

@@ -22,24 +22,35 @@ from .core.resources import get_lifespan
 from prometheus_client import make_asgi_app
 from fastapi.middleware.cors import CORSMiddleware
 from vllm.entrypoints.openai.api_server import mount_metrics
-from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
+from vllm.engine.multiprocessing.client import MQLLMEngineClient
 
 from happy_vllm import utils
 from happy_vllm.middlewares.exception import ExceptionHandlerMiddleware
 
 
-async def declare_application(async_engine_client: AsyncEngineRPCClient, args: Namespace) -> FastAPI:
+async def declare_application(async_engine_client: MQLLMEngineClient, args: Namespace) -> FastAPI:
     """Create the FastAPI application
 
     See https://fastapi.tiangolo.com/tutorial/first-steps/ to learn how to
     customize your FastAPI application
     """
-    app = FastAPI(
-        title=f"A REST API for vLLM",
-        description=f"A REST API for vLLM, production ready",
-        lifespan=get_lifespan(async_engine_client, args=args),
-        version=utils.get_package_version()
-    )
+    if args.disable_fastapi_docs :
+        app = FastAPI(
+            openapi_url=None,
+            docs_url=None,
+            redoc_url=None,
+            title=f"A REST API for vLLM",
+            description=f"A REST API for vLLM, production ready",
+            lifespan=get_lifespan(async_engine_client, args=args),
+            version=utils.get_package_version()
+        )
+    else:
+        app = FastAPI(
+            title=f"A REST API for vLLM",
+            description=f"A REST API for vLLM, production ready",
+            lifespan=get_lifespan(async_engine_client, args=args),
+            version=utils.get_package_version()
+        )
 
     # Add prometheus asgi middleware to route /metrics requests
     mount_metrics(app)
