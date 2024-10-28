@@ -1,7 +1,7 @@
 vllm==0.6.2
-fastapi==0.114.1
-pydantic-settings==2.5.2
-uvicorn[standard]==0.30.6
-prometheus_client==0.20.0
+fastapi==0.115.4
+pydantic-settings==2.6.0
+uvicorn[standard]==0.32.0
+prometheus_client==0.21.0
 numpy==1.26.4
 jsonschema==4.23.0
