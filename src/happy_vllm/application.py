@@ -34,12 +34,23 @@ async def declare_application(async_engine_client: MQLLMEngineClient, args: Name
     See https://fastapi.tiangolo.com/tutorial/first-steps/ to learn how to
     customize your FastAPI application
     """
-    app = FastAPI(
-        title=f"A REST API for vLLM",
-        description=f"A REST API for vLLM, production ready",
-        lifespan=get_lifespan(async_engine_client, args=args),
-        version=utils.get_package_version()
-    )
+    if args.disable_fastapi_docs :
+        app = FastAPI(
+            openapi_url=None,
+            docs_url=None,
+            redoc_url=None,
+            title=f"A REST API for vLLM",
+            description=f"A REST API for vLLM, production ready",
+            lifespan=get_lifespan(async_engine_client, args=args),
+            version=utils.get_package_version()
+        )
+    else:
+        app = FastAPI(
+            title=f"A REST API for vLLM",
+            description=f"A REST API for vLLM, production ready",
+            lifespan=get_lifespan(async_engine_client, args=args),
+            version=utils.get_package_version()
+        )
 
     # Add prometheus asgi middleware to route /metrics requests
     mount_metrics(app)

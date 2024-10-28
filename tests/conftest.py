@@ -101,7 +101,8 @@ async def test_base_client() -> AsyncClient:
         allowed_methods=["*"],
         allowed_headers=["*"],
         root_path=None,
-        with_launch_arguments=True
+        with_launch_arguments=True,
+        disable_fastapi_docs=False
     )
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True)
@@ -125,7 +126,8 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
         allowed_methods=["*"],
         allowed_headers=["*"],
         root_path=None,
-        with_launch_arguments=True
+        with_launch_arguments=True,
+        disable_fastapi_docs=False
     )
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     async with LifespanManager(app) as manager:
