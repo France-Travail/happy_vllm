@@ -95,13 +95,12 @@ class Model:
             else:
                 self._tokenizer = tokenizer_tmp # type: ignore
             self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
-            self.max_model_len = self._model.model_config.max_model_len # type: ignore
+            self.max_model_len = model_config.max_model_len # type: ignore
             # To take into account Mistral tokenizers
             try:
                 self.original_truncation_side = self._tokenizer.truncation_side # type: ignore
             except:
                 self.original_truncation_side = "left"
-            model_config = await self._model.get_model_config()
             if args.disable_log_requests:
                 request_logger = None
             else:
