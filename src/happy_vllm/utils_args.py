@@ -57,7 +57,7 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
 DEFAULT_TOOL_CALL_PARSER = None
-
+DEFAULT_DISABLE_FASTAPI_DOCS = False
 
 class ApplicationSettings(BaseSettings):
     """Application settings
@@ -95,6 +95,7 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
+    disable_fastapi_docs : bool = DEFAULT_DISABLE_FASTAPI_DOCS
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -353,6 +354,12 @@ def get_parser() -> FlexibleArgumentParser:
         "Select the tool call parser depending on the model that you're using."
         " This is used to parse the model-generated tool call into OpenAI API "
         "format. Required for --enable-auto-tool-choice.")
+    parser.add_argument(
+            "--disable-fastapi-docs",
+            action='store_true',
+            default=False,
+            help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint"
+    )
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
