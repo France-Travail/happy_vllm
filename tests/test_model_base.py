@@ -21,10 +21,8 @@ from argparse import Namespace
 from transformers import AutoTokenizer
 
 from vllm.config import ConfigFormat
-from vllm.engine.arg_utils import AsyncEngineArgs
 
 from happy_vllm import utils
-from happy_vllm import utils_args
 from happy_vllm.model import model_base
 from happy_vllm.model.model_base import Model
 from happy_vllm.launch import happy_vllm_build_async_engine_client
