@@ -27,6 +27,7 @@ from vllm.config import ConfigFormat
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
 from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
+from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.entrypoints.openai.cli_args import LoRAParserAction, PromptAdapterParserAction
 from vllm.transformers_utils.tokenizer_group.base_tokenizer_group import BaseTokenizerGroup
 
@@ -58,6 +59,7 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
 DEFAULT_TOOL_CALL_PARSER = None
+DEFAULT_TOOL_PARSER_PLUGIN = ""
 DEFAULT_DISABLE_FASTAPI_DOCS = False
 
 class ApplicationSettings(BaseSettings):
@@ -96,6 +98,7 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
+    tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
     disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
 
 
@@ -177,7 +180,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         preemption_mode: Optional[str] = default_args.preemption_mode
         disable_log_requests: bool = False
         engine_use_ray: bool = False
-        use_v2_block_manager: bool = False
+        use_v2_block_manager: bool = default_args.use_v2_block_manager
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
@@ -348,15 +351,25 @@ def get_parser() -> FlexibleArgumentParser:
         help=
         "Enable auto tool choice for supported models. Use --tool-call-parser"
         "to specify which parser to use")
+    valid_tool_parsers = ToolParserManager.tool_parsers.keys()
     parser.add_argument(
         "--tool-call-parser",
         type=str,
-        choices=["mistral", "hermes"],
+        metavar="{" + ",".join(valid_tool_parsers) + "} or name registered in "
+        "--tool-parser-plugin",
         default=application_settings.tool_call_parser,
         help=
         "Select the tool call parser depending on the model that you're using."
         " This is used to parse the model-generated tool call into OpenAI API "
         "format. Required for --enable-auto-tool-choice.")
+    parser.add_argument(
+        "--tool-parser-plugin",
+        type=str,
+        default=application_settings.tool_parser_plugin,
+        help=
+        "Special the tool parser plugin write to parse the model-generated tool"
+        " into OpenAI API format, the name register in this plugin can be used "
+        "in --tool-call-parser.")
     parser.add_argument(
             "--disable-fastapi-docs",
             action='store_true',
