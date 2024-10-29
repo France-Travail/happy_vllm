@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import signal
+import socket
 import asyncio
 import uvicorn
 import argparse
@@ -20,6 +22,7 @@ import argparse
 from vllm.entrypoints.launcher import serve_http 
 from vllm.engine.arg_utils import AsyncEngineArgs
 import vllm.entrypoints.openai.api_server as vllm_api_server
+from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 
 
 from happy_vllm.utils_args import parse_args
@@ -42,6 +45,25 @@ def happy_vllm_build_async_engine_client(args):
 
 
 async def launch_app(args, **uvicorn_kwargs):
+
+    # Register new tool parser
+    if args.tool_parser_plugin and len(args.tool_parser_plugin) > 3:
+        ToolParserManager.import_tool_parser(args.tool_parser_plugin)
+    valide_tool_parses = ToolParserManager.tool_parsers.keys()
+    if args.enable_auto_tool_choice \
+        and args.tool_call_parser not in valide_tool_parses:
+        raise KeyError(f"invalid tool call parser: {args.tool_call_parser} "
+                       f"(chose from {{ {','.join(valide_tool_parses)} }})")
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("", args.port))
+
+    def signal_handler(*_) -> None:
+        # Interrupt server on sigterm while initializing
+        raise KeyboardInterrupt("terminated")
+
+    signal.signal(signal.SIGTERM, signal_handler)
+
     async with happy_vllm_build_async_engine_client(args) as async_engine_client:
         app = await declare_application(async_engine_client, args=args)
         shutdown_task = await serve_http(app,
@@ -53,6 +75,7 @@ async def launch_app(args, **uvicorn_kwargs):
                                         ssl_certfile=args.ssl_certfile,
                                         ssl_ca_certs=args.ssl_ca_certs,
                                         ssl_cert_reqs=args.ssl_cert_reqs,
+                                        fd=sock.fileno(),
                                         **uvicorn_kwargs)
     await shutdown_task
 

@@ -50,7 +50,6 @@ from asgi_lifespan import LifespanManager
 from httpx import AsyncClient, ASGITransport
 
 from argparse import Namespace
-from vllm.config import ConfigFormat
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
