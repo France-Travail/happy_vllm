@@ -66,7 +66,10 @@ async def get_readiness() -> technical_schema.ResponseReadiness:
 )
 async def info() -> technical_schema.ResponseInformation:
     """Rest resource for info"""
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    try :
+        model: Model = RESOURCES[RESOURCE_MODEL]
+    except KeyError:
+        raise KeyError(f"Key : {RESOURCE_MODEL} not found")
 
     return technical_schema.ResponseInformation(
         application=model.app_name,
@@ -80,13 +83,19 @@ async def info() -> technical_schema.ResponseInformation:
 
 @router.get("/v1/models", response_model=technical_schema.HappyvllmModelList)
 async def show_available_models():
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    try :
+        model: Model = RESOURCES[RESOURCE_MODEL]
+    except KeyError:
+        raise KeyError(f"Key : {RESOURCE_MODEL} not found")
     models = await model.openai_serving_completion.show_available_models()
     return JSONResponse(content=models.model_dump())
 
 
 @router.get("/v1/launch_arguments")
 async def launch_arguments():
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    try :
+        model: Model = RESOURCES[RESOURCE_MODEL]
+    except KeyError:
+        raise KeyError(f"Key : {RESOURCE_MODEL} not found")
     launch_arguments = model.launch_arguments
     return JSONResponse(content=launch_arguments)

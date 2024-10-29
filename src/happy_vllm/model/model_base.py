@@ -27,12 +27,10 @@ from argparse import Namespace
 from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
-from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.engine.protocol import AsyncEngineClient
 from vllm.engine.async_llm_engine import AsyncLLMEngine
-from vllm.entrypoints.openai.rpc import RPCUtilityRequest
+from vllm.engine.multiprocessing.client import MQLLMEngineClient
+from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
-from vllm.entrypoints.openai.rpc.client import AsyncEngineRPCClient
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
@@ -65,7 +63,7 @@ class Model:
         """return the state of the model"""
         return self._loaded
 
-    async def loading(self, async_engine_client: AsyncEngineRPCClient, args: Namespace, **kwargs):
+    async def loading(self, async_engine_client: MQLLMEngineClient, args: Namespace, **kwargs):
         """load the model"""
         await self._load_model(async_engine_client, args, **kwargs)
         self._loaded = True
@@ -74,7 +72,7 @@ class Model:
         else:
             self.launch_arguments = {}
 
-    async def _load_model(self, async_engine_client: AsyncEngineRPCClient, args: Namespace, **kwargs) -> None:
+    async def _load_model(self, async_engine_client: MQLLMEngineClient, args: Namespace, **kwargs) -> None:
         """Load a model from a file
 
         Returns:
@@ -107,7 +105,12 @@ class Model:
                 request_logger = None
             else:
                 request_logger = RequestLogger(max_log_len=args.max_log_len)
-            self.openai_serving_chat = OpenAIServingChat(cast(AsyncEngineClient, self._model), model_config, [args.model_name],
+            served_model_names = [args.model_name]
+            base_model_paths = [
+                BaseModelPath(name=name, model_path=args.model)
+                for name in served_model_names
+            ]
+            self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                         args.response_role,
                                                         lora_modules=args.lora_modules,
                                                         prompt_adapters=args.prompt_adapters,
@@ -116,12 +119,12 @@ class Model:
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids,
                                                         enable_auto_tools=args.enable_auto_tool_choice,
                                                         tool_parser=args.tool_call_parser)
-            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncEngineClient, self._model), model_config, [args.model_name], 
+            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncLLMEngine,self._model), model_config, base_model_paths, 
                                                                     lora_modules=args.lora_modules,
                                                                     prompt_adapters=args.prompt_adapters,
                                                                     request_logger=request_logger,
                                                                     return_tokens_as_token_ids=args.return_tokens_as_token_ids)
-            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncEngineClient, self._model), model_config, [args.model_name],
+            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
                                                                         chat_template=args.chat_template)
@@ -184,9 +187,9 @@ class Model:
                 index_beginning_chunk = index_current_used_separator + 1
             current_used_separator += 1
         chunks.append(tokens[index_beginning_chunk:])
-        chunks = [utils.proper_decode(self._tokenizer, chunk) for chunk in chunks]
-        chunks = [element for element in chunks if element!= ""]
-        return chunks
+        chunks_decoded = [utils.proper_decode(self._tokenizer, chunk) for chunk in chunks]
+        chunks_decoded = [element for element in chunks_decoded if element!= ""]
+        return chunks_decoded
 
     def extract_text_outside_truncation(self, text: str, truncation_side: Union[str, None] = None, max_length: Union[int, None] = None) -> str:
         """Extracts the part of the prompt not kept after truncation, which will not be infered by the model.

@@ -25,7 +25,7 @@ from vllm.sampling_params import SamplingParams
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
 from vllm.entrypoints.openai import protocol as vllm_protocol
-from typing import Annotated, AsyncGenerator, Tuple, List, Union
+from typing import Annotated, AsyncGenerator, Tuple, List
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
@@ -137,7 +137,7 @@ async def generate(
                                              https://github.com/vllm-project/vllm/blob/main/vllm/sampling_params.py).
     """
     
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     request_dict = await request.json()
     prompt, prompt_in_response, sampling_params = parse_generate_parameters(request_dict, model._model, model._tokenizer, model._tokenizer_lmformatenforcer)
     request_id = random_uuid()
@@ -182,7 +182,7 @@ async def generate_stream(request: Request,
     - prompt: The prompt to use for the generation.
     - other fields: The sampling parameters (See `SamplingParams` for details).
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     request_dict = await request.json()
     prompt, prompt_in_response, sampling_params = parse_generate_parameters(request_dict, model._model, model._tokenizer, model._tokenizer_lmformatenforcer)
     request_id = random_uuid()
@@ -223,7 +223,7 @@ async def tokenizer(request: Request,
     - with_tokens_str (optional): Whether we want the tokens strings in the output
     - vanilla (optional) : Whether we want the vanilla version of the tokenizers
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     request_dict = await request.json()
     text = request_dict.pop("text")
     vanilla = request_dict.get("vanilla", True)
@@ -264,7 +264,7 @@ async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
     - add_special_tokens : Add a special tokens to the begin (optional, default value : `false`)
     - add_generation_prompt : Add generation prompt's model in decode response (optional, default value : `true`)
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     generator = await model.openai_serving_tokenization.create_tokenize(request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
@@ -288,7 +288,7 @@ async def decode(request: Request,
     - with_tokens_str : If the result should also include a list of str
     - vanilla (optional) : Whether we want the vanilla version of the tokenizers
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     request_dict = await request.json()
     token_ids = request_dict.pop("token_ids")
     with_tokens_str = request_dict.get("with_tokens_str", False)
@@ -321,7 +321,7 @@ async def decode_v2(request :Annotated[
     - tokens: The ids of the tokens
     - model : ID of the model to use
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     generator = await model.openai_serving_tokenization.create_detokenize(request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
@@ -345,7 +345,7 @@ async def split_text(request: Request,
     - num_tokens_in_chunk (optional): The minimal number of tokens we want in each chunk
     - separators (optional) : The allowed separators between the chunks
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
 
     request_dict = await request.json()
     split_text = model.split_text(**request_dict)
@@ -368,7 +368,7 @@ async def metadata_text(request: Request,
 
     The default values for truncation_side and max_length are those of the underlying model
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
 
     request_dict = await request.json()
 
@@ -384,7 +384,7 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
                                  raw_request: Request):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     generator = await model.openai_serving_chat.create_chat_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
@@ -402,7 +402,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
                             raw_request: Request):
     """Open AI compatible completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
     """
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     generator = await model.openai_serving_completion.create_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
@@ -417,7 +417,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
 
 @router.post("/v1/abort_request")
 async def abort_request(request: functional_schema.RequestAbortRequest):
-    model: Model = RESOURCES.get(RESOURCE_MODEL)
+    model: Model = RESOURCES[RESOURCE_MODEL]
     model._model.engine.abort_request(request.request_id)
 
 
@@ -425,7 +425,7 @@ if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
 
     @router.post("/v1/load_lora_adapter")
     async def load_lora_adapter(request: vllm_protocol.LoadLoraAdapterRequest):
-        model: Model = RESOURCES.get(RESOURCE_MODEL)
+        model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.load_lora_adapter(request)
         if isinstance(response, vllm_protocol.ErrorResponse):
             return JSONResponse(content=response.model_dump(),
@@ -440,7 +440,7 @@ if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
 
     @router.post("/v1/unload_lora_adapter")
     async def unload_lora_adapter(request: vllm_protocol.UnloadLoraAdapterRequest):
-        model: Model = RESOURCES.get(RESOURCE_MODEL)
+        model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.unload_lora_adapter(request)
         if isinstance(response, vllm_protocol.ErrorResponse):
             return JSONResponse(content=response.model_dump(),

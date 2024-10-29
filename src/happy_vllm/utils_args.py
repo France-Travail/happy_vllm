@@ -21,11 +21,13 @@ import torch
 
 from argparse import Namespace, BooleanOptionalAction
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, Tuple, Union, List, Mapping, Dict, Any
+from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal
 
+from vllm.config import ConfigFormat
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
 from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
+from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.entrypoints.openai.cli_args import LoRAParserAction, PromptAdapterParserAction
 from vllm.transformers_utils.tokenizer_group.base_tokenizer_group import BaseTokenizerGroup
 
@@ -57,7 +59,8 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
 DEFAULT_TOOL_CALL_PARSER = None
-
+DEFAULT_TOOL_PARSER_PLUGIN = ""
+DEFAULT_DISABLE_FASTAPI_DOCS = False
 
 class ApplicationSettings(BaseSettings):
     """Application settings
@@ -95,6 +98,8 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
+    tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
+    disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -123,7 +128,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         trust_remote_code: bool = False
         download_dir: Optional[str] = default_args.download_dir
         load_format: str = default_args.load_format
-        config_format: str = default_args.config_format
+        config_format: ConfigFormat = default_args.config_format
         dtype: str = default_args.dtype
         kv_cache_dtype: str = default_args.kv_cache_dtype
         quantization_param_path: Optional[str] = default_args.quantization_param_path
@@ -166,6 +171,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         max_cpu_loras: Optional[int] = default_args.max_cpu_loras
         device: str = default_args.device
         num_scheduler_steps: int = default_args.num_scheduler_steps
+        multi_step_stream_outputs: bool = default_args.multi_step_stream_outputs
         ray_workers_use_nsight: bool = False
         num_gpu_blocks_override: Optional[int] = default_args.num_gpu_blocks_override
         num_lookahead_slots: int = default_args.num_lookahead_slots
@@ -174,12 +180,14 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         preemption_mode: Optional[str] = default_args.preemption_mode
         disable_log_requests: bool = False
         engine_use_ray: bool = False
-        use_v2_block_manager: bool = False
+        use_v2_block_manager: bool = default_args.use_v2_block_manager
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
         tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
         limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
+        mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
+        scheduling_policy: Literal["fcfs", "priority"] = default_args.scheduling_policy
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -188,6 +196,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         speculative_model_quantization: Optional[str] = default_args.speculative_model_quantization
         speculative_draft_tensor_parallel_size: Optional[int] = default_args.speculative_draft_tensor_parallel_size
         num_speculative_tokens: Optional[int] = default_args.num_speculative_tokens
+        speculative_disable_mqa_scorer: Optional[bool] = default_args.speculative_disable_mqa_scorer
         speculative_max_model_len: Optional[int] = default_args.speculative_max_model_len
         speculative_disable_by_batch_size: Optional[int] = default_args.speculative_disable_by_batch_size
         ngram_prompt_lookup_max: Optional[int] = default_args.ngram_prompt_lookup_max
@@ -206,7 +215,6 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
 
     model_settings = ModelSettings()
-
     return model_settings
 
 
@@ -343,15 +351,31 @@ def get_parser() -> FlexibleArgumentParser:
         help=
         "Enable auto tool choice for supported models. Use --tool-call-parser"
         "to specify which parser to use")
+    valid_tool_parsers = ToolParserManager.tool_parsers.keys()
     parser.add_argument(
         "--tool-call-parser",
         type=str,
-        choices=["mistral", "hermes"],
+        metavar="{" + ",".join(valid_tool_parsers) + "} or name registered in "
+        "--tool-parser-plugin",
         default=application_settings.tool_call_parser,
         help=
         "Select the tool call parser depending on the model that you're using."
         " This is used to parse the model-generated tool call into OpenAI API "
         "format. Required for --enable-auto-tool-choice.")
+    parser.add_argument(
+        "--tool-parser-plugin",
+        type=str,
+        default=application_settings.tool_parser_plugin,
+        help=
+        "Special the tool parser plugin write to parse the model-generated tool"
+        " into OpenAI API format, the name register in this plugin can be used "
+        "in --tool-call-parser.")
+    parser.add_argument(
+            "--disable-fastapi-docs",
+            action='store_true',
+            default=application_settings.disable_fastapi_docs,
+            help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint"
+    )
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
@@ -376,7 +400,6 @@ def parse_args() -> Namespace:
     parser.set_defaults(**model_settings.model_dump())
     # Gets the args
     args = parser.parse_args()
-
     # Explicitly check for help flag for the providing help message to the entrypoint
     if '-h' in sys.argv[1:] or '--help' in sys.argv[1:]:
         parser.print_help()
