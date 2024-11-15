@@ -16,6 +16,7 @@
 
 import os
 import json
+import numpy as np
 import vllm.envs as envs
 from vllm.utils import random_uuid
 from fastapi import APIRouter, Body
@@ -395,6 +396,27 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
                                  media_type="text/event-stream")
     else:
         return JSONResponse(content=generator.model_dump()) # type: ignore
+
+
+@router.post("/v1/perplexity")
+async def get_perplexity(request: Request):
+    model: Model = RESOURCES[RESOURCE_MODEL]
+    request_dict = await request.json()
+    new_request = vllm_protocol.ChatCompletionRequest(model=request_dict.get("model", model._model_conf["model_name"]),
+                                                      messages=[{"role": "user", "content": request_dict["text"]}],
+                                                      temperature=0,
+                                                      max_tokens=1,
+                                                      prompt_logprobs=0)
+    response = await create_chat_completion(new_request, None)
+    response = json.loads(response.body)
+    prompt_logprobs = []
+    for prompt_logprob in response["prompt_logprobs"]:
+        if prompt_logprob:
+            prompt_logprobs.append(list(prompt_logprob.values())[0]["logprob"])
+    perplexity = np.exp(-np.mean(prompt_logprobs))
+    result = {"perplexity": perplexity}
+    result["prompt_logprobs"] = response["prompt_logprobs"]
+    return JSONResponse(result)
 
 
 @router.post("/v1/completions", response_model=functional_schema.HappyvllmCompletionResponse)
