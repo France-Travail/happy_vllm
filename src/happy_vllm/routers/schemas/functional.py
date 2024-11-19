@@ -64,6 +64,7 @@ class RequestGenerate(BaseModel):
     early_stopping: Union[bool, str] = Field(None)
     stop: Optional[Union[str, List[str]]] = Field(None)
     stop_token_ids: Optional[List[int]] = Field(None)
+    bad_words: Optional[List[str]] = Field(None)
     include_stop_str_in_output: bool = Field(None)
     ignore_eos: bool = Field(None)
     max_tokens: Optional[int] = Field(None)

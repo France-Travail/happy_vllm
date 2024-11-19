@@ -23,21 +23,25 @@ from vllm import AsyncEngineArgs
 from vllm.engine.multiprocessing.engine import MQLLMEngine
 
 
-def run_mp_engine(engine_args: AsyncEngineArgs,
-                   usage_context: UsageContext, ipc_path: str):
-    def signal_handler(*_) -> None:
-        # Interrupt server on sigterm
-        raise KeyboardInterrupt("MQLLMEngine terminated")
-    signal.signal(signal.SIGTERM, signal_handler)
-    engine = MQLLMEngine.from_engine_args(
-        engine_args=engine_args,
-        usage_context=usage_context,
-        ipc_path=ipc_path
-    )
-    model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-    if engine_args.num_scheduler_steps > 1 :
-        model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner._base_model_runner.model_memory_usage/float(2**30),2)) # type: ignore
-    else:
-        model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
-    engine.start()
+def run_mp_engine(engine_args: AsyncEngineArgs, usage_context: UsageContext, ipc_path: str, engine_alive):
+    try :
+        def signal_handler(*_) -> None:
+            # Interrupt server on sigterm
+            raise KeyboardInterrupt("MQLLMEngine terminated")
+        engine = MQLLMEngine.from_engine_args(
+            engine_args=engine_args,
+            usage_context=usage_context,
+            ipc_path=ipc_path
+        )
+        model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
+        if engine_args.num_scheduler_steps > 1 :
+            model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner._base_model_runner.model_memory_usage/float(2**30),2)) # type: ignore
+        else:
+            model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
+        signal.signal(signal.SIGTERM, signal_handler)
+        engine.start()
+    except BaseException as e:
+        logger.exception(e)
+        engine_alive.value = False
+        raise e
      
