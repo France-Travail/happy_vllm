@@ -186,7 +186,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         preemption_mode: Optional[str] = default_args.preemption_mode
         disable_log_requests: bool = False
         engine_use_ray: bool = False
-        use_v2_block_manager: bool = default_args.use_v2_block_manager
+        use_v2_block_manager: bool = True
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
@@ -330,65 +330,55 @@ def get_parser() -> FlexibleArgumentParser:
                         help='Max number of prompt characters or prompt '
                         'ID numbers being printed in log.'
                         '\n\nDefault: Unlimited')
-    parser.add_argument(
-                "--prompt-adapters",
-                type=nullable_str,
-                default=application_settings.prompt_adapters,
-                nargs='+',
-                action=PromptAdapterParserAction,
-                help="Prompt adapter configurations in the format name=path. "
-                "Multiple adapters can be specified.")
-    parser.add_argument(
-        "--return-tokens-as-token-ids",
-        default=application_settings.return_tokens_as_token_ids,
-        action=BooleanOptionalAction,
-        help="When --max-logprobs is specified, represents single tokens as "
-        "strings of the form 'token_id:{token_id}' so that tokens that "
-        "are not JSON-encodable can be identified.")
-    parser.add_argument(
-        "--disable-frontend-multiprocessing",
-        default=application_settings.disable_frontend_multiprocessing,
-        action=BooleanOptionalAction,
-        help="If specified, will run the OpenAI frontend server in the same "
-        "process as the model serving engine.")
-    parser.add_argument(
-        "--enable-auto-tool-choice",
-        default=application_settings.enable_auto_tool_choice,
-        action=BooleanOptionalAction,
-        help=
-        "Enable auto tool choice for supported models. Use --tool-call-parser"
-        "to specify which parser to use")
+    parser.add_argument("--prompt-adapters",
+                        type=nullable_str,
+                        default=application_settings.prompt_adapters,
+                        nargs='+',
+                        action=PromptAdapterParserAction,
+                        help="Prompt adapter configurations in the format name=path. "
+                        "Multiple adapters can be specified.")
+    parser.add_argument("--return-tokens-as-token-ids",
+                        default=application_settings.return_tokens_as_token_ids,
+                        action=BooleanOptionalAction,
+                        help="When --max-logprobs is specified, represents single tokens as "
+                        "strings of the form 'token_id:{token_id}' so that tokens that "
+                        "are not JSON-encodable can be identified.")
+    parser.add_argument("--disable-frontend-multiprocessing",
+                        default=application_settings.disable_frontend_multiprocessing,
+                        action=BooleanOptionalAction,
+                        help="If specified, will run the OpenAI frontend server in the same "
+                        "process as the model serving engine.")
+    parser.add_argument("--enable-auto-tool-choice",
+                        default=application_settings.enable_auto_tool_choice,
+                        action=BooleanOptionalAction,
+                        help=
+                        "Enable auto tool choice for supported models. Use --tool-call-parser"
+                        "to specify which parser to use")
     valid_tool_parsers = ToolParserManager.tool_parsers.keys()
-    parser.add_argument(
-        "--tool-call-parser",
-        type=str,
-        metavar="{" + ",".join(valid_tool_parsers) + "} or name registered in "
-        "--tool-parser-plugin",
-        default=application_settings.tool_call_parser,
-        help=
-        "Select the tool call parser depending on the model that you're using."
-        " This is used to parse the model-generated tool call into OpenAI API "
-        "format. Required for --enable-auto-tool-choice.")
-    parser.add_argument(
-        "--tool-parser-plugin",
-        type=str,
-        default=application_settings.tool_parser_plugin,
-        help=
-        "Special the tool parser plugin write to parse the model-generated tool"
-        " into OpenAI API format, the name register in this plugin can be used "
-        "in --tool-call-parser.")
-    parser.add_argument(
-            "--disable-fastapi-docs",
-            action='store_true',
-            default=application_settings.disable_fastapi_docs,
-            help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint"
-    )
-    parser.add_argument(
-        "--enable-prompt-tokens-details",
-        action='store_true',
-        default=application_settings.enable_prompt_tokens_details,
-        help="If set to True, enable prompt_tokens_details in usage."
-    )
+    parser.add_argument("--tool-call-parser",
+                        type=str,
+                        metavar="{" + ",".join(valid_tool_parsers) + "} or name registered in "
+                        "--tool-parser-plugin",
+                        default=application_settings.tool_call_parser,
+                        help=
+                        "Select the tool call parser depending on the model that you're using."
+                        " This is used to parse the model-generated tool call into OpenAI API "
+                        "format. Required for --enable-auto-tool-choice.")
+    parser.add_argument("--tool-parser-plugin",
+                        type=str,
+                        default=application_settings.tool_parser_plugin,
+                        help=
+                        "Special the tool parser plugin write to parse the model-generated tool"
+                        " into OpenAI API format, the name register in this plugin can be used "
+                        "in --tool-call-parser.")
+    parser.add_argument("--disable-fastapi-docs",
+                        action='store_true',
+                        default=application_settings.disable_fastapi_docs,
+                        help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint")
+    parser.add_argument("--enable-prompt-tokens-details",
+                        action='store_true',
+                        default=application_settings.enable_prompt_tokens_details,
+                        help="If set to True, enable prompt_tokens_details in usage.")
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
