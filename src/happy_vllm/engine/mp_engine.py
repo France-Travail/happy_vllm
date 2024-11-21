@@ -16,11 +16,15 @@
 
 import signal
 import uvloop
+import logging
 
+from vllm import AsyncEngineArgs
 from prometheus_client import Gauge
 from vllm.usage.usage_lib import UsageContext
-from vllm import AsyncEngineArgs
 from vllm.engine.multiprocessing.engine import MQLLMEngine
+
+
+logger = logging.getLogger(__name__)
 
 
 def run_mp_engine(engine_args: AsyncEngineArgs, usage_context: UsageContext, ipc_path: str, engine_alive):

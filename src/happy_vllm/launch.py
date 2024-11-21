@@ -31,6 +31,7 @@ from happy_vllm.application import declare_application
 
 TIMEOUT_KEEP_ALIVE = 5 # seconds
 
+
 def main(**uvicorn_kwargs) -> None:
     args = parse_args()
     asyncio.run(launch_app(args, **uvicorn_kwargs))
