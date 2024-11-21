@@ -81,5 +81,8 @@ async def launch_app(args, **uvicorn_kwargs):
                                         **uvicorn_kwargs)
     await shutdown_task
 
+    sock.close()
+
+    
 if __name__ == "__main__":
     main()

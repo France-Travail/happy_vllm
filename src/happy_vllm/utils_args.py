@@ -214,7 +214,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
         disable_async_output_proc: bool = False
         override_neuron_config: Optional[Dict[str, Any]] = default_args.override_neuron_config
-        override_pooler_config: Optional[PoolerConfig] = default_args.override_neuron_config
+        override_pooler_config: Optional[PoolerConfig] = default_args.override_pooler_config
 
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
