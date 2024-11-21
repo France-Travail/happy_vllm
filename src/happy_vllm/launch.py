@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import signal
-import socket
 import asyncio
 import uvicorn
 import argparse
@@ -31,6 +30,7 @@ from happy_vllm.application import declare_application
 
 
 TIMEOUT_KEEP_ALIVE = 5 # seconds
+
 
 def main(**uvicorn_kwargs) -> None:
     args = parse_args()
@@ -57,8 +57,8 @@ async def launch_app(args, **uvicorn_kwargs):
                        f"(chose from {{ {','.join(valide_tool_parses)} }})")
 
     # Bind socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", args.port))
+    sock_addr = (args.host or "", args.port)
+    sock = vllm_api_server.create_server_socket(sock_addr)
 
     def signal_handler(*_) -> None:
         # Interrupt server on sigterm while initializing
@@ -81,5 +81,8 @@ async def launch_app(args, **uvicorn_kwargs):
                                         **uvicorn_kwargs)
     await shutdown_task
 
+    sock.close()
+
+    
 if __name__ == "__main__":
     main()
