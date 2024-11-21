@@ -118,7 +118,8 @@ class Model:
                                                         chat_template=args.chat_template,
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids,
                                                         enable_auto_tools=args.enable_auto_tool_choice,
-                                                        tool_parser=args.tool_call_parser)
+                                                        tool_parser=args.tool_call_parser,
+                                                        enable_prompt_tokens_details=args.enable_prompt_tokens_details)
             self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncLLMEngine,self._model), model_config, base_model_paths, 
                                                                     lora_modules=args.lora_modules,
                                                                     prompt_adapters=args.prompt_adapters,
