@@ -186,7 +186,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         preemption_mode: Optional[str] = default_args.preemption_mode
         disable_log_requests: bool = False
         engine_use_ray: bool = False
-        use_v2_block_manager: bool = True
+        use_v2_block_manager: bool = default_args.use_v2_block_manager
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
