@@ -28,6 +28,7 @@ from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.entrypoints.chat_utils import load_chat_template
 from vllm.engine.multiprocessing.client import MQLLMEngineClient
 from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
@@ -110,12 +111,14 @@ class Model:
                 BaseModelPath(name=name, model_path=args.model)
                 for name in served_model_names
             ]
+            resolved_chat_template = load_chat_template(args.chat_template)
+            logger.info("Using supplied chat template:\n%s", resolved_chat_template)
             self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                         args.response_role,
                                                         lora_modules=args.lora_modules,
                                                         prompt_adapters=args.prompt_adapters,
                                                         request_logger=request_logger,
-                                                        chat_template=args.chat_template,
+                                                        chat_template=resolved_chat_template,
                                                         chat_template_content_format=args.chat_template_content_format,
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids,
                                                         enable_auto_tools=args.enable_auto_tool_choice,
@@ -129,7 +132,7 @@ class Model:
             self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
-                                                                        chat_template=args.chat_template,
+                                                                        chat_template=resolved_chat_template,
                                                                         chat_template_content_format=args.chat_template_content_format)
 
         # For test purpose
