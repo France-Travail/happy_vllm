@@ -21,15 +21,16 @@ import torch
 
 from argparse import Namespace, BooleanOptionalAction
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal
+from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal, get_args
 
-from vllm.config import ConfigFormat, TaskOption, HfOverrides, PoolerConfig
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
 from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
+from vllm.entrypoints.chat_utils import (ChatTemplateContentFormatOption)
 from vllm.entrypoints.openai.cli_args import LoRAParserAction, PromptAdapterParserAction
 from vllm.transformers_utils.tokenizer_group.base_tokenizer_group import BaseTokenizerGroup
+from vllm.config import (ConfigFormat, TaskOption, HfOverrides, PoolerConfig, CompilationConfig, KVTransferConfig)
 
 
 DEFAULT_MODEL_NAME = '?'
@@ -51,12 +52,14 @@ DEFAULT_SSL_CERT_REQS = int(ssl.CERT_NONE)
 DEFAULT_ROOT_PATH = None
 DEFAULT_LORA_MODULES = None
 DEFAULT_CHAT_TEMPLATE = None
+DEFAULT_CHAT_TEMPLATE_CONTENT_FORMAT = "auto"
 DEFAULT_RESPONSE_ROLE = "assistant"
 DEFAULT_WITH_LAUNCH_ARGUMENTS = False
 DEFAULT_MAX_LOG_LEN = None
 DEFAULT_PROMPT_ADAPTERS = None
 DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
+DEFAULT_ENABLE_REQUEST_ID_HEADERS = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
 DEFAULT_TOOL_CALL_PARSER = None
 DEFAULT_TOOL_PARSER_PLUGIN = ""
@@ -91,12 +94,14 @@ class ApplicationSettings(BaseSettings):
     api_endpoint_prefix: str = DEFAULT_API_ENDPOINT_PREFIX
     lora_modules: Optional[str] = DEFAULT_LORA_MODULES
     chat_template : Optional[str] = DEFAULT_CHAT_TEMPLATE
+    chat_template_content_format: str = DEFAULT_CHAT_TEMPLATE_CONTENT_FORMAT
     response_role: str = DEFAULT_RESPONSE_ROLE
     with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
     max_log_len: Optional[int] = DEFAULT_MAX_LOG_LEN
     prompt_adapters: Optional[str] = DEFAULT_PROMPT_ADAPTERS
     return_tokens_as_token_ids: bool = DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
+    enable_request_id_headers: bool = DEFAULT_ENABLE_REQUEST_ID_HEADERS
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
     tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
@@ -127,7 +132,6 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         task: TaskOption = default_args.task
         skip_tokenizer_init: bool = False
         tokenizer_mode: str = default_args.tokenizer_mode
-        chat_template_text_format: str = default_args.chat_template_text_format
         trust_remote_code: bool = False
 
         allowed_local_media_path: Optional[str] = default_args.allowed_local_media_path
@@ -144,14 +148,14 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
         max_parallel_loading_workers: Optional[int] = default_args.max_parallel_loading_workers
-        block_size: int = default_args.block_size
-        enable_prefix_caching: bool = False
+        block_size: Optional[int] = default_args.block_size
+        enable_prefix_caching: Optional[bool] = default_args.enable_prefix_caching
         disable_sliding_window: bool = False
         swap_space: float = default_args.swap_space # GiB
         cpu_offload_gb: float = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
-        max_num_seqs: int = default_args.max_num_seqs
+        max_num_seqs: Optional[int] = default_args.max_num_seqs
         disable_log_stats: bool = False
         revision: Optional[str] = default_args.revision
         code_revision: Optional[str] = default_args.code_revision
@@ -193,10 +197,12 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         tokenizer_pool_extra_config: Optional[Dict[str, Any]] = default_args.tokenizer_pool_extra_config
         limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
         mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
+        disable_mm_preprocessor_cache: bool = False
         scheduling_policy: Literal["fcfs", "priority"] = default_args.scheduling_policy
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
+        logits_processor_pattern: Optional[str] = default_args.logits_processor_pattern
         # Speculative decoding configuration.
         speculative_model: Optional[str] = default_args.speculative_model
         speculative_model_quantization: Optional[str] = default_args.speculative_model_quantization
@@ -215,6 +221,10 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         disable_async_output_proc: bool = False
         override_neuron_config: Optional[Dict[str, Any]] = default_args.override_neuron_config
         override_pooler_config: Optional[PoolerConfig] = default_args.override_pooler_config
+        compilation_config: Optional[CompilationConfig] = default_args.compilation_config
+        worker_cls: str = default_args.worker_cls
+        kv_transfer_config: Optional[KVTransferConfig] = default_args.kv_transfer_config
+        generation_config: Optional[str] = default_args.generation_config
 
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
@@ -315,6 +325,18 @@ def get_parser() -> FlexibleArgumentParser:
                         help="The file path to the chat template, "
                         "or the template in single-line form "
                         "for the specified model")
+    parser.add_argument(
+                        '--chat-template-content-format',
+                        type=str,
+                        default=application_settings.chat_template_content_format,
+                        choices=get_args(ChatTemplateContentFormatOption),
+                        help='The format to render message content within a chat template.'
+                        '\n\n'
+                        '* "string" will render the content as a string. '
+                        'Example: "Hello World"\n'
+                        '* "openai" will render the content as a list of dictionaries, '
+                        'similar to OpenAI schema. '
+                        'Example: [{"type": "text", "text": "Hello world!"}]')
     parser.add_argument("--response-role",
                         type=str,
                         default=application_settings.response_role,
@@ -348,6 +370,12 @@ def get_parser() -> FlexibleArgumentParser:
                         action=BooleanOptionalAction,
                         help="If specified, will run the OpenAI frontend server in the same "
                         "process as the model serving engine.")
+    parser.add_argument(
+                        "--enable-request-id-headers",
+                        default=application_settings.enable_request_id_headers,
+                        action=BooleanOptionalAction,
+                        help="If specified, API server will add X-Request-Id header to "
+                        "responses. Caution: this hurts performance at high QPS.")
     parser.add_argument("--enable-auto-tool-choice",
                         default=application_settings.enable_auto_tool_choice,
                         action=BooleanOptionalAction,

@@ -116,6 +116,7 @@ class Model:
                                                         prompt_adapters=args.prompt_adapters,
                                                         request_logger=request_logger,
                                                         chat_template=args.chat_template,
+                                                        chat_template_content_format=args.chat_template_content_format,
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids,
                                                         enable_auto_tools=args.enable_auto_tool_choice,
                                                         tool_parser=args.tool_call_parser,
@@ -128,7 +129,8 @@ class Model:
             self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
-                                                                        chat_template=args.chat_template)
+                                                                        chat_template=args.chat_template,
+                                                                        chat_template_content_format=args.chat_template_content_format)
 
         # For test purpose
         else:
