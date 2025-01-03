@@ -21,15 +21,16 @@ import torch
 
 from argparse import Namespace, BooleanOptionalAction
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal
+from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal, get_args
 
-from vllm.config import ConfigFormat
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
 from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
+from vllm.entrypoints.chat_utils import (ChatTemplateContentFormatOption)
 from vllm.entrypoints.openai.cli_args import LoRAParserAction, PromptAdapterParserAction
 from vllm.transformers_utils.tokenizer_group.base_tokenizer_group import BaseTokenizerGroup
+from vllm.config import (ConfigFormat, TaskOption, HfOverrides, PoolerConfig, CompilationConfig, KVTransferConfig)
 
 
 DEFAULT_MODEL_NAME = '?'
@@ -51,16 +52,19 @@ DEFAULT_SSL_CERT_REQS = int(ssl.CERT_NONE)
 DEFAULT_ROOT_PATH = None
 DEFAULT_LORA_MODULES = None
 DEFAULT_CHAT_TEMPLATE = None
+DEFAULT_CHAT_TEMPLATE_CONTENT_FORMAT = "auto"
 DEFAULT_RESPONSE_ROLE = "assistant"
 DEFAULT_WITH_LAUNCH_ARGUMENTS = False
 DEFAULT_MAX_LOG_LEN = None
 DEFAULT_PROMPT_ADAPTERS = None
 DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
+DEFAULT_ENABLE_REQUEST_ID_HEADERS = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
 DEFAULT_TOOL_CALL_PARSER = None
 DEFAULT_TOOL_PARSER_PLUGIN = ""
 DEFAULT_DISABLE_FASTAPI_DOCS = False
+DEFAULT_ENABLE_PROMPT_TOKENS_DETAILS = False
 
 class ApplicationSettings(BaseSettings):
     """Application settings
@@ -90,16 +94,19 @@ class ApplicationSettings(BaseSettings):
     api_endpoint_prefix: str = DEFAULT_API_ENDPOINT_PREFIX
     lora_modules: Optional[str] = DEFAULT_LORA_MODULES
     chat_template : Optional[str] = DEFAULT_CHAT_TEMPLATE
+    chat_template_content_format: str = DEFAULT_CHAT_TEMPLATE_CONTENT_FORMAT
     response_role: str = DEFAULT_RESPONSE_ROLE
     with_launch_arguments: bool = DEFAULT_WITH_LAUNCH_ARGUMENTS
     max_log_len: Optional[int] = DEFAULT_MAX_LOG_LEN
     prompt_adapters: Optional[str] = DEFAULT_PROMPT_ADAPTERS
     return_tokens_as_token_ids: bool = DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
+    enable_request_id_headers: bool = DEFAULT_ENABLE_REQUEST_ID_HEADERS
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
     tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
     disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
+    enable_prompt_tokens_details : Optional[bool] = DEFAULT_ENABLE_PROMPT_TOKENS_DETAILS
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -115,7 +122,6 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
     """
 
     default_args = parser.parse_args([])
-
     # Define ModelSettings with the default values of the args (which will be replaced)
     # by the environnement variables or those of the .env file
     class ModelSettings(BaseSettings):
@@ -123,9 +129,12 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         model_name: str = default_args.model_name
         served_model_name: Optional[Union[str, List[str]]] = None
         tokenizer: Optional[str] = default_args.tokenizer
+        task: TaskOption = default_args.task
         skip_tokenizer_init: bool = False
         tokenizer_mode: str = default_args.tokenizer_mode
         trust_remote_code: bool = False
+
+        allowed_local_media_path: Optional[str] = default_args.allowed_local_media_path
         download_dir: Optional[str] = default_args.download_dir
         load_format: str = default_args.load_format
         config_format: ConfigFormat = default_args.config_format
@@ -139,26 +148,27 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
         max_parallel_loading_workers: Optional[int] = default_args.max_parallel_loading_workers
-        block_size: int = default_args.block_size
-        enable_prefix_caching: bool = False
+        block_size: Optional[int] = default_args.block_size
+        enable_prefix_caching: Optional[bool] = default_args.enable_prefix_caching
         disable_sliding_window: bool = False
         swap_space: float = default_args.swap_space # GiB
         cpu_offload_gb: float = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
-        max_num_seqs: int = default_args.max_num_seqs
+        max_num_seqs: Optional[int] = default_args.max_num_seqs
         disable_log_stats: bool = False
         revision: Optional[str] = default_args.revision
         code_revision: Optional[str] = default_args.code_revision
-        rope_scaling: Optional[dict] = default_args.rope_scaling
+        rope_scaling: Optional[Dict[str, Any]] = default_args.rope_scaling
         rope_theta: Optional[float] = None
+        hf_overrides: Optional[HfOverrides] = default_args.hf_overrides
         tokenizer_revision: Optional[str] = default_args.tokenizer_revision
         quantization: Optional[str] = default_args.quantization
         enforce_eager: Optional[bool] = default_args.enforce_eager
-        max_context_len_to_capture: Optional[int] = default_args.max_context_len_to_capture
         max_seq_len_to_capture: int = default_args.max_seq_len_to_capture
         disable_custom_all_reduce: bool = False
         enable_lora: bool = False
+        enable_lora_bias: bool = False
         max_loras: int = default_args.max_loras
         max_lora_rank: int = default_args.max_lora_rank
         enable_prompt_adapter: bool = False
@@ -184,13 +194,15 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         max_logprobs: int = default_args.max_logprobs
         tokenizer_pool_size: int = default_args.tokenizer_pool_size
         tokenizer_pool_type: Union[str, BaseTokenizerGroup] = default_args.tokenizer_pool_type
-        tokenizer_pool_extra_config: Optional[str] = default_args.tokenizer_pool_extra_config
+        tokenizer_pool_extra_config: Optional[Dict[str, Any]] = default_args.tokenizer_pool_extra_config
         limit_mm_per_prompt: Optional[Mapping[str, int]] = default_args.limit_mm_per_prompt
         mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
+        disable_mm_preprocessor_cache: bool = False
         scheduling_policy: Literal["fcfs", "priority"] = default_args.scheduling_policy
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
+        logits_processor_pattern: Optional[str] = default_args.logits_processor_pattern
         # Speculative decoding configuration.
         speculative_model: Optional[str] = default_args.speculative_model
         speculative_model_quantization: Optional[str] = default_args.speculative_model_quantization
@@ -208,6 +220,11 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
         disable_async_output_proc: bool = False
         override_neuron_config: Optional[Dict[str, Any]] = default_args.override_neuron_config
+        override_pooler_config: Optional[PoolerConfig] = default_args.override_pooler_config
+        compilation_config: Optional[CompilationConfig] = default_args.compilation_config
+        worker_cls: str = default_args.worker_cls
+        kv_transfer_config: Optional[KVTransferConfig] = default_args.kv_transfer_config
+        generation_config: Optional[str] = default_args.generation_config
 
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
@@ -308,6 +325,18 @@ def get_parser() -> FlexibleArgumentParser:
                         help="The file path to the chat template, "
                         "or the template in single-line form "
                         "for the specified model")
+    parser.add_argument(
+                        '--chat-template-content-format',
+                        type=str,
+                        default=application_settings.chat_template_content_format,
+                        choices=get_args(ChatTemplateContentFormatOption),
+                        help='The format to render message content within a chat template.'
+                        '\n\n'
+                        '* "string" will render the content as a string. '
+                        'Example: "Hello World"\n'
+                        '* "openai" will render the content as a list of dictionaries, '
+                        'similar to OpenAI schema. '
+                        'Example: [{"type": "text", "text": "Hello world!"}]')
     parser.add_argument("--response-role",
                         type=str,
                         default=application_settings.response_role,
@@ -323,59 +352,61 @@ def get_parser() -> FlexibleArgumentParser:
                         help='Max number of prompt characters or prompt '
                         'ID numbers being printed in log.'
                         '\n\nDefault: Unlimited')
+    parser.add_argument("--prompt-adapters",
+                        type=nullable_str,
+                        default=application_settings.prompt_adapters,
+                        nargs='+',
+                        action=PromptAdapterParserAction,
+                        help="Prompt adapter configurations in the format name=path. "
+                        "Multiple adapters can be specified.")
+    parser.add_argument("--return-tokens-as-token-ids",
+                        default=application_settings.return_tokens_as_token_ids,
+                        action=BooleanOptionalAction,
+                        help="When --max-logprobs is specified, represents single tokens as "
+                        "strings of the form 'token_id:{token_id}' so that tokens that "
+                        "are not JSON-encodable can be identified.")
+    parser.add_argument("--disable-frontend-multiprocessing",
+                        default=application_settings.disable_frontend_multiprocessing,
+                        action=BooleanOptionalAction,
+                        help="If specified, will run the OpenAI frontend server in the same "
+                        "process as the model serving engine.")
     parser.add_argument(
-                "--prompt-adapters",
-                type=nullable_str,
-                default=application_settings.prompt_adapters,
-                nargs='+',
-                action=PromptAdapterParserAction,
-                help="Prompt adapter configurations in the format name=path. "
-                "Multiple adapters can be specified.")
-    parser.add_argument(
-        "--return-tokens-as-token-ids",
-        default=application_settings.return_tokens_as_token_ids,
-        action=BooleanOptionalAction,
-        help="When --max-logprobs is specified, represents single tokens as "
-        "strings of the form 'token_id:{token_id}' so that tokens that "
-        "are not JSON-encodable can be identified.")
-    parser.add_argument(
-        "--disable-frontend-multiprocessing",
-        default=application_settings.disable_frontend_multiprocessing,
-        action=BooleanOptionalAction,
-        help="If specified, will run the OpenAI frontend server in the same "
-        "process as the model serving engine.")
-    parser.add_argument(
-        "--enable-auto-tool-choice",
-        default=application_settings.enable_auto_tool_choice,
-        action=BooleanOptionalAction,
-        help=
-        "Enable auto tool choice for supported models. Use --tool-call-parser"
-        "to specify which parser to use")
+                        "--enable-request-id-headers",
+                        default=application_settings.enable_request_id_headers,
+                        action=BooleanOptionalAction,
+                        help="If specified, API server will add X-Request-Id header to "
+                        "responses. Caution: this hurts performance at high QPS.")
+    parser.add_argument("--enable-auto-tool-choice",
+                        default=application_settings.enable_auto_tool_choice,
+                        action=BooleanOptionalAction,
+                        help=
+                        "Enable auto tool choice for supported models. Use --tool-call-parser"
+                        "to specify which parser to use")
     valid_tool_parsers = ToolParserManager.tool_parsers.keys()
-    parser.add_argument(
-        "--tool-call-parser",
-        type=str,
-        metavar="{" + ",".join(valid_tool_parsers) + "} or name registered in "
-        "--tool-parser-plugin",
-        default=application_settings.tool_call_parser,
-        help=
-        "Select the tool call parser depending on the model that you're using."
-        " This is used to parse the model-generated tool call into OpenAI API "
-        "format. Required for --enable-auto-tool-choice.")
-    parser.add_argument(
-        "--tool-parser-plugin",
-        type=str,
-        default=application_settings.tool_parser_plugin,
-        help=
-        "Special the tool parser plugin write to parse the model-generated tool"
-        " into OpenAI API format, the name register in this plugin can be used "
-        "in --tool-call-parser.")
-    parser.add_argument(
-            "--disable-fastapi-docs",
-            action='store_true',
-            default=application_settings.disable_fastapi_docs,
-            help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint"
-    )
+    parser.add_argument("--tool-call-parser",
+                        type=str,
+                        metavar="{" + ",".join(valid_tool_parsers) + "} or name registered in "
+                        "--tool-parser-plugin",
+                        default=application_settings.tool_call_parser,
+                        help=
+                        "Select the tool call parser depending on the model that you're using."
+                        " This is used to parse the model-generated tool call into OpenAI API "
+                        "format. Required for --enable-auto-tool-choice.")
+    parser.add_argument("--tool-parser-plugin",
+                        type=str,
+                        default=application_settings.tool_parser_plugin,
+                        help=
+                        "Special the tool parser plugin write to parse the model-generated tool"
+                        " into OpenAI API format, the name register in this plugin can be used "
+                        "in --tool-call-parser.")
+    parser.add_argument("--disable-fastapi-docs",
+                        action='store_true',
+                        default=application_settings.disable_fastapi_docs,
+                        help="Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint")
+    parser.add_argument("--enable-prompt-tokens-details",
+                        action='store_true',
+                        default=application_settings.enable_prompt_tokens_details,
+                        help="If set to True, enable prompt_tokens_details in usage.")
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
