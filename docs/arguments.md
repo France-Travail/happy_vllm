@@ -36,12 +36,19 @@ Here is a list of arguments useful for the application (they all have default va
  - `root_path`: The FastAPI root path (default value is `None`)
  - `lora-modules`: LoRA module configurations in the format name=path
  - `chat-template`: The file path to the chat template, or the template in single-line form for the specified model (see [the documentation of vLLM](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#chat-template) for more details). Useful in the `/v1/chat/completions` endpoint
+ - `chat-template-content-format`: The format to render message content within a chat template. `string` will render the content as a string. 'Example: "Hello World"', `openai` will render the content as a list of dictionaries, similar to OpenAI schema. 'Example: [{"type": "text", "text": "Hello world!"}]' (default value is `auto`)
  - `response-role`: The role name to return if `request.add_generation_prompt=true`. Useful in the `/v1/chat/completions` endpoint
  - `with-launch-arguments`: Whether the route `/v1/launch_arguments` gives the launch arguments or an empty json (default value is `False`)
  - `return-tokens-as-token-ids`: "When `--max-logprobs`  is specified, represents single tokens as strings of the form 'token_id:{token_id}' so that tokens that are not JSON-encodable can be identified (default value is `False`)
+ - `max-log-len`: Max number of prompt characters or prompt ID numbers being printed in log (default value is unlimited)
+ - `prompt-adapters`: Prompt adapter configurations in the format name=path. Multiple adapters can be specified (default value is `None`)
  - `disable-frontend-multiprocessing`: If specified, will run the OpenAI frontend server in the same process as the model serving engine (default value is `False`)
+ - `enable-request-id-headers`: If specified, API server will add X-Request-Id header to responses. Caution: this hurts performance at high QPS (default value `False`)
  - `enable-auto-tool-choice`: Enable auto tool choice for supported models. Use --tool-call-parser" "to specify which parser to use" (default value is `False`)
  - `tool-call-parser`: Select the tool call parser depending on the model that you're using. This is used to parse the model-generated tool call. Required for --enable-auto-tool-choice. (default value is `None`, only `mistral` and `hermes` are allowed)
+ - `tool-parser-plugin`: Special the tool parser plugin write to parse the model-generated tool into OpenAI API format, the name register in this plugin can be used in --tool-call-parser (default value is `""`)
+ - `disable-fastapi-docs`: Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint (default value is `False`)
+ - `enable-prompt-tokens-details`: If set to True, enable prompt_tokens_details in usage (default value is `False`)
 
 ### Model arguments
 

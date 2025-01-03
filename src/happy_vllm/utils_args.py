@@ -325,8 +325,7 @@ def get_parser() -> FlexibleArgumentParser:
                         help="The file path to the chat template, "
                         "or the template in single-line form "
                         "for the specified model")
-    parser.add_argument(
-                        '--chat-template-content-format',
+    parser.add_argument('--chat-template-content-format',
                         type=str,
                         default=application_settings.chat_template_content_format,
                         choices=get_args(ChatTemplateContentFormatOption),
@@ -346,6 +345,12 @@ def get_parser() -> FlexibleArgumentParser:
                         type=bool,
                         default=application_settings.with_launch_arguments,
                         help="Whether the route launch_arguments should display the launch arguments")
+    parser.add_argument("--return-tokens-as-token-ids",
+                        default=application_settings.return_tokens_as_token_ids,
+                        action=BooleanOptionalAction,
+                        help="When --max-logprobs is specified, represents single tokens as "
+                        "strings of the form 'token_id:{token_id}' so that tokens that "
+                        "are not JSON-encodable can be identified.")
     parser.add_argument('--max-log-len',
                         type=int,
                         default=application_settings.max_log_len,
@@ -359,19 +364,12 @@ def get_parser() -> FlexibleArgumentParser:
                         action=PromptAdapterParserAction,
                         help="Prompt adapter configurations in the format name=path. "
                         "Multiple adapters can be specified.")
-    parser.add_argument("--return-tokens-as-token-ids",
-                        default=application_settings.return_tokens_as_token_ids,
-                        action=BooleanOptionalAction,
-                        help="When --max-logprobs is specified, represents single tokens as "
-                        "strings of the form 'token_id:{token_id}' so that tokens that "
-                        "are not JSON-encodable can be identified.")
     parser.add_argument("--disable-frontend-multiprocessing",
                         default=application_settings.disable_frontend_multiprocessing,
                         action=BooleanOptionalAction,
                         help="If specified, will run the OpenAI frontend server in the same "
                         "process as the model serving engine.")
-    parser.add_argument(
-                        "--enable-request-id-headers",
+    parser.add_argument("--enable-request-id-headers",
                         default=application_settings.enable_request_id_headers,
                         action=BooleanOptionalAction,
                         help="If specified, API server will add X-Request-Id header to "
