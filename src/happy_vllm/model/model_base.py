@@ -256,13 +256,13 @@ class MockOpenAIServingTokenization():
     def __init__(self, tokenizer):
         self.tokenizer=tokenizer
 
-    async def create_tokenize(self, request):
+    async def create_tokenize(self, request, raw_request):
         token = self.tokenizer(request.prompt, add_special_tokens=request.add_special_tokens)['input_ids']
         return TokenizeResponse(tokens=token,
                                 count=len(token),
                                 max_model_len=1)
 
-    async def create_detokenize(self, request):
+    async def create_detokenize(self, request, raw_request):
         decode = self.tokenizer.decode(request.tokens)
         return DetokenizeResponse(prompt=decode)
 
