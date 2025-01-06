@@ -22,10 +22,11 @@ from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 from vllm.sampling_params import SamplingParams
+from vllm.entrypoints.utils import with_cancellation
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
-from vllm.entrypoints.openai import protocol as vllm_protocol
 from typing import Annotated, AsyncGenerator, Tuple, List
+from vllm.entrypoints.openai import protocol as vllm_protocol
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
@@ -246,8 +247,10 @@ async def tokenizer(request: Request,
 
 
 @router.post("/v2/tokenizer", response_model=vllm_protocol.TokenizeResponse)
+@with_cancellation
 async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
-        Body(openapi_examples=request_openapi_examples["vllm_tokenizer"])]
+        Body(openapi_examples=request_openapi_examples["vllm_tokenizer"])],
+        raw_request: Request
     ):
     """Tokenizes a text
 
@@ -265,7 +268,7 @@ async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
     - add_generation_prompt : Add generation prompt's model in decode response (optional, default value : `true`)
     """
     model: Model = RESOURCES[RESOURCE_MODEL]
-    generator = await model.openai_serving_tokenization.create_tokenize(request)
+    generator = await model.openai_serving_tokenization.create_tokenize(request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
@@ -311,9 +314,11 @@ async def decode(request: Request,
 
 
 @router.post("/v2/decode", response_model=vllm_protocol.DetokenizeResponse)
+@with_cancellation
 async def decode_v2(request :Annotated[
         vllm_protocol.DetokenizeRequest,
-        Body(openapi_examples=request_openapi_examples["vllm_decode"])]
+        Body(openapi_examples=request_openapi_examples["vllm_decode"])],
+        raw_request: Request
     ):
     """Decodes token ids
 
@@ -322,7 +327,7 @@ async def decode_v2(request :Annotated[
     - model : ID of the model to use
     """
     model: Model = RESOURCES[RESOURCE_MODEL]
-    generator = await model.openai_serving_tokenization.create_detokenize(request)
+    generator = await model.openai_serving_tokenization.create_detokenize(request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
@@ -380,6 +385,7 @@ async def metadata_text(request: Request,
 
 
 @router.post("/v1/chat/completions", response_model=functional_schema.HappyvllmChatCompletionResponse)
+@with_cancellation
 async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Body(openapi_examples=request_openapi_examples["chat_completions"])],
                                  raw_request: Request):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
@@ -398,6 +404,7 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
 
 
 @router.post("/v1/completions", response_model=functional_schema.HappyvllmCompletionResponse)
+@with_cancellation
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
     """Open AI compatible completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details

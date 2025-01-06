@@ -18,6 +18,7 @@ import asyncio
 import uvicorn
 import argparse
 
+from vllm.utils import set_ulimit
 from vllm.entrypoints.launcher import serve_http 
 from vllm.engine.arg_utils import AsyncEngineArgs
 import vllm.entrypoints.openai.api_server as vllm_api_server
@@ -59,6 +60,8 @@ async def launch_app(args, **uvicorn_kwargs):
     # Bind socket
     sock_addr = (args.host or "", args.port)
     sock = vllm_api_server.create_server_socket(sock_addr)
+
+    set_ulimit()
 
     def signal_handler(*_) -> None:
         # Interrupt server on sigterm while initializing

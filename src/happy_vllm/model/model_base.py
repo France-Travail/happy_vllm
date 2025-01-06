@@ -28,6 +28,7 @@ from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.entrypoints.chat_utils import load_chat_template
 from vllm.engine.multiprocessing.client import MQLLMEngineClient
 from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
@@ -110,12 +111,15 @@ class Model:
                 BaseModelPath(name=name, model_path=args.model)
                 for name in served_model_names
             ]
+            resolved_chat_template = load_chat_template(args.chat_template)
+            logger.info("Using supplied chat template:\n%s", resolved_chat_template)
             self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                         args.response_role,
                                                         lora_modules=args.lora_modules,
                                                         prompt_adapters=args.prompt_adapters,
                                                         request_logger=request_logger,
-                                                        chat_template=args.chat_template,
+                                                        chat_template=resolved_chat_template,
+                                                        chat_template_content_format=args.chat_template_content_format,
                                                         return_tokens_as_token_ids=args.return_tokens_as_token_ids,
                                                         enable_auto_tools=args.enable_auto_tool_choice,
                                                         tool_parser=args.tool_call_parser,
@@ -128,7 +132,8 @@ class Model:
             self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
-                                                                        chat_template=args.chat_template)
+                                                                        chat_template=resolved_chat_template,
+                                                                        chat_template_content_format=args.chat_template_content_format)
 
         # For test purpose
         else:
@@ -251,13 +256,13 @@ class MockOpenAIServingTokenization():
     def __init__(self, tokenizer):
         self.tokenizer=tokenizer
 
-    async def create_tokenize(self, request):
+    async def create_tokenize(self, request, raw_request):
         token = self.tokenizer(request.prompt, add_special_tokens=request.add_special_tokens)['input_ids']
         return TokenizeResponse(tokens=token,
                                 count=len(token),
                                 max_model_len=1)
 
-    async def create_detokenize(self, request):
+    async def create_detokenize(self, request, raw_request):
         decode = self.tokenizer.decode(request.tokens)
         return DetokenizeResponse(prompt=decode)
 
