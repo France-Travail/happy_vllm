@@ -21,14 +21,19 @@ from vllm.utils import random_uuid
 from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
 from starlette.requests import Request
+from typing_extensions import assert_never
 from vllm.sampling_params import SamplingParams
 from vllm.entrypoints.utils import with_cancellation
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
-from typing import Annotated, AsyncGenerator, Tuple, List
 from vllm.entrypoints.openai import protocol as vllm_protocol
+from vllm.entrypoints.openai.serving_engine import OpenAIServing
+from typing import Annotated, AsyncGenerator, Tuple, List, Optional
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+from vllm.entrypoints.openai.serving_pooling import OpenAIServingPooling
 from starlette.responses import JSONResponse, Response, StreamingResponse
+from vllm.entrypoints.openai.serving_embedding import OpenAIServingEmbedding
+from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 
 from happy_vllm import utils
 from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
@@ -422,6 +427,67 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
         return JSONResponse(content=generator.model_dump())
 
 
+def embedding(request: Request) -> Optional[OpenAIServingEmbedding]:
+    return request.app.state.openai_serving_embedding
+
+
+def pooling(request: Request) -> Optional[OpenAIServingPooling]:
+    return request.app.state.openai_serving_pooling
+
+
+def tokenization(request: Request) -> OpenAIServingTokenization:
+    return request.app.state.openai_serving_tokenization
+
+
+def base(request: Request) -> OpenAIServing:
+    # Reuse the existing instance
+    return tokenization(request)
+
+
+@router.post("/v1/embeddings")
+@with_cancellation
+async def create_embedding(request: vllm_protocol.EmbeddingRequest, raw_request: Request):
+    handler = embedding(raw_request)
+    if handler is None:
+        fallback_handler = pooling(raw_request)
+        if fallback_handler is None:
+            return base(raw_request).create_error_response(
+                message="The model does not support Embeddings API")
+
+        logger.warning(
+            "Embeddings API will become exclusive to embedding models "
+            "in a future release. To return the hidden states directly, "
+            "use the Pooling API (`/pooling`) instead.")
+
+        res = await fallback_handler.create_pooling(request, raw_request)
+        if isinstance(res, vllm_protocol.PoolingResponse):
+            generator = vllm_protocol.EmbeddingResponse(
+                id=res.id,
+                object=res.object,
+                created=res.created,
+                model=res.model,
+                data=[
+                    vllm_protocol.EmbeddingResponseData(
+                        index=d.index,
+                        embedding=d.data,  # type: ignore
+                    ) for d in res.data
+                ],
+                usage=res.usage,
+            )
+        else:
+            generator = res
+    else:
+        generator = await handler.create_embedding(request, raw_request)
+
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+    elif isinstance(generator, vllm_protocol.EmbeddingResponse):
+        return JSONResponse(content=generator.model_dump())
+
+    assert_never(generator)
+
+
 @router.post("/v1/abort_request")
 async def abort_request(request: functional_schema.RequestAbortRequest):
     model: Model = RESOURCES[RESOURCE_MODEL]
@@ -459,3 +525,6 @@ if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
                                 status_code=response.code)
 
         return Response(status_code=200, content=response)
+
+
+    
