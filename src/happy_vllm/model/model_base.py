@@ -32,6 +32,7 @@ from vllm.entrypoints.chat_utils import load_chat_template
 from vllm.engine.multiprocessing.client import MQLLMEngineClient
 from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from vllm.entrypoints.openai.serving_embedding import OpenAIServingEmbedding
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
@@ -129,11 +130,17 @@ class Model:
                                                                     prompt_adapters=args.prompt_adapters,
                                                                     request_logger=request_logger,
                                                                     return_tokens_as_token_ids=args.return_tokens_as_token_ids)
-            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
+            self.openai_serving_tokenization = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
                                                                         chat_template=resolved_chat_template,
                                                                         chat_template_content_format=args.chat_template_content_format)
+            self.openai_serving_embedding = OpenAIServingEmbedding(cast(AsyncLLMEngine,self._model),
+        model_config,
+        base_model_paths,
+        request_logger=request_logger,
+        chat_template=resolved_chat_template,
+        chat_template_content_format=args.chat_template_content_format)
 
         # For test purpose
         else:

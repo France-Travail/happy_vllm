@@ -427,57 +427,11 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
         return JSONResponse(content=generator.model_dump())
 
 
-def embedding(request: Request) -> Optional[OpenAIServingEmbedding]:
-    return request.app.state.openai_serving_embedding
-
-
-def pooling(request: Request) -> Optional[OpenAIServingPooling]:
-    return request.app.state.openai_serving_pooling
-
-
-def tokenization(request: Request) -> OpenAIServingTokenization:
-    return request.app.state.openai_serving_tokenization
-
-
-def base(request: Request) -> OpenAIServing:
-    # Reuse the existing instance
-    return tokenization(request)
-
-
 @router.post("/v1/embeddings")
 @with_cancellation
 async def create_embedding(request: vllm_protocol.EmbeddingRequest, raw_request: Request):
-    handler = embedding(raw_request)
-    if handler is None:
-        fallback_handler = pooling(raw_request)
-        if fallback_handler is None:
-            return base(raw_request).create_error_response(
-                message="The model does not support Embeddings API")
-
-        logger.warning(
-            "Embeddings API will become exclusive to embedding models "
-            "in a future release. To return the hidden states directly, "
-            "use the Pooling API (`/pooling`) instead.")
-
-        res = await fallback_handler.create_pooling(request, raw_request)
-        if isinstance(res, vllm_protocol.PoolingResponse):
-            generator = vllm_protocol.EmbeddingResponse(
-                id=res.id,
-                object=res.object,
-                created=res.created,
-                model=res.model,
-                data=[
-                    vllm_protocol.EmbeddingResponseData(
-                        index=d.index,
-                        embedding=d.data,  # type: ignore
-                    ) for d in res.data
-                ],
-                usage=res.usage,
-            )
-        else:
-            generator = res
-    else:
-        generator = await handler.create_embedding(request, raw_request)
+    model: Model = RESOURCES[RESOURCE_MODEL]
+    generator = await model.openai_serving_embedding.create_embedding(request, raw_request)
 
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
