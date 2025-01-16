@@ -28,10 +28,10 @@ from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
 from vllm.entrypoints.openai import protocol as vllm_protocol
 from vllm.entrypoints.openai.serving_engine import OpenAIServing
-from typing import Annotated, AsyncGenerator, Tuple, List, Optional
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from vllm.entrypoints.openai.serving_pooling import OpenAIServingPooling
 from starlette.responses import JSONResponse, Response, StreamingResponse
+from typing import Annotated, AsyncGenerator, Tuple, List, Optional, Union
 from vllm.entrypoints.openai.serving_embedding import OpenAIServingEmbedding
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 
@@ -126,6 +126,10 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
             if min_tokens > 0 and len(reponse_pool):
                 raise ValueError(f"min_tokens : {min_tokens} is incompatible with the `response_pool` keyword")
     return prompt, prompt_in_response, sampling_params
+
+
+def base(request: Request, model: Model) -> OpenAIServing:
+    return model.openai_serving_tokenization
 
 
 @router.post("/v1/generate", response_model=functional_schema.ResponseGenerate)
@@ -389,14 +393,19 @@ async def metadata_text(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/v1/chat/completions", response_model=functional_schema.HappyvllmChatCompletionResponse)
+@router.post("/v1/chat/completions", response_model=Union[vllm_protocol.ErrorResponse, 
+                                                          functional_schema.HappyvllmChatCompletionResponse])
 @with_cancellation
 async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Body(openapi_examples=request_openapi_examples["chat_completions"])],
                                  raw_request: Request):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
     """
     model: Model = RESOURCES[RESOURCE_MODEL]
-    generator = await model.openai_serving_chat.create_chat_completion(
+    handler = model.openai_serving_chat
+    if handler is None:
+        return base(raw_request, model).create_error_response(
+            message="The model does not support Chat Completions API")
+    generator = await handler.create_chat_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
@@ -408,14 +417,19 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
         return JSONResponse(content=generator.model_dump()) # type: ignore
 
 
-@router.post("/v1/completions", response_model=functional_schema.HappyvllmCompletionResponse)
+@router.post("/v1/completions", response_model=Union[vllm_protocol.ErrorResponse, 
+                                                     functional_schema.HappyvllmCompletionResponse])
 @with_cancellation
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
     """Open AI compatible completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
     """
     model: Model = RESOURCES[RESOURCE_MODEL]
-    generator = await model.openai_serving_completion.create_completion(
+    handler = model.openai_serving_completion
+    if handler is None:
+        return base(raw_request, model).create_error_response(
+            message="The model does not support Completions API")
+    generator = await handler.create_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
@@ -427,11 +441,15 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
         return JSONResponse(content=generator.model_dump())
 
 
-@router.post("/v1/embeddings")
+@router.post("/v1/embeddings", response_model=Union[vllm_protocol.ErrorResponse, vllm_protocol.EmbeddingResponse])
 @with_cancellation
 async def create_embedding(request: vllm_protocol.EmbeddingRequest, raw_request: Request):
     model: Model = RESOURCES[RESOURCE_MODEL]
-    generator = await model.openai_serving_embedding.create_embedding(request, raw_request)
+    handler = model.openai_serving_embedding
+    if handler is None:
+        return base(raw_request, model).create_error_response(
+                message="The model does not support Embeddings API")
+    generator = await handler.create_embedding(request, raw_request)
 
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
