@@ -70,6 +70,11 @@ Used to know which part of a prompt will be truncated (more details [here](data_
 
 Splits a text on some separators, for example to prepare for some RAG (more details [here](data_manipulation.md))
 
+## Embeddings endpoint
+
+### /v1/embeddings
+Used to obtain the embeddings of a text (more details [here](embeddings.md))
+
 ## Lora endpoints
 
 ### /v1/load_lora_adapter (POST)
