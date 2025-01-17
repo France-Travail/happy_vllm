@@ -422,12 +422,16 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
 async def get_perplexity(request: Request):
     model: Model = RESOURCES[RESOURCE_MODEL]
     request_dict = await request.json()
+    handler = model.openai_serving_chat
+    if handler is None:
+        return base(raw_request, model).create_error_response(
+            message="The model does not support Chat Completions API")
     new_request = vllm_protocol.ChatCompletionRequest(model=request_dict.get("model", model._model_conf["model_name"]),
                                                       messages=[{"role": "user", "content": request_dict["text"]}],
                                                       temperature=0,
                                                       max_tokens=1,
                                                       prompt_logprobs=0)
-    response = await create_chat_completion(new_request, None)
+    response = await create_chat_completion(new_request, request)
     response = json.loads(response.body)
     prompt_logprobs = []
     for prompt_logprob in response["prompt_logprobs"]:
