@@ -28,9 +28,11 @@ from transformers import AutoTokenizer
 from typing import Any, Tuple, Union, List, cast
 from vllm.entrypoints.logger import RequestLogger
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+from vllm.entrypoints.chat_utils import load_chat_template
 from vllm.engine.multiprocessing.client import MQLLMEngineClient
 from vllm.entrypoints.openai.serving_engine import BaseModelPath
 from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
+from vllm.entrypoints.openai.serving_embedding import OpenAIServingEmbedding
 from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
@@ -54,6 +56,7 @@ class Model:
         self._model_conf = None
         self._model_explainer = None
         self.openai_serving_chat = None
+        self.openai_serving_embedding = None
         self.openai_serving_completion = None
         self.openai_serving_tokenization = None
         self._loaded = False
@@ -110,26 +113,36 @@ class Model:
                 BaseModelPath(name=name, model_path=args.model)
                 for name in served_model_names
             ]
-            self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
-                                                        args.response_role,
-                                                        lora_modules=args.lora_modules,
-                                                        prompt_adapters=args.prompt_adapters,
-                                                        request_logger=request_logger,
-                                                        chat_template=args.chat_template,
-                                                        chat_template_content_format=args.chat_template_content_format,
-                                                        return_tokens_as_token_ids=args.return_tokens_as_token_ids,
-                                                        enable_auto_tools=args.enable_auto_tool_choice,
-                                                        tool_parser=args.tool_call_parser,
-                                                        enable_prompt_tokens_details=args.enable_prompt_tokens_details)
-            self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncLLMEngine,self._model), model_config, base_model_paths, 
-                                                                    lora_modules=args.lora_modules,
-                                                                    prompt_adapters=args.prompt_adapters,
-                                                                    request_logger=request_logger,
-                                                                    return_tokens_as_token_ids=args.return_tokens_as_token_ids)
-            self.openai_serving_tokenization  = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
+            resolved_chat_template = load_chat_template(args.chat_template)
+            logger.info("Using supplied chat template:\n%s", resolved_chat_template)
+            if model_config.task == "generate":
+                self.openai_serving_chat = OpenAIServingChat(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
+                                                            args.response_role,
+                                                            lora_modules=args.lora_modules,
+                                                            prompt_adapters=args.prompt_adapters,
+                                                            request_logger=request_logger,
+                                                            chat_template=resolved_chat_template,
+                                                            chat_template_content_format=args.chat_template_content_format,
+                                                            return_tokens_as_token_ids=args.return_tokens_as_token_ids,
+                                                            enable_auto_tools=args.enable_auto_tool_choice,
+                                                            tool_parser=args.tool_call_parser,
+                                                            enable_prompt_tokens_details=args.enable_prompt_tokens_details)
+                self.openai_serving_completion = OpenAIServingCompletion(cast(AsyncLLMEngine,self._model), model_config, base_model_paths, 
+                                                                        lora_modules=args.lora_modules,
+                                                                        prompt_adapters=args.prompt_adapters,
+                                                                        request_logger=request_logger,
+                                                                        return_tokens_as_token_ids=args.return_tokens_as_token_ids)
+            if model_config.task == "embed":
+                self.openai_serving_embedding = OpenAIServingEmbedding(cast(AsyncLLMEngine,self._model),
+                                                                        model_config,
+                                                                        base_model_paths,
+                                                                        request_logger=request_logger,
+                                                                        chat_template=resolved_chat_template,
+                                                                        chat_template_content_format=args.chat_template_content_format)
+            self.openai_serving_tokenization = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, base_model_paths,
                                                                         lora_modules=args.lora_modules,
                                                                         request_logger=request_logger,
-                                                                        chat_template=args.chat_template,
+                                                                        chat_template=resolved_chat_template,
                                                                         chat_template_content_format=args.chat_template_content_format)
 
         # For test purpose
@@ -253,13 +266,13 @@ class MockOpenAIServingTokenization():
     def __init__(self, tokenizer):
         self.tokenizer=tokenizer
 
-    async def create_tokenize(self, request):
+    async def create_tokenize(self, request, raw_request):
         token = self.tokenizer(request.prompt, add_special_tokens=request.add_special_tokens)['input_ids']
         return TokenizeResponse(tokens=token,
                                 count=len(token),
                                 max_model_len=1)
 
-    async def create_detokenize(self, request):
+    async def create_detokenize(self, request, raw_request):
         decode = self.tokenizer.decode(request.tokens)
         return DetokenizeResponse(prompt=decode)
 
