@@ -1,5 +1,5 @@
-vllm==0.6.6.post1
-fastapi==0.115.6
+vllm==0.7.0
+fastapi==0.115.7
 pydantic-settings==2.7.1
 uvicorn[standard]==0.34.0
 prometheus_client==0.21.1
