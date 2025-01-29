@@ -140,10 +140,8 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         config_format: ConfigFormat = default_args.config_format
         dtype: str = default_args.dtype
         kv_cache_dtype: str = default_args.kv_cache_dtype
-        quantization_param_path: Optional[str] = default_args.quantization_param_path
         seed: int = default_args.seed
         max_model_len: Optional[int] = default_args.max_model_len
-        worker_use_ray: bool = False
         distributed_executor_backend: Optional[Union[str, ExecutorBase]] = default_args.distributed_executor_backend
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
@@ -225,7 +223,9 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         worker_cls: str = default_args.worker_cls
         kv_transfer_config: Optional[KVTransferConfig] = default_args.kv_transfer_config
         generation_config: Optional[str] = default_args.generation_config
+        enable_sleep_mode: bool = False
 
+        calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
 
