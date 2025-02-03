@@ -41,6 +41,14 @@ RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
      && install_packages python3.11 \
      && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
+# Upgrade to GCC 10 to avoid https://gcc.gnu.org/bugzilla/show_bug.cgi?id=92519
+# as it was causing spam when compiling the CUTLASS kernels
+RUN apt-get install -y gcc-10 g++-10
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 110 --slave /usr/bin/g++ g++ /usr/bin/g++-10
+RUN <<EOF
+gcc --version
+EOF
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:${PATH}" \
