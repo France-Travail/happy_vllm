@@ -45,7 +45,9 @@ Here is a list of arguments useful for the application (they all have default va
  - `disable-frontend-multiprocessing`: If specified, will run the OpenAI frontend server in the same process as the model serving engine (default value is `False`)
  - `enable-request-id-headers`: If specified, API server will add X-Request-Id header to responses. Caution: this hurts performance at high QPS (default value `False`)
  - `enable-auto-tool-choice`: Enable auto tool choice for supported models. Use --tool-call-parser" "to specify which parser to use" (default value is `False`)
+ - `enable-reasoning`: Whether to enable reasoning_content for the model. If enabled, the model will be able to generate reasoning content.
  - `tool-call-parser`: Select the tool call parser depending on the model that you're using. This is used to parse the model-generated tool call. Required for --enable-auto-tool-choice. (default value is `None`, only `mistral` and `hermes` are allowed)
+ - `reasoning-parser`: Select the reasoning parser depending on the model that you're using. This is used to parse the reasoning content into OpenAI API format. Required for ``--enable-reasoning``.
  - `tool-parser-plugin`: Special the tool parser plugin write to parse the model-generated tool into OpenAI API format, the name register in this plugin can be used in --tool-call-parser (default value is `""`)
  - `disable-fastapi-docs`: Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint (default value is `False`)
  - `enable-prompt-tokens-details`: If set to True, enable prompt_tokens_details in usage (default value is `False`)

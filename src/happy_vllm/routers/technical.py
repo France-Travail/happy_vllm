@@ -87,7 +87,7 @@ async def show_available_models():
         model: Model = RESOURCES[RESOURCE_MODEL]
     except KeyError:
         raise KeyError(f"Key : {RESOURCE_MODEL} not found")
-    models = await model.openai_serving_completion.show_available_models()
+    models = await model.openai_serving_models.show_available_models()
     return JSONResponse(content=models.model_dump())
 
 

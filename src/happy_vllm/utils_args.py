@@ -28,6 +28,7 @@ from vllm.executor.executor_base import ExecutorBase
 from vllm.engine.arg_utils import AsyncEngineArgs, nullable_str
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.entrypoints.chat_utils import (ChatTemplateContentFormatOption)
+from vllm.entrypoints.openai.reasoning_parsers import ReasoningParserManager
 from vllm.entrypoints.openai.cli_args import LoRAParserAction, PromptAdapterParserAction
 from vllm.transformers_utils.tokenizer_group.base_tokenizer_group import BaseTokenizerGroup
 from vllm.config import (ConfigFormat, TaskOption, HfOverrides, PoolerConfig, CompilationConfig, KVTransferConfig)
@@ -61,6 +62,8 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_REQUEST_ID_HEADERS = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
+DEFAULT_ENABLE_REASONING = False
+DEFAULT_REASONING_PARSER = None
 DEFAULT_TOOL_CALL_PARSER = None
 DEFAULT_TOOL_PARSER_PLUGIN = ""
 DEFAULT_DISABLE_FASTAPI_DOCS = False
@@ -103,6 +106,8 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_request_id_headers: bool = DEFAULT_ENABLE_REQUEST_ID_HEADERS
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
+    enable_reasoning: bool = DEFAULT_ENABLE_REASONING
+    reasoning_parser: Optional[str] = DEFAULT_REASONING_PARSER
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
     tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
     disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
@@ -223,6 +228,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         worker_cls: str = default_args.worker_cls
         kv_transfer_config: Optional[KVTransferConfig] = default_args.kv_transfer_config
         generation_config: Optional[str] = default_args.generation_config
+        override_generation_config: Optional[Dict[str, Any]] = default_args.generation_config
         enable_sleep_mode: bool = False
 
         calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
@@ -380,6 +386,19 @@ def get_parser() -> FlexibleArgumentParser:
                         help=
                         "Enable auto tool choice for supported models. Use --tool-call-parser"
                         "to specify which parser to use")
+    parser.add_argument("--enable-reasoning",
+                        action="store_true",
+                        default=application_settings.enable_reasoning,
+                        help="Whether to enable reasoning_content for the model. "
+                        "If enabled, the model will be able to generate reasoning content.")
+    valid_reasoning_parsers = ReasoningParserManager.reasoning_parsers.keys()
+    parser.add_argument("--reasoning-parser",
+                        type=str,
+                        metavar="{" + ",".join(valid_reasoning_parsers) + "}",
+                        default=application_settings.reasoning_parser,
+                        help="Select the reasoning parser depending on the model that you're using."
+                        " This is used to parse the reasoning content into OpenAI API "
+                        "format. Required for ``--enable-reasoning``.")
     valid_tool_parsers = ToolParserManager.tool_parsers.keys()
     parser.add_argument("--tool-call-parser",
                         type=str,

@@ -24,6 +24,7 @@ from vllm.engine.arg_utils import AsyncEngineArgs
 import vllm.entrypoints.openai.api_server as vllm_api_server
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.entrypoints.openai.cli_args import validate_parsed_serve_args
+from vllm.entrypoints.openai.reasoning_parsers import ReasoningParserManager
 
 from happy_vllm.utils_args import parse_args
 from happy_vllm.engine.mp_engine import run_mp_engine
@@ -56,6 +57,12 @@ async def launch_app(args, **uvicorn_kwargs):
         and args.tool_call_parser not in valide_tool_parses:
         raise KeyError(f"invalid tool call parser: {args.tool_call_parser} "
                        f"(chose from {{ {','.join(valide_tool_parses)} }})")
+    valid_reasoning_parses = ReasoningParserManager.reasoning_parsers.keys()
+    if args.enable_reasoning \
+        and args.reasoning_parser not in valid_reasoning_parses:
+        raise KeyError(
+            f"invalid reasoning parser: {args.reasoning_parser} "
+            f"(chose from {{ {','.join(valid_reasoning_parses)} }})")
 
     # Bind socket
     sock_addr = (args.host or "", args.port)
