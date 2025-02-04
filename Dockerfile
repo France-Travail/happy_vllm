@@ -10,8 +10,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN install_packages software-properties-common
 
 RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
-     && install_packages python3.11 python3.11-dev python3.11-venv python3-pip \
-     && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+     && install_packages python3.11 python3.11-dev python3.11-venv python3-pip gcc-10 g++-10\
+     && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1\
+     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 110 --slave /usr/bin/g++ g++ /usr/bin/g++-10
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -38,8 +39,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN install_packages software-properties-common
 
 RUN add-apt-repository -d -y 'ppa:deadsnakes/ppa' \
-     && install_packages python3.11 \
-     && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+     && install_packages python3.11 python3.11-dev python3.11-venv python3-pip gcc-10 g++-10\
+     && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1\
+     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 110 --slave /usr/bin/g++ g++ /usr/bin/g++-10
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
