@@ -18,11 +18,11 @@ import os
 import json
 import vllm.envs as envs
 from vllm.utils import random_uuid
-from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 from typing_extensions import assert_never
 from vllm.sampling_params import SamplingParams
+from fastapi import APIRouter, Body, HTTPException
 from vllm.entrypoints.utils import with_cancellation
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
@@ -126,6 +126,34 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
             if min_tokens > 0 and len(reponse_pool):
                 raise ValueError(f"min_tokens : {min_tokens} is incompatible with the `response_pool` keyword")
     return prompt, prompt_in_response, sampling_params
+
+
+def verify_request(request: Request, model: Model) -> None:
+    status_code = 422
+    detail = None
+    if request.echo and request.stream:
+        detail="Use both echo and stream breaks backend"
+    if request.temperature and request.top_p:
+        if request.temperature == 0 and request.top_p == 0:
+            detail=f"Use temperature: {request.temperature} and top_p : {request.top_p} breaks the model"
+    if request.temperature and request.top_k:
+        if request.temperature > 2 and request.top_k == 1:
+            detail=f"Use temperature with high value: {request.temperature} and top_k equals to 1 : {request.top_k} breaks the model"
+    if request.top_p and request.top_k:
+        if request.top_p == 1 and request.top_k == 1:
+            detail=f"Use top_p equals to 1: {request.top_p} and top_k equals to 1 : {request.top_k} breaks the model"
+    if request.max_tokens and request.min_tokens:
+        if request.max_tokens <= request.min_tokens:
+            detail=f"Use max_tokens: {request.max_tokens} less than min_tokens : {request.min_tokens} breaks the model"
+    if request.echo and (request.top_k or request.top_p or request.min_p):
+        detail=f"Use echo with top_k or top_p or min_p breaks backend"
+    if request.prompt_logprobs and (request.top_k or request.top_p or request.min_p):
+        detail=f"Use prompt_logprobs with top_k or top_p or min_p breaks backend"
+    if detail :
+        raise HTTPException(
+            status_code=status_code, 
+            detail=detail
+        )
 
 
 def base(request: Request, model: Model) -> OpenAIServing:
@@ -403,8 +431,11 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
     model: Model = RESOURCES[RESOURCE_MODEL]
     handler = model.openai_serving_chat
     if handler is None:
-        return base(raw_request, model).create_error_response(
-            message="The model does not support Chat Completions API")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"The model does not support Chat Completions API"
+        )
+    verify_request(request, model)
     generator = await handler.create_chat_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
@@ -429,6 +460,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
     if handler is None:
         return base(raw_request, model).create_error_response(
             message="The model does not support Completions API")
+    verify_request(request, model)
     generator = await handler.create_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
