@@ -128,26 +128,26 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
     return prompt, prompt_in_response, sampling_params
 
 
-def verify_request(request: Request, model: Model) -> None:
+def verify_request(request: Request) -> None:
     status_code = 422
     detail = None
     if request.echo and request.stream:
         detail="Use both echo and stream breaks backend"
-    if request.temperature and request.top_p:
+    if request.temperature is not None and request.top_p is not None:
         if request.temperature == 0 and request.top_p == 0:
-            detail=f"Use temperature: {request.temperature} and top_p : {request.top_p} breaks the model"
+            detail=f"Use temperature and top_p equal to 0 breaks the model"
     if request.temperature and request.top_k:
         if request.temperature > 2 and request.top_k == 1:
             detail=f"Use temperature with high value: {request.temperature} and top_k equals to 1 : {request.top_k} breaks the model"
     if request.top_p and request.top_k:
         if request.top_p == 1 and request.top_k == 1:
-            detail=f"Use top_p equals to 1: {request.top_p} and top_k equals to 1 : {request.top_k} breaks the model"
+            detail=f"Use top_p and top_k equal to 1 breaks the model"
     if request.max_tokens and request.min_tokens:
         if request.max_tokens <= request.min_tokens:
             detail=f"Use max_tokens: {request.max_tokens} less than min_tokens : {request.min_tokens} breaks the model"
-    if request.echo and (request.top_k or request.top_p or request.min_p):
+    if request.echo and (request.top_k is not None or request.top_p is not None or request.min_p is not None):
         detail=f"Use echo with top_k or top_p or min_p breaks backend"
-    if request.prompt_logprobs and (request.top_k or request.top_p or request.min_p):
+    if request.prompt_logprobs and (request.top_k is not None or request.top_p is not None or request.min_p is not None):
         detail=f"Use prompt_logprobs with top_k or top_p or min_p breaks backend"
     if detail :
         raise HTTPException(
@@ -435,7 +435,7 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
             status_code=400, 
             detail=f"The model does not support Chat Completions API"
         )
-    verify_request(request, model)
+    verify_request(request)
     generator = await handler.create_chat_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
@@ -460,7 +460,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
     if handler is None:
         return base(raw_request, model).create_error_response(
             message="The model does not support Completions API")
-    verify_request(request, model)
+    verify_request(request)
     generator = await handler.create_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
