@@ -128,7 +128,7 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
     return prompt, prompt_in_response, sampling_params
 
 
-def verify_request(request: Request) -> None:
+def verify_request(request: vllm_protocol.OpenAIBaseModel) -> None:
     status_code = 422
     detail = None
     if request.echo and request.stream:
