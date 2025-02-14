@@ -190,7 +190,7 @@ def test_verify_request():
         functional.verify_request(request)
     assert error.value.detail == "Use both echo and stream breaks backend"
 
-    # With HTTPException temperature and top_p equalts to 0
+    # With HTTPException temperature and top_p equals to 0
     request = vllm_protocol.ChatCompletionRequest(
         messages=[{"role":"user", "content": "How are you ?"}],
         model="my_model",
