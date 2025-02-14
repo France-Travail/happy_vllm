@@ -197,7 +197,6 @@ def test_verify_request():
         temperature=0,
         top_p=0
     )
-    print(request)
     with pytest.raises(HTTPException) as error:
         functional.verify_request(request)
     assert error.value.detail == "Use temperature and top_p equal to 0 breaks the model"
