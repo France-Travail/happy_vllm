@@ -131,6 +131,13 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
 def verify_request(request: Union[
     vllm_protocol.ChatCompletionRequest,
     vllm_protocol.CompletionRequest]) -> None:
+    """Parses the sampling parameters to check if any combination will break the app
+
+    Args:
+        request  (Union[ChatCompletionRequest, CompletionRequest]): The request to verify
+    Returns:
+        None
+    """
     status_code = 422
     detail = None
     if request.echo and request.stream:
@@ -156,6 +163,25 @@ def verify_request(request: Union[
             status_code=status_code, 
             detail=detail
         )
+
+
+def check_generator(generator: Union[
+    vllm_protocol.ChatCompletionResponse, 
+    vllm_protocol.CompletionResponse
+    ]) -> None:
+    """Parses the LLM response to check if prompt_logprobs and fix '-inf' value
+
+    Args:
+        request  (Union[ChatCompletionResponse, CompletionResponse]): The request to verify
+    Returns:
+        None
+    """
+    if hasattr(generator, "prompt_logprobs"):
+            for logprob_dict in generator.prompt_logprobs:
+                    if logprob_dict:
+                        for logprob_values in logprob_dict.values():
+                            if logprob_values.logprob == float('-inf'):
+                                logprob_values.logprob = -9999.0
 
 
 def base(request: Request, model: Model) -> OpenAIServing:
@@ -443,6 +469,7 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
+    check_generator(generator)
     if request.stream:
         return StreamingResponse(content=generator, # type: ignore
                                  media_type="text/event-stream")
@@ -468,6 +495,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
+    check_generator(generator)
     if request.stream:
         return StreamingResponse(content=generator,
                                  media_type="text/event-stream")
