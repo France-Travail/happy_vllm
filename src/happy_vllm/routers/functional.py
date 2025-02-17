@@ -154,10 +154,6 @@ def verify_request(request: Union[
     if request.max_tokens and request.min_tokens:
         if request.max_tokens <= request.min_tokens:
             detail=f"Use max_tokens: {request.max_tokens} less than min_tokens : {request.min_tokens} breaks the model"
-    if request.echo and (request.top_k is not None or request.top_p is not None or request.min_p is not None):
-        detail=f"Use echo with top_k or top_p or min_p breaks backend"
-    if request.prompt_logprobs and (request.top_k is not None or request.top_p is not None or request.min_p is not None):
-        detail=f"Use prompt_logprobs with top_k or top_p or min_p breaks backend"
     if detail :
         raise HTTPException(
             status_code=status_code, 
@@ -177,6 +173,7 @@ def check_generator(generator: Union[
         None
     """
     if hasattr(generator, "prompt_logprobs"):
+        if generator.prompt_logprobs:
             for logprob_dict in generator.prompt_logprobs:
                     if logprob_dict:
                         for logprob_values in logprob_dict.values():
