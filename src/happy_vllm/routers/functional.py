@@ -18,11 +18,11 @@ import os
 import json
 import vllm.envs as envs
 from vllm.utils import random_uuid
-from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
 from starlette.requests import Request
 from typing_extensions import assert_never
 from vllm.sampling_params import SamplingParams
+from fastapi import APIRouter, Body, HTTPException
 from vllm.entrypoints.utils import with_cancellation
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
@@ -126,6 +126,59 @@ def parse_generate_parameters(request_dict: dict, model: AsyncLLMEngine, tokeniz
             if min_tokens > 0 and len(reponse_pool):
                 raise ValueError(f"min_tokens : {min_tokens} is incompatible with the `response_pool` keyword")
     return prompt, prompt_in_response, sampling_params
+
+
+def verify_request(request: Union[
+    vllm_protocol.ChatCompletionRequest,
+    vllm_protocol.CompletionRequest]) -> None:
+    """Parses the sampling parameters to check if any combination will break the app
+
+    Args:
+        request  (Union[ChatCompletionRequest, CompletionRequest]): The request to verify
+    Returns:
+        None
+    """
+    status_code = 422
+    detail = None
+    if request.echo and request.stream:
+        detail="Use both echo and stream breaks backend"
+    if request.temperature is not None and request.top_p is not None:
+        if request.temperature == 0 and request.top_p == 0:
+            detail=f"Use temperature and top_p equal to 0 breaks the model"
+    if request.temperature and request.top_k:
+        if request.temperature > 2 and request.top_k == 1:
+            detail=f"Use temperature with high value: {request.temperature} and top_k equals to 1 : {request.top_k} breaks the model"
+    if request.top_p and request.top_k:
+        if request.top_p == 1 and request.top_k == 1:
+            detail=f"Use top_p and top_k equal to 1 breaks the model"
+    if request.max_tokens and request.min_tokens:
+        if request.max_tokens <= request.min_tokens:
+            detail=f"Use max_tokens: {request.max_tokens} less than min_tokens : {request.min_tokens} breaks the model"
+    if detail :
+        raise HTTPException(
+            status_code=status_code, 
+            detail=detail
+        )
+
+
+def check_generator(generator: Union[
+    vllm_protocol.ChatCompletionResponse, 
+    vllm_protocol.CompletionResponse
+    ]) -> None:
+    """Parses the LLM response to check if prompt_logprobs and fix '-inf' value
+
+    Args:
+        request  (Union[ChatCompletionResponse, CompletionResponse]): The request to verify
+    Returns:
+        None
+    """
+    if hasattr(generator, "prompt_logprobs"):
+        if generator.prompt_logprobs:
+            for logprob_dict in generator.prompt_logprobs:
+                    if logprob_dict:
+                        for logprob_values in logprob_dict.values():
+                            if logprob_values.logprob == float('-inf'):
+                                logprob_values.logprob = -9999.0
 
 
 def base(request: Request, model: Model) -> OpenAIServing:
@@ -403,13 +456,17 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
     model: Model = RESOURCES[RESOURCE_MODEL]
     handler = model.openai_serving_chat
     if handler is None:
-        return base(raw_request, model).create_error_response(
-            message="The model does not support Chat Completions API")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"The model does not support Chat Completions API"
+        )
+    verify_request(request)
     generator = await handler.create_chat_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
+    check_generator(generator)
     if request.stream:
         return StreamingResponse(content=generator, # type: ignore
                                  media_type="text/event-stream")
@@ -429,11 +486,13 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
     if handler is None:
         return base(raw_request, model).create_error_response(
             message="The model does not support Completions API")
+    verify_request(request)
     generator = await handler.create_completion(
         request, raw_request)
     if isinstance(generator, vllm_protocol.ErrorResponse):
         return JSONResponse(content=generator.model_dump(),
                             status_code=generator.code)
+    check_generator(generator)
     if request.stream:
         return StreamingResponse(content=generator,
                                  media_type="text/event-stream")
