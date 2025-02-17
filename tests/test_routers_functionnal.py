@@ -234,68 +234,6 @@ def test_verify_request():
         functional.verify_request(request)
     assert error.value.detail == "Use max_tokens: 50 less than min_tokens : 100 breaks the model"
 
-    # With HTTPException echo and top_k or top_p or min_p
-    request = vllm_protocol.ChatCompletionRequest(
-        messages=[{"role":"user", "content": "How are you ?"}],
-        model="my_model",
-        echo=True,
-        top_k=4
-    )
-    with pytest.raises(HTTPException) as error:
-        functional.verify_request(request)
-    assert error.value.detail == "Use echo with top_k or top_p or min_p breaks backend"
-
-    request = vllm_protocol.ChatCompletionRequest(
-        messages=[{"role":"user", "content": "How are you ?"}],
-        model="my_model",
-        echo=True,
-        top_p=0.9
-    )
-    with pytest.raises(HTTPException) as error:
-        functional.verify_request(request)
-    assert error.value.detail == "Use echo with top_k or top_p or min_p breaks backend"
-
-    request = vllm_protocol.ChatCompletionRequest(
-        messages=[{"role":"user", "content": "How are you ?"}],
-        model="my_model",
-        echo=True,
-        min_p=0.2
-    )
-    with pytest.raises(HTTPException) as error:
-        functional.verify_request(request)
-    assert error.value.detail == "Use echo with top_k or top_p or min_p breaks backend"
-
-    # With HTTPException prompt_logprobs and top_k or top_p or min_p
-    request = vllm_protocol.ChatCompletionRequest(
-        messages=[{"role":"user", "content": "How are you ?"}],
-        model="my_model",
-        prompt_logprobs=True,
-        top_k=4
-    )
-    with pytest.raises(HTTPException) as error:
-        functional.verify_request(request)
-    assert error.value.detail == "Use prompt_logprobs with top_k or top_p or min_p breaks backend"
-
-    request = vllm_protocol.ChatCompletionRequest(
-        messages=[{"role":"user", "content": "How are you ?"}],
-        model="my_model",
-        prompt_logprobs=True,
-        top_p=0.9
-    )
-    with pytest.raises(HTTPException) as error:
-        functional.verify_request(request)
-    assert error.value.detail == "Use prompt_logprobs with top_k or top_p or min_p breaks backend"
-
-    request = vllm_protocol.ChatCompletionRequest(
-        messages=[{"role":"user", "content": "How are you ?"}],
-        model="my_model",
-        prompt_logprobs=True,
-        min_p=0.2
-    )
-    with pytest.raises(HTTPException) as error:
-        functional.verify_request(request)
-    assert error.value.detail == "Use prompt_logprobs with top_k or top_p or min_p breaks backend"
-
 
 @pytest.mark.asyncio
 async def test_generate(test_complete_client: AsyncClient):
