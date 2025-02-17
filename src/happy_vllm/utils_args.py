@@ -230,6 +230,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         generation_config: Optional[str] = default_args.generation_config
         override_generation_config: Optional[Dict[str, Any]] = default_args.generation_config
         enable_sleep_mode: bool = False
+        model_impl: str = default_args.model_impl
 
         calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
