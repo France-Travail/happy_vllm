@@ -21,7 +21,7 @@ import torch
 
 from argparse import Namespace, BooleanOptionalAction
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal, get_args
+from typing import Optional, Tuple, Type, Union, List, Mapping, Dict, Any, Literal, get_args
 
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
@@ -158,6 +158,9 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         cpu_offload_gb: float = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
+        max_num_partial_prefills: Optional[int] = default_args.max_num_partial_prefills
+        max_long_partial_prefills: Optional[int] = default_args.max_long_partial_prefills
+        long_prefill_token_threshold: Optional[int] = default_args.long_prefill_token_threshold
         max_num_seqs: Optional[int] = default_args.max_num_seqs
         disable_log_stats: bool = False
         revision: Optional[str] = default_args.revision
@@ -202,6 +205,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
         disable_mm_preprocessor_cache: bool = False
         scheduling_policy: Literal["fcfs", "priority"] = default_args.scheduling_policy
+        scheduler_cls: Union[str, Type[object]] = default_args.scheduler_cls
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -233,6 +237,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         model_impl: str = default_args.model_impl
 
         calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
+        additional_config: Optional[Dict[str, Any]] = default_args.additional_config
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
 
