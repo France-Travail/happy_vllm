@@ -23,14 +23,11 @@ from fastapi import HTTPException
 from transformers import AutoTokenizer
 from vllm.sampling_params import SamplingParams
 from vllm.entrypoints.openai import protocol as vllm_protocol
-from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
 from .conftest import TEST_MODELS_DIR
 from happy_vllm.routers import functional
 from happy_vllm.model.model_base import Model
-from happy_vllm.logits_processors.json_format import VLLMLogitsProcessorJSON
-from happy_vllm.logits_processors.response_pool import VLLMLogitsProcessorResponsePool
 
 
 def teardown_module():
@@ -43,129 +40,9 @@ def init_model(truncation_side="left"):
     model = Model(app_name=os.environ['app_name'])
     model._tokenizer = AutoTokenizer.from_pretrained(os.environ["tokenizer_name"],
                                                      cache_dir=TEST_MODELS_DIR, truncation_side=truncation_side)
-    model._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(model._tokenizer)
     model.original_truncation_side = truncation_side
     model.max_model_len = 2048
     return model
-
-
-def test_parse_logits_processors():
-    """Tests the function parse_logits_processors"""
-    model = init_model()
-    tokenizer = model._tokenizer
-    tokenizer_lmformatenforcer = model._tokenizer_lmformatenforcer
-    
-    # With response_pool
-    prompt = "This is the prompt"
-    for response_pool in [["Yes", "No"], ["Certainly", "I think so", "Of course"], ["Without a doubt"]]:
-        request_dict = {"temperature": 0, "keyword": "value", "response_pool": response_pool}
-        logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
-        assert request_dict == {"temperature": 0, "keyword": "value"}
-        assert len(logits_processors) == 1
-        assert isinstance(logits_processors[0], VLLMLogitsProcessorResponsePool)
-        assert len(logits_processors[0].possible_tokens_responses) == len(response_pool)
-        assert logits_processors[0].eos_token_id == tokenizer.eos_token_id
-
-    # With json_format
-    prompt = "This is the prompt"
-    json_format = {"name": "string",
-                    "surname": "string",
-                    "favorite_food": "string",
-                    "current_number_of_children": "integer",
-                    "team_name": "string",
-                    "job_title": "string"}
-    request_dict = {"temperature": 0, "keyword": "value", "json_format": json_format}
-    logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
-    assert request_dict == {"temperature": 0, "keyword": "value"}
-    assert len(logits_processors) == 1
-    assert isinstance(logits_processors[0], VLLMLogitsProcessorJSON)
-    assert logits_processors[0].logits_processor_activated
-
-    # With json_format
-    prompt = "This is the prompt"
-    json_format = {}
-    request_dict = {"temperature": 0, "keyword": "value", "json_format": json_format}
-    logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
-    assert request_dict == {"temperature": 0, "keyword": "value"}
-    assert len(logits_processors) == 1
-    assert isinstance(logits_processors[0], VLLMLogitsProcessorJSON)
-    assert not(logits_processors[0].logits_processor_activated)
-            
-    # Without logits_processors
-    request_dict = {"temperature": 0, "keyword": "value"}
-    logits_processors = functional.parse_logits_processors(request_dict, prompt, model, tokenizer, tokenizer_lmformatenforcer)
-    assert request_dict == {"temperature": 0, "keyword": "value"}
-    assert logits_processors == []
-
-
-def test_parse_generate_parameters():
-    """Tests the function parse_generate_parameters"""
-    model = init_model()
-    tokenizer = model._tokenizer
-    tokenizer_lmformatenforcer = model._tokenizer_lmformatenforcer
-    
-    # with response_pool
-    prompt_ini = "This is the prompt"
-    temperature = 0
-    request_dict = {"temperature": temperature, "response_pool": ["Yes", "No"], "prompt": prompt_ini, "max_tokens": 100}
-    prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
-    assert prompt == prompt_ini
-    assert not(prompt_in_response)
-    assert isinstance(sampling_params, SamplingParams)
-    assert sampling_params.temperature == temperature
-    assert len(sampling_params.logits_processors) == 1
-    assert isinstance(sampling_params.logits_processors[0], VLLMLogitsProcessorResponsePool)
-
-    # with json_format
-    prompt_ini = "This is the prompt"
-    temperature = 0
-    json_format = {"name": "string",
-                    "surname": "string",
-                    "favorite_food": "string",
-                    "current_number_of_children": "integer",
-                    "team_name": "string",
-                    "job_title": "string"}
-    request_dict = {"temperature": temperature, "json_format": json_format, "prompt": prompt_ini, "max_tokens": 100}
-    prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
-    assert prompt == prompt_ini
-    assert not(prompt_in_response)
-    assert isinstance(sampling_params, SamplingParams)
-    assert sampling_params.temperature == temperature
-    assert len(sampling_params.logits_processors) == 1
-    assert isinstance(sampling_params.logits_processors[0], VLLMLogitsProcessorJSON)
-
-    # with no logits_processors and prompt_in_response=True
-    prompt_ini = "This is the prompt but it is longer than before"
-    temperature = 1.5
-    max_tokens = 123
-    request_dict = {"temperature": temperature, "prompt": prompt_ini, "max_tokens": max_tokens, "prompt_in_response": True}
-    prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
-    assert prompt == prompt_ini
-    assert prompt_in_response
-    assert isinstance(sampling_params, SamplingParams)
-    assert sampling_params.temperature == temperature
-    assert sampling_params.max_tokens == max_tokens
-    assert sampling_params.logits_processors == []
-
-    # with no logits_processors and prompt_in_response=False
-    prompt_ini = "Here"
-    temperature = 0.1
-    max_tokens = 1234
-    request_dict = {"temperature": temperature, "prompt": prompt_ini, "max_tokens": max_tokens, "prompt_in_response": False}
-    prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
-    assert prompt == prompt_ini
-    assert not(prompt_in_response)
-    assert isinstance(sampling_params, SamplingParams)
-    assert sampling_params.temperature == temperature
-    assert sampling_params.max_tokens == max_tokens
-    assert sampling_params.logits_processors == []
-
-    # Raise ValueError if response_pool and min_tokens are present
-    prompt_ini = "This is the prompt"
-    temperature = 0
-    request_dict = {"temperature": temperature, "response_pool": ["Yes", "No"], "prompt": prompt_ini, "min_tokens": 10, "max_tokens": 100}
-    with pytest.raises(ValueError):
-        prompt, prompt_in_response, sampling_params = functional.parse_generate_parameters(request_dict, model, tokenizer, tokenizer_lmformatenforcer)
 
 
 def test_verify_request():
@@ -233,103 +110,6 @@ def test_verify_request():
     with pytest.raises(HTTPException) as error:
         functional.verify_request(request)
     assert error.value.detail == "Use max_tokens: 50 less than min_tokens : 100 breaks the model"
-
-
-@pytest.mark.asyncio
-async def test_generate(test_complete_client: AsyncClient):
-    """Test the route /v1/generate thanks to the test_complete_client we created in conftest.py"""
-    model = init_model()
-    tokenizer = model._tokenizer
-
-    def get_response(tokenizer, prompt, i, max_tokens):
-        prompt_tot = f"n={i} "*i + prompt + " This is the generated text. I find it really good don't you ?"
-        token_ids = tokenizer(prompt_tot)['input_ids']
-        token_ids = token_ids[:max_tokens]
-        return tokenizer.decode(token_ids, skip_special_tokens=True), len(token_ids)
-    
-    # Nominal case
-    max_tokens = 500
-    prompt = "Hey"
-    body = {"prompt": prompt, "max_tokens": max_tokens}
-    response = await test_complete_client.post("/tests/v1/generate", json=body)
-    assert response.status_code == 200
-    response_json = response.json()
-    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
-    response, completion_tokens = get_response(tokenizer, prompt, 0, max_tokens)
-    assert response_json["responses"] == [response]
-    assert response_json["finish_reasons"] == ["stop"]
-    assert response_json["usages"] == [{"prompt_tokens": nb_token_prompt,
-                                        "completion_tokens": completion_tokens,
-                                        "total_tokens": nb_token_prompt + completion_tokens }]
-    assert set(response_json) == {"responses", "finish_reasons", "usages"}
-
-    # Several responses and prompt_in_response
-    max_tokens = 500
-    prompt = "Hello there"
-    body = {"prompt": prompt, "max_tokens": max_tokens, "n": 3, "prompt_in_response": True}
-    response = await test_complete_client.post("/tests/v1/generate", json=body)
-    assert response.status_code == 200
-    response_json = response.json()
-    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
-    assert len(response_json["responses"]) == 3
-    assert len(response_json["finish_reasons"]) == 3
-    assert len(response_json["usages"]) == 3
-    for i in [0, 1, 2]:
-        target_response, target_completion_tokens = get_response(tokenizer, prompt, i, max_tokens)
-        assert response_json["responses"][i] == target_response
-        if target_response[-4:] == "ou ?":
-            assert response_json["finish_reasons"][i] == "stop"
-        else:
-            assert response_json["finish_reasons"][i] == "length"
-        assert response_json["usages"][i] == {"prompt_tokens": nb_token_prompt,
-                                        "completion_tokens": target_completion_tokens,
-                                        "total_tokens": nb_token_prompt + target_completion_tokens } 
-    assert response_json["prompt"] == "Hello there"
-    assert set(response_json) == {"responses", "finish_reasons", "prompt", "usages"}
-
-    # Generations stopped
-    max_tokens = 5
-    prompt = "Hey"
-    body = {"prompt": prompt, "max_tokens": max_tokens, "n": 3}
-    response = await test_complete_client.post("/tests/v1/generate", json=body)
-    assert response.status_code == 200
-    response_json = response.json()
-    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
-    assert len(response_json["responses"]) == 3
-    assert len(response_json["finish_reasons"]) == 3
-    for i in [0, 1, 2]:
-        target_response, target_completion_tokens = get_response(tokenizer, prompt, i, max_tokens)
-        assert response_json["responses"][i] == target_response
-        if target_response[-4:] == "ou ?":
-            assert response_json["finish_reasons"][i] == "stop"
-        else:
-            assert response_json["finish_reasons"][i] == "length"
-        assert response_json["usages"][i] == {"prompt_tokens": nb_token_prompt,
-                                        "completion_tokens": target_completion_tokens,
-                                        "total_tokens": nb_token_prompt + target_completion_tokens } 
-    assert set(response_json) == {"responses", "finish_reasons", "usages"}
-
-    # Some Generation stopped
-    max_tokens = 18
-    prompt = "Hey"
-    body = {"prompt": prompt, "max_tokens": max_tokens, "n": 3}
-    response = await test_complete_client.post("/tests/v1/generate", json=body)
-    assert response.status_code == 200
-    response_json = response.json()
-    nb_token_prompt = len(tokenizer(prompt)['input_ids'])
-    assert len(response_json["responses"]) == 3
-    assert len(response_json["finish_reasons"]) == 3
-    for i in [0, 1, 2]:
-        target_response, target_completion_tokens = get_response(tokenizer, prompt, i, max_tokens)
-        assert response_json["responses"][i] == target_response
-        if target_response[-4:] == "ou ?":
-            assert response_json["finish_reasons"][i] == "stop"
-        else:
-            assert response_json["finish_reasons"][i] == "length"
-        assert response_json["usages"][i] == {"prompt_tokens": nb_token_prompt,
-                                        "completion_tokens": target_completion_tokens,
-                                        "total_tokens": nb_token_prompt + target_completion_tokens } 
-    assert set(response_json) == {"responses", "finish_reasons", "usages"}
 
 
 @pytest.mark.asyncio

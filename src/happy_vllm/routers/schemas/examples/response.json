@@ -1,36 +1,4 @@
 {
-    "generate": {
-        "responses": [
-            "Why don't scientists trust atoms? \n Because they make up everything!"
-        ],
-        "finish_reasons": [
-            "stop"
-        ],
-        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
-        "usages": [
-            {
-                "prompt_tokens": 17,
-                "completion_tokens": 17,
-                "total_tokens": 34
-            }
-        ]
-    },
-    "generate_stream": {
-        "responses": [
-            "Why don't scientists trust atoms? \n Because they make up everything!"
-        ],
-        "finish_reasons": [
-            "stop"
-        ],
-        "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
-        "usages": [
-            {
-                "prompt_tokens": 17,
-                "completion_tokens": 17,
-                "total_tokens": 34
-            }
-        ]
-    },
     "tokenizer": {
         "tokens_ids": [
             1,
