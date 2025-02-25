@@ -26,13 +26,5 @@ from happy_vllm import utils
 
 def get_pattern_log():
     app_version = utils.get_package_version()
-    return (
-        "{"
-        '"date": "%(asctime)s", '
-        '"level": "%(levelname)s", '
-        '"message": "%(message)s", '
-        f'"version": "{app_version}", '
-        '"function": "File %(pathname)s, line %(lineno)d, in %(funcName)s", '
-        '"logger": "%(name)s"'
-        "}"
-    )
+    msg = "%(levelname)s %(asctime)s [%(filename)s:%(lineno)d] %(message)s"
+    return msg

@@ -15,12 +15,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import signal
 import asyncio
+import logging
 import uvicorn
 import argparse
 
-from vllm.utils import set_ulimit
 from vllm.entrypoints.launcher import serve_http 
 from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.utils import is_valid_ipv6_address, set_ulimit
 import vllm.entrypoints.openai.api_server as vllm_api_server
 from vllm.entrypoints.openai.tool_parsers import ToolParserManager
 from vllm.entrypoints.openai.cli_args import validate_parsed_serve_args
@@ -32,6 +33,7 @@ from happy_vllm.application import declare_application
 
 
 TIMEOUT_KEEP_ALIVE = 5 # seconds
+logger = logging.getLogger(__name__)
 
 
 def main(**uvicorn_kwargs) -> None:
@@ -78,6 +80,15 @@ async def launch_app(args, **uvicorn_kwargs):
     # Launch app
     async with happy_vllm_build_async_engine_client(args) as async_engine_client:
         app = await declare_application(async_engine_client, args=args)
+
+        def _listen_addr(a: str) -> str:
+            if is_valid_ipv6_address(a):
+                return '[' + a + ']'
+            return a or "0.0.0.0"
+
+        logger.info("Starting vLLM API server on http://%s:%d",
+                    _listen_addr(sock_addr[0]), sock_addr[1])
+
         shutdown_task = await serve_http(app,
                                         sock=sock,
                                         host=args.host,
