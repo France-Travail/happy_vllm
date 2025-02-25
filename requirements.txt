@@ -1,7 +1,6 @@
-vllm==0.7.1
+vllm==0.7.3
 fastapi==0.115.8
-pydantic-settings==2.7.1
+pydantic-settings==2.8.0
 uvicorn[standard]==0.34.0
 prometheus_client==0.21.1
 numpy==1.26.4
-jsonschema==4.23.0

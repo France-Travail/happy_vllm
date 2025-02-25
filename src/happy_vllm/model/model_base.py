@@ -37,7 +37,6 @@ from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeRespons
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
 from vllm.entrypoints.openai.serving_models import (BaseModelPath, OpenAIServingModels)
-from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 
 from happy_vllm import utils
 
@@ -97,7 +96,6 @@ class Model:
                 self._tokenizer = tokenizer_tmp.tokenizer # type: ignore
             else:
                 self._tokenizer = tokenizer_tmp # type: ignore
-            self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self.max_model_len = model_config.max_model_len # type: ignore
             # To take into account Mistral tokenizers
             try:
@@ -159,7 +157,6 @@ class Model:
             self.original_truncation_side = 'right'
             self._tokenizer = AutoTokenizer.from_pretrained(utils.TEST_TOKENIZER_NAME,
                                                      cache_dir=os.environ["TEST_MODELS_DIR"], truncation_side=self.original_truncation_side)
-            self._tokenizer_lmformatenforcer = build_token_enforcer_tokenizer_data(self._tokenizer)
             self._model = MockModel(self._tokenizer, self.app_name)
             self.openai_serving_tokenization = MockOpenAIServingTokenization(self._tokenizer)
         logger.info(f"Model loaded")
@@ -290,20 +287,6 @@ class MockModel():
     def __init__(self, tokenizer, app_name: str = "happy_vllm"):
         self.tokenizer = tokenizer
         self.app_name = app_name
-
-    async def generate(self, prompt, sampling_params, request_id):
-        stream_txts = [f"n={i} "*i + prompt + " This is the generated text. I find it really good don't you ?" for i in range(sampling_params.n)]
-        stream_ids = [self.tokenizer(stream_txt, truncation=True, max_length=sampling_params.max_tokens)['input_ids'] for stream_txt in stream_txts]
-        max_length = max([len(element) for element in stream_ids]) + 1
-        stream_tmp = [[self.tokenizer.decode(text[:i], skip_special_tokens=True) for text in stream_ids] for i in range(max_length)]
-        stream = [MockGenerateResponse(prompt, texts, self.tokenizer) for texts in stream_tmp]
-        # Mock the length finish_reason
-        for i in range(sampling_params.n):
-            if stream[-1].outputs[i].finish_reason is None:
-                stream[-1].outputs[i].finish_reason = "length"
-        stream = self.async_iter(stream)
-        async for outputs in stream:
-            yield outputs
 
     async def async_iter(self, my_list):
         for element in my_list:
