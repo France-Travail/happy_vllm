@@ -22,12 +22,13 @@ from pydantic import BaseModel, Field
 from starlette.requests import Request
 from typing_extensions import assert_never
 from vllm.sampling_params import SamplingParams
-from fastapi import APIRouter, Body, HTTPException
 from vllm.entrypoints.utils import with_cancellation
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
+from fastapi import APIRouter, Body, Depends, HTTPException
 from vllm.entrypoints.openai import protocol as vllm_protocol
 from vllm.entrypoints.openai.serving_engine import OpenAIServing
+from vllm.entrypoints.openai.api_server import validate_json_request
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from vllm.entrypoints.openai.serving_pooling import OpenAIServingPooling
 from starlette.responses import JSONResponse, Response, StreamingResponse
@@ -144,7 +145,7 @@ async def tokenizer(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/v2/tokenizer", response_model=vllm_protocol.TokenizeResponse)
+@router.post("/v2/tokenizer", response_model=vllm_protocol.TokenizeResponse, dependencies=[Depends(validate_json_request)])
 @with_cancellation
 async def tokenizer_v2(request: Annotated[vllm_protocol.TokenizeRequest,
         Body(openapi_examples=request_openapi_examples["vllm_tokenizer"])],
@@ -211,7 +212,7 @@ async def decode(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/v2/decode", response_model=vllm_protocol.DetokenizeResponse)
+@router.post("/v2/decode", response_model=vllm_protocol.DetokenizeResponse, dependencies=[Depends(validate_json_request)])
 @with_cancellation
 async def decode_v2(request :Annotated[
         vllm_protocol.DetokenizeRequest,
@@ -282,11 +283,20 @@ async def metadata_text(request: Request,
     return JSONResponse(ret)
 
 
-@router.post("/v1/chat/completions", response_model=Union[vllm_protocol.ErrorResponse, 
-                                                          functional_schema.HappyvllmChatCompletionResponse])
+@router.post(
+    "/v1/chat/completions", 
+    response_model=Union[
+        vllm_protocol.ErrorResponse, 
+        functional_schema.HappyvllmChatCompletionResponse
+    ], 
+    dependencies=[Depends(validate_json_request)]
+)
 @with_cancellation
-async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletionRequest, Body(openapi_examples=request_openapi_examples["chat_completions"])],
-                                 raw_request: Request):
+async def create_chat_completion(
+    request: Annotated[vllm_protocol.ChatCompletionRequest, 
+    Body(openapi_examples=request_openapi_examples["chat_completions"])],
+    raw_request: Request
+):
     """Open AI compatible chat completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
     """
     model: Model = RESOURCES[RESOURCE_MODEL]
@@ -310,8 +320,14 @@ async def create_chat_completion(request: Annotated[vllm_protocol.ChatCompletion
         return JSONResponse(content=generator.model_dump()) # type: ignore
 
 
-@router.post("/v1/completions", response_model=Union[vllm_protocol.ErrorResponse, 
-                                                     functional_schema.HappyvllmCompletionResponse])
+@router.post(
+    "/v1/completions", 
+    response_model=Union[
+        vllm_protocol.ErrorResponse, 
+        functional_schema.HappyvllmCompletionResponse
+    ], 
+    dependencies=[Depends(validate_json_request)]
+)
 @with_cancellation
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
@@ -336,7 +352,14 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
         return JSONResponse(content=generator.model_dump())
 
 
-@router.post("/v1/embeddings", response_model=Union[vllm_protocol.ErrorResponse, vllm_protocol.EmbeddingResponse])
+@router.post(
+    "/v1/embeddings", 
+    response_model=Union[
+        vllm_protocol.ErrorResponse, 
+        vllm_protocol.EmbeddingResponse
+    ], 
+    dependencies=[Depends(validate_json_request)]
+)
 @with_cancellation
 async def create_embedding(request: vllm_protocol.EmbeddingRequest, raw_request: Request):
     model: Model = RESOURCES[RESOURCE_MODEL]
@@ -363,7 +386,7 @@ async def abort_request(request: functional_schema.RequestAbortRequest):
 
 if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
 
-    @router.post("/v1/load_lora_adapter")
+    @router.post("/v1/load_lora_adapter", dependencies=[Depends(validate_json_request)])
     async def load_lora_adapter(request: vllm_protocol.LoadLoraAdapterRequest):
         model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.load_lora_adapter(request)
@@ -378,7 +401,7 @@ if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
 
         return Response(status_code=200, content=response)
 
-    @router.post("/v1/unload_lora_adapter")
+    @router.post("/v1/unload_lora_adapter", dependencies=[Depends(validate_json_request)])
     async def unload_lora_adapter(request: vllm_protocol.UnloadLoraAdapterRequest):
         model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.unload_lora_adapter(request)

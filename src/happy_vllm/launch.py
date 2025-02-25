@@ -79,7 +79,7 @@ async def launch_app(args, **uvicorn_kwargs):
     async with happy_vllm_build_async_engine_client(args) as async_engine_client:
         app = await declare_application(async_engine_client, args=args)
         shutdown_task = await serve_http(app,
-                                        sock=None,
+                                        sock=sock,
                                         host=args.host,
                                         port=args.port,
                                         log_level=args.uvicorn_log_level,
@@ -88,7 +88,6 @@ async def launch_app(args, **uvicorn_kwargs):
                                         ssl_certfile=args.ssl_certfile,
                                         ssl_ca_certs=args.ssl_ca_certs,
                                         ssl_cert_reqs=args.ssl_cert_reqs,
-                                        fd=sock.fileno(),
                                         **uvicorn_kwargs)
     await shutdown_task
 
