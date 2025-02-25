@@ -84,7 +84,7 @@ async def launch_app(args, **uvicorn_kwargs):
         def _listen_addr(a: str) -> str:
             if is_valid_ipv6_address(a):
                 return '[' + a + ']'
-            return a or "127.0.0.1" # nosec
+            return a or "127.0.0.1"
 
         logger.info("Starting vLLM API server on http://%s:%d",
                     _listen_addr(sock_addr[0]), sock_addr[1])
