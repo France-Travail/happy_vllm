@@ -15,11 +15,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import json
 import shutil
 import pytest
 from httpx import AsyncClient
 
-from .conftest import TEST_MODELS_DIR
+from .conftest import TEST_MODELS_DIR, TEST_DATA_DIR
 
 
 from happy_vllm import utils
@@ -66,6 +67,11 @@ async def test_info(test_complete_client: AsyncClient):
     assert response_json["model_name"] == "TEST MODEL"
     assert response_json["truncation_side"] == "right"
     assert response_json["max_length"] == 2048
+    with open(TEST_DATA_DIR / "extra_information.json", "r") as json_file:
+        target_extra_information = json.load(json_file)
+    assert set(response_json["extra_information"]) == set(target_extra_information)
+    for key, value in target_extra_information.items():
+        response_json["extra_information"][key] == value
 
 
 @pytest.mark.asyncio
