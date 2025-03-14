@@ -13,9 +13,11 @@ This endpoints gives various information on the application and the model. The f
   "vllm_version": "0.4.0.post1",
   "model_name": "The best LLM",
   "truncation_side": "right",
-  "max_length": 32768
+  "max_length": 32768,
+  "extra_information": {}
 }
 ```
+In order to add a non empty dictionnary to the field "extra_information", you should pass the path to .json when initiating the API via the `--extra-information` argument.
 
 ## /metrics (GET)
 

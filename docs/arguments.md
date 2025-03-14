@@ -21,6 +21,7 @@ Here is a list of arguments useful for the application (they all have default va
  - `host` : The name of the host (default value is `127.0.0.1`)
  - `port` : The port number (default value is `5000`)
  - `model-name` : The name of the model which will be given by the `/v1/info` endpoint or the `/v1/models`. Knowing the name of the model is important to be able to use the endpoints `/v1/completions` and `/v1/chat/completions` (default value is `?`)
+ - `extra-information` : The path to a json which will be added to the `/v1/info` endpoint in the `extra_information` field 
  - `app-name`: The name of the application (default value is `happy_vllm`)
  - `api-endpoint-prefix`: The prefix added to all the API endpoints (default value is no prefix)
  - `explicit-errors`: If `False`, the message displayed when an `500 error` is encountered will be `Internal Server Error`. If `True`, the message displayed will be more explicit and give information on the underlying error. The `True` setting is not recommended in a production setting (default value is `False`).

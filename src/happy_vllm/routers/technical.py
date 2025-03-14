@@ -77,7 +77,8 @@ async def info() -> technical_schema.ResponseInformation:
         model_name=model._model_conf.get("model_name", "?"),
         vllm_version=utils.get_vllm_version(),
         truncation_side=model.original_truncation_side,
-        max_length=model.max_model_len
+        max_length=model.max_model_len,
+        extra_information=model.extra_information
     )
 
 

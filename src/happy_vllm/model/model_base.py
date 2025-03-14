@@ -20,6 +20,7 @@
 
 
 import os
+import json
 import asyncio
 import logging
 from pathlib import Path
@@ -60,6 +61,7 @@ class Model:
         self.openai_serving_tokenization = None
         self._loaded = False
         self.app_name = kwargs.get('app_name', "happy_vllm")
+        self.extra_information = {}
 
     def is_model_loaded(self):
         """return the state of the model"""
@@ -69,6 +71,9 @@ class Model:
         """load the model"""
         await self._load_model(async_engine_client, args, **kwargs)
         self._loaded = True
+        if args.extra_information:
+            with open(args.extra_information, 'r') as json_file:
+                self.extra_information = json.load(json_file)
         if args.with_launch_arguments:
             self.launch_arguments = vars(args)
         else:

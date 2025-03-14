@@ -35,6 +35,7 @@ from vllm.config import (ConfigFormat, TaskOption, HfOverrides, PoolerConfig, Co
 
 
 DEFAULT_MODEL_NAME = '?'
+DEFAULT_EXTRA_INFORMATION = None
 DEFAULT_APP_NAME = "happy_vllm"
 DEFAULT_API_ENDPOINT_PREFIX = ""
 DEFAULT_HOST = "127.0.0.1"
@@ -118,12 +119,12 @@ class ApplicationSettings(BaseSettings):
 
 
 def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
-    """Gets the model settings. It corresponds to the variables added via AsyncEngineArgs.add_cli_args plus model-name.
+    """Gets the model settings. It corresponds to the variables added via AsyncEngineArgs.add_cli_args plus model-name and extra-information.
     First we use the parser to get the default values of vLLM for these variables. We instantiate a BaseSettings model
     with these values as default. They are possibly overwritten by environnement variables or those of a .env
 
     Args:
-        parser (FlexibleArgumentParser) : The parser containing all the model variables with thei default values from vLLM 
+        parser (FlexibleArgumentParser) : The parser containing all the model variables with their default values from vLLM 
     """
 
     default_args = parser.parse_args([])
@@ -132,6 +133,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
     class ModelSettings(BaseSettings):
         model: str = default_args.model
         model_name: str = default_args.model_name
+        extra_information: Optional[str] = default_args.extra_information
         served_model_name: Optional[Union[str, List[str]]] = None
         tokenizer: Optional[str] = default_args.tokenizer
         task: TaskOption = default_args.task
@@ -271,6 +273,10 @@ def get_parser() -> FlexibleArgumentParser:
                         type=str,
                         default=DEFAULT_MODEL_NAME,
                         help="The name of the model given by the /info endpoint of the API")
+    parser.add_argument("--extra-information",
+                        type=str,
+                        default=DEFAULT_EXTRA_INFORMATION,
+                        help="The path to a json to add to the /info endpoint of the API")
     parser.add_argument("--app-name",
                         type=str,
                         default=application_settings.app_name,
