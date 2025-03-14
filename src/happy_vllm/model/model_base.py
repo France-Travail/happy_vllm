@@ -71,7 +71,7 @@ class Model:
         """load the model"""
         await self._load_model(async_engine_client, args, **kwargs)
         self._loaded = True
-        if args.extra_information is not None:
+        if args.extra_information:
             with open(args.extra_information, 'r') as json_file:
                 self.extra_information = json.load(json_file)
         if args.with_launch_arguments:
