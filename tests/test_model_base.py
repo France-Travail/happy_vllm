@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import json
 import pytest
 import shutil
 from argparse import Namespace
@@ -25,7 +26,7 @@ from happy_vllm.model import model_base
 from happy_vllm.model.model_base import Model
 from happy_vllm.launch import happy_vllm_build_async_engine_client
 
-from .conftest import TEST_MODELS_DIR
+from .conftest import TEST_MODELS_DIR, TEST_DATA_DIR
 
 
 def teardown_module():
@@ -45,11 +46,43 @@ def init_model(truncation_side="left"):
 
 @pytest.mark.asyncio
 async def test_is_model_loaded():
-    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True)
+    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True, extra_information=None)
     model = init_model()
     assert not(model.is_model_loaded())
     await model.loading(happy_vllm_build_async_engine_client(args), args)
     assert model.is_model_loaded()
+
+
+@pytest.mark.asyncio
+async def test_loading():
+    # Nominal case
+    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=False, extra_information=None)
+    model = init_model()
+    await model.loading(happy_vllm_build_async_engine_client(args), args)
+    assert model.launch_arguments == {}
+    assert model.extra_information == {}
+
+    # with_launch_arguments True
+    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=True, extra_information=None)
+    model = init_model()
+    await model.loading(happy_vllm_build_async_engine_client(args), args)
+    assert model.extra_information == {}
+    target_launch_arguments = vars(args)
+    assert set(target_launch_arguments) == set(model.launch_arguments)
+    for key, value in model.launch_arguments.items():
+        assert target_launch_arguments[key] == value
+
+    # with extra_information
+    extra_information = str(TEST_DATA_DIR / "extra_information.json")
+    with open(extra_information, 'r') as json_file:
+        target_extra_information = json.load(json_file)
+    args = Namespace(model_name=os.environ["MODEL_NAME"], model=os.environ['MODEL'], with_launch_arguments=False, extra_information=extra_information)
+    model = init_model()
+    await model.loading(happy_vllm_build_async_engine_client(args), args)
+    assert model.launch_arguments == {}
+    assert set(target_extra_information) == set(model.extra_information)
+    for key, value in model.extra_information.items():
+        assert target_extra_information[key] == value
 
 
 def test_tokenize():
