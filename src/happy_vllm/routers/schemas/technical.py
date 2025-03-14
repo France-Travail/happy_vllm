@@ -63,6 +63,7 @@ class ResponseInformation(BaseModel):
     model_name: str = Field(None, title="Model name")
     truncation_side: str = Field(None, title="Truncation side")
     max_length : int = Field(None, title="Max length")
+    extra_information: dict = Field(None, title="Extra information")
     model_config = {
         "json_schema_extra": {
             "examples": [

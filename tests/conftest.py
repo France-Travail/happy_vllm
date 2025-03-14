@@ -65,7 +65,8 @@ os.environ['HF_TOKEN'] = huggingface_settings.hf_token
 
 # Set paths
 TEST_DIR = Path(__file__).parent.resolve()
-TEST_MODELS_DIR = TEST_DIR / "data" / "models"
+TEST_DATA_DIR = TEST_DIR / "data"
+TEST_MODELS_DIR = TEST_DATA_DIR / "models"
 
 # Set environment variables for testing
 os.environ["app_name"] = "APP_TESTS"
@@ -101,7 +102,8 @@ async def test_base_client() -> AsyncClient:
         allowed_headers=["*"],
         root_path=None,
         with_launch_arguments=True,
-        disable_fastapi_docs=False
+        disable_fastapi_docs=False,
+        extra_information=str(TEST_DATA_DIR / "extra_information.json")
     )
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True)
@@ -126,7 +128,8 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
         allowed_headers=["*"],
         root_path=None,
         with_launch_arguments=True,
-        disable_fastapi_docs=False
+        disable_fastapi_docs=False,
+        extra_information=str(TEST_DATA_DIR / "extra_information.json")
     )
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)
     async with LifespanManager(app) as manager:

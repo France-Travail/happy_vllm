@@ -21,7 +21,7 @@ import torch
 
 from argparse import Namespace, BooleanOptionalAction
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, Tuple, Union, List, Mapping, Dict, Any, Literal, get_args
+from typing import Optional, Tuple, Type, Union, List, Mapping, Dict, Any, Literal, get_args
 
 from vllm.utils import FlexibleArgumentParser
 from vllm.executor.executor_base import ExecutorBase
@@ -35,6 +35,7 @@ from vllm.config import (ConfigFormat, TaskOption, HfOverrides, PoolerConfig, Co
 
 
 DEFAULT_MODEL_NAME = '?'
+DEFAULT_EXTRA_INFORMATION = None
 DEFAULT_APP_NAME = "happy_vllm"
 DEFAULT_API_ENDPOINT_PREFIX = ""
 DEFAULT_HOST = "127.0.0.1"
@@ -118,12 +119,12 @@ class ApplicationSettings(BaseSettings):
 
 
 def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
-    """Gets the model settings. It corresponds to the variables added via AsyncEngineArgs.add_cli_args plus model-name.
+    """Gets the model settings. It corresponds to the variables added via AsyncEngineArgs.add_cli_args plus model-name and extra-information.
     First we use the parser to get the default values of vLLM for these variables. We instantiate a BaseSettings model
     with these values as default. They are possibly overwritten by environnement variables or those of a .env
 
     Args:
-        parser (FlexibleArgumentParser) : The parser containing all the model variables with thei default values from vLLM 
+        parser (FlexibleArgumentParser) : The parser containing all the model variables with their default values from vLLM 
     """
 
     default_args = parser.parse_args([])
@@ -132,6 +133,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
     class ModelSettings(BaseSettings):
         model: str = default_args.model
         model_name: str = default_args.model_name
+        extra_information: Optional[str] = default_args.extra_information
         served_model_name: Optional[Union[str, List[str]]] = None
         tokenizer: Optional[str] = default_args.tokenizer
         task: TaskOption = default_args.task
@@ -158,6 +160,9 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         cpu_offload_gb: float = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
         max_num_batched_tokens: Optional[int] = default_args.max_num_batched_tokens
+        max_num_partial_prefills: Optional[int] = default_args.max_num_partial_prefills
+        max_long_partial_prefills: Optional[int] = default_args.max_long_partial_prefills
+        long_prefill_token_threshold: Optional[int] = default_args.long_prefill_token_threshold
         max_num_seqs: Optional[int] = default_args.max_num_seqs
         disable_log_stats: bool = False
         revision: Optional[str] = default_args.revision
@@ -202,6 +207,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         mm_processor_kwargs: Optional[Dict[str, Any]] = default_args.mm_processor_kwargs
         disable_mm_preprocessor_cache: bool = False
         scheduling_policy: Literal["fcfs", "priority"] = default_args.scheduling_policy
+        scheduler_cls: Union[str, Type[object]] = default_args.scheduler_cls
         scheduler_delay_factor: float = default_args.scheduler_delay_factor
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
@@ -230,8 +236,10 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         generation_config: Optional[str] = default_args.generation_config
         override_generation_config: Optional[Dict[str, Any]] = default_args.generation_config
         enable_sleep_mode: bool = False
+        model_impl: str = default_args.model_impl
 
         calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
+        additional_config: Optional[Dict[str, Any]] = default_args.additional_config
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
 
@@ -265,6 +273,10 @@ def get_parser() -> FlexibleArgumentParser:
                         type=str,
                         default=DEFAULT_MODEL_NAME,
                         help="The name of the model given by the /info endpoint of the API")
+    parser.add_argument("--extra-information",
+                        type=str,
+                        default=DEFAULT_EXTRA_INFORMATION,
+                        help="The path to a json to add to the /info endpoint of the API")
     parser.add_argument("--app-name",
                         type=str,
                         default=application_settings.app_name,

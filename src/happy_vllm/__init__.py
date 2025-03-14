@@ -29,7 +29,10 @@ logger.setLevel(level)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 
-formatterJson = logging.Formatter(get_pattern_log())
+formatterJson = logging.Formatter(
+    get_pattern_log(),
+    datefmt="%m-%d %H:%M:%S"
+)
 ch.setFormatter(formatterJson)
 
 logger.addHandler(ch)

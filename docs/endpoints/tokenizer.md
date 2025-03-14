@@ -196,4 +196,4 @@ For the happy_vLLM tokenizer:
 
  Note that the "Hey" is not treated the same way, that the whitespaces are directly translated in real whitespaces and there is no initial whitespace.
 
-Note that our modified version of the tokenizer is the one used in the `/v1/metadata_text` endpoint (see [this section](data_manipulation.md#metadata_text-post) for more details). For all other endpoints, the usual tokenizer is used (in particular for the `/v1/generate` and `/v1/generate_stream` endpoints).
+Note that our modified version of the tokenizer is the one used in the `/v1/metadata_text` endpoint (see [this section](data_manipulation.md#metadata_text-post) for more details).

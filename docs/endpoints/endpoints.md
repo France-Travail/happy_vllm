@@ -38,10 +38,6 @@ These two endpoints mimick the ones of vLLM. They follow the Open AI contract an
 
 Aborts a running request 
 
-### DEPRECATED /v1/generate and /v1/generate_stream (POST)
-
-DEPRECATED : These two routes take a prompt and completes it (more details [here](generate.md))
-
 ## Tokenizer endpoints
 
 ### /v1/tokenizer (POST) :warning: **Deprecated**

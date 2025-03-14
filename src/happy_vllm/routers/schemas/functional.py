@@ -38,48 +38,6 @@ class NumpyJSONResponse(JSONResponse):
         return json.dumps(content, cls=NumpyArrayEncoder).encode()
 
 
-class ResponseGenerate(BaseModel):
-    responses: List[str] = Field(None, title="List of responses")
-    finish_reasons: List[str] = Field(None, title="List of finish reasons")
-    prompt: str = Field(None, title="Input prompt")
-    model_config = {"json_schema_extra": {"examples": [response_examples["generate"]]}}
-
-
-# See https://github.com/vllm-project/vllm/blob/0ce0539d4750f9ebcd9b19d7085ca3b934b9ec67/vllm/sampling_params.py
-# for parameters description
-class RequestGenerate(BaseModel):
-    prompt: str = Field(None, title="Input prompt")
-    n: int = Field(None)
-    best_of: Optional[int] = Field(None)
-    presence_penalty: float = Field(None)
-    frequency_penalty: float = Field(None)
-    repetition_penalty: float = Field(None)
-    temperature: float = Field(None)
-    top_p: float = Field(None)
-    top_k: int = Field(None)
-    min_p: float = Field(None)
-    seed: Optional[int] = Field(None)
-    use_beam_search: bool = Field(None)
-    length_penalty: float = Field(None)
-    early_stopping: Union[bool, str] = Field(None)
-    stop: Optional[Union[str, List[str]]] = Field(None)
-    stop_token_ids: Optional[List[int]] = Field(None)
-    bad_words: Optional[List[str]] = Field(None)
-    include_stop_str_in_output: bool = Field(None)
-    ignore_eos: bool = Field(None)
-    max_tokens: Optional[int] = Field(None)
-    min_tokens: int = Field(None)
-    logprobs: Optional[int] = Field(None)
-    prompt_logprobs: Optional[int] = Field(None)
-    detokenize: bool = Field(None)
-    skip_special_tokens: bool = Field(None)
-    spaces_between_special_tokens: bool = Field(None)
-    truncate_prompt_tokens: int = Field(None)
-    response_pool: list = Field(None)
-    json_format: dict = Field(None)
-    json_format_is_json_schema: bool = Field(None)
-
-
 class ResponseTokenizer(BaseModel):
     tokens_ids: List[int] = Field(None, title="List of token ids")
     tokens_nb: int = Field(None, title="Number of tokens")

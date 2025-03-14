@@ -13,9 +13,11 @@ This endpoints gives various information on the application and the model. The f
   "vllm_version": "0.4.0.post1",
   "model_name": "The best LLM",
   "truncation_side": "right",
-  "max_length": 32768
+  "max_length": 32768,
+  "extra_information": {}
 }
 ```
+In order to add a non empty dictionnary to the field "extra_information", you should pass the path to .json when initiating the API via the `--extra-information` argument.
 
 ## /metrics (GET)
 
@@ -45,7 +47,7 @@ If the API is not ready, the value is "ko"
 
 ## /v1/models (GET)
 
-The Open AI compatible endpoint used, for example, to get the name of the model. Mimicks the vLLM implementation. Getting the name of the model is important since it is needed to use the [Open AI compatible generating endpoints](generate.md) 
+The Open AI compatible endpoint used, for example, to get the name of the model. Mimicks the vLLM implementation. 
 
 ## /v1/launch_arguments (GET)
 

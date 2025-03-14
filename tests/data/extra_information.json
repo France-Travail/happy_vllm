@@ -1,0 +1,8 @@
+{
+    "argument_1": "Hey",
+    "argument_2": 42,
+    "argument_3": true,
+    "argument_4": {
+        "internal_argument": 23
+    }
+}
