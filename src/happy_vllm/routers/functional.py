@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from starlette.requests import Request
 from typing_extensions import assert_never
 from vllm.sampling_params import SamplingParams
-from vllm.entrypoints.utils import with_cancellation
+from vllm.entrypoints.utils import with_cancellation, load_aware_call
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
 from fastapi import APIRouter, Body, Depends, HTTPException
@@ -291,7 +291,7 @@ async def metadata_text(request: Request,
     ], 
     dependencies=[Depends(validate_json_request)]
 )
-@with_cancellation
+@load_aware_call
 async def create_chat_completion(
     request: Annotated[vllm_protocol.ChatCompletionRequest, 
     Body(openapi_examples=request_openapi_examples["chat_completions"])],
@@ -328,7 +328,7 @@ async def create_chat_completion(
     ], 
     dependencies=[Depends(validate_json_request)]
 )
-@with_cancellation
+@load_aware_call
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
     """Open AI compatible completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
@@ -360,7 +360,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
     ], 
     dependencies=[Depends(validate_json_request)]
 )
-@with_cancellation
+@load_aware_call
 async def create_embedding(request: vllm_protocol.EmbeddingRequest, raw_request: Request):
     model: Model = RESOURCES[RESOURCE_MODEL]
     handler = model.openai_serving_embedding

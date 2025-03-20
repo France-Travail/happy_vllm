@@ -51,6 +51,7 @@ DEFAULT_SSL_KEYFILE = None
 DEFAULT_SSL_CERTFILE = None
 DEFAULT_SSL_CA_CERTS = None
 DEFAULT_SSL_CERT_REQS = int(ssl.CERT_NONE)
+DEFAULT_ENABLE_SSL_REFRESH = False
 DEFAULT_ROOT_PATH = None
 DEFAULT_LORA_MODULES = None
 DEFAULT_CHAT_TEMPLATE = None
@@ -63,12 +64,13 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_REQUEST_ID_HEADERS = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
-DEFAULT_ENABLE_REASONING = False
+DEFAULT_ENABLE_REASONING = None
 DEFAULT_REASONING_PARSER = None
 DEFAULT_TOOL_CALL_PARSER = None
 DEFAULT_TOOL_PARSER_PLUGIN = ""
 DEFAULT_DISABLE_FASTAPI_DOCS = False
 DEFAULT_ENABLE_PROMPT_TOKENS_DETAILS = False
+DEFAULT_ENABLE_SERVER_LOAD_TRACKING = False
 
 class ApplicationSettings(BaseSettings):
     """Application settings
@@ -93,6 +95,7 @@ class ApplicationSettings(BaseSettings):
     ssl_certfile: Optional[str] = DEFAULT_SSL_CERTFILE
     ssl_ca_certs: Optional[str] = DEFAULT_SSL_CA_CERTS
     ssl_cert_reqs: int = DEFAULT_SSL_CERT_REQS
+    enable_ssl_refresh: Optional[bool] = DEFAULT_ENABLE_SSL_REFRESH
     root_path: Optional[str] = DEFAULT_ROOT_PATH
     app_name: str = DEFAULT_APP_NAME
     api_endpoint_prefix: str = DEFAULT_API_ENDPOINT_PREFIX
@@ -107,12 +110,13 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_request_id_headers: bool = DEFAULT_ENABLE_REQUEST_ID_HEADERS
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
-    enable_reasoning: bool = DEFAULT_ENABLE_REASONING
+    enable_reasoning: Optional[bool] = DEFAULT_ENABLE_REASONING
     reasoning_parser: Optional[str] = DEFAULT_REASONING_PARSER
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
     tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
     disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
     enable_prompt_tokens_details : Optional[bool] = DEFAULT_ENABLE_PROMPT_TOKENS_DETAILS
+    enable_server_load_tracking: Optional[bool]= DEFAULT_ENABLE_SERVER_LOAD_TRACKING
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -136,6 +140,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         extra_information: Optional[str] = default_args.extra_information
         served_model_name: Optional[Union[str, List[str]]] = None
         tokenizer: Optional[str] = default_args.tokenizer
+        hf_config_path: Optional[str] = default_args.hf_config_path
         task: TaskOption = default_args.task
         skip_tokenizer_init: bool = False
         tokenizer_mode: str = default_args.tokenizer_mode
@@ -147,11 +152,12 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         config_format: ConfigFormat = default_args.config_format
         dtype: str = default_args.dtype
         kv_cache_dtype: str = default_args.kv_cache_dtype
-        seed: int = default_args.seed
+        seed: Optional[int] = default_args.seed
         max_model_len: Optional[int] = default_args.max_model_len
         distributed_executor_backend: Optional[Union[str, ExecutorBase]] = default_args.distributed_executor_backend
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
+        enable_expert_parallel: bool = default_args.enable_expert_parallel
         max_parallel_loading_workers: Optional[int] = default_args.max_parallel_loading_workers
         block_size: Optional[int] = default_args.block_size
         enable_prefix_caching: Optional[bool] = default_args.enable_prefix_caching
@@ -227,11 +233,13 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         typical_acceptance_sampler_posterior_alpha: Optional[float] = default_args.typical_acceptance_sampler_posterior_alpha
         qlora_adapter_name_or_path: Optional[str] = default_args.qlora_adapter_name_or_path
         disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
+        show_hidden_metrics_for_version: Optional[str] = default_args.show_hidden_metrics_for_version
         disable_async_output_proc: bool = False
         override_neuron_config: Optional[Dict[str, Any]] = default_args.override_neuron_config
         override_pooler_config: Optional[PoolerConfig] = default_args.override_pooler_config
         compilation_config: Optional[CompilationConfig] = default_args.compilation_config
         worker_cls: str = default_args.worker_cls
+        worker_extension_cls: str = default_args.worker_cls
         kv_transfer_config: Optional[KVTransferConfig] = default_args.kv_transfer_config
         generation_config: Optional[str] = default_args.generation_config
         override_generation_config: Optional[Dict[str, Any]] = default_args.generation_config
@@ -240,6 +248,9 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
 
         calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
         additional_config: Optional[Dict[str, Any]] = default_args.additional_config
+        enable_reasoning: Optional[bool] = default_args.additional_config
+        reasoning_parser: Optional[str] = default_args.additional_config
+        use_tqdm_on_load: bool = default_args.additional_config
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
 
@@ -322,6 +333,10 @@ def get_parser() -> FlexibleArgumentParser:
                         type=str,
                         default=application_settings.ssl_ca_certs,
                         help="The CA certificates file")
+    parser.add_argument("--enable-ssl-refresh",
+                        action="store_true",
+                        default=application_settings.enable_ssl_refresh,
+                        help="Refresh SSL Context when SSL certificate files change")
     parser.add_argument("--ssl-cert-reqs",
                         type=int,
                         default=application_settings.ssl_cert_reqs,
@@ -398,19 +413,7 @@ def get_parser() -> FlexibleArgumentParser:
                         help=
                         "Enable auto tool choice for supported models. Use --tool-call-parser"
                         "to specify which parser to use")
-    parser.add_argument("--enable-reasoning",
-                        action="store_true",
-                        default=application_settings.enable_reasoning,
-                        help="Whether to enable reasoning_content for the model. "
-                        "If enabled, the model will be able to generate reasoning content.")
     valid_reasoning_parsers = ReasoningParserManager.reasoning_parsers.keys()
-    parser.add_argument("--reasoning-parser",
-                        type=str,
-                        metavar="{" + ",".join(valid_reasoning_parsers) + "}",
-                        default=application_settings.reasoning_parser,
-                        help="Select the reasoning parser depending on the model that you're using."
-                        " This is used to parse the reasoning content into OpenAI API "
-                        "format. Required for ``--enable-reasoning``.")
     valid_tool_parsers = ToolParserManager.tool_parsers.keys()
     parser.add_argument("--tool-call-parser",
                         type=str,
@@ -436,6 +439,10 @@ def get_parser() -> FlexibleArgumentParser:
                         action='store_true',
                         default=application_settings.enable_prompt_tokens_details,
                         help="If set to True, enable prompt_tokens_details in usage.")
+    parser.add_argument("--enable-server-load-tracking",
+                        action='store_true',
+                        default=application_settings.enable_server_load_tracking,
+                        help="If set to True, enable tracking server_load_metrics in the app state.")
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
