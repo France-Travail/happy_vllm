@@ -74,4 +74,7 @@ async def declare_application(async_engine_client: MQLLMEngineClient, args: Name
 
     app.root_path = args.root_path
 
+    app.state.enable_server_load_tracking = args.enable_server_load_tracking
+    app.state.server_load_metrics = 0
+
     return app

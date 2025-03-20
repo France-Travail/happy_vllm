@@ -25,9 +25,9 @@ from vllm.sampling_params import SamplingParams
 from vllm.entrypoints.utils import with_cancellation, load_aware_call
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
-from fastapi import APIRouter, Body, Depends, HTTPException
 from vllm.entrypoints.openai import protocol as vllm_protocol
 from vllm.entrypoints.openai.serving_engine import OpenAIServing
+from fastapi import APIRouter, Body, Depends, HTTPException, Form
 from vllm.entrypoints.openai.api_server import validate_json_request
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from vllm.entrypoints.openai.serving_pooling import OpenAIServingPooling
@@ -350,6 +350,32 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
                                  media_type="text/event-stream")
     else:
         return JSONResponse(content=generator.model_dump())
+
+
+@router.post("/v1/audio/transcriptions")
+@with_cancellation
+@load_aware_call
+async def create_transcriptions(request: Annotated[vllm_protocol.TranscriptionRequest,
+                                                   Body(openapi_examples=request_openapi_examples["audio_transcription"])],
+                                raw_request: Request):
+    model: Model = RESOURCES[RESOURCE_MODEL]
+    handler = model.openai_serving_completion
+    if handler is None:
+        return base(raw_request).create_error_response(
+            message="The model does not support Transcriptions API")
+
+    audio_data = await request.file.read()
+    generator = await handler.create_transcription(audio_data, request,
+                                                   raw_request)
+
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+
+    elif isinstance(generator, vllm_protocol.TranscriptionResponse):
+        return JSONResponse(content=generator.model_dump())
+
+    return StreamingResponse(content=generator, media_type="text/event-stream")
 
 
 @router.post(

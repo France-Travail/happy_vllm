@@ -239,18 +239,18 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         override_pooler_config: Optional[PoolerConfig] = default_args.override_pooler_config
         compilation_config: Optional[CompilationConfig] = default_args.compilation_config
         worker_cls: str = default_args.worker_cls
-        worker_extension_cls: str = default_args.worker_cls
+        worker_extension_cls: str = default_args.worker_extension_cls
         kv_transfer_config: Optional[KVTransferConfig] = default_args.kv_transfer_config
         generation_config: Optional[str] = default_args.generation_config
-        override_generation_config: Optional[Dict[str, Any]] = default_args.generation_config
+        override_generation_config: Optional[Dict[str, Any]] = default_args.override_generation_config
         enable_sleep_mode: bool = False
         model_impl: str = default_args.model_impl
 
         calculate_kv_scales: Optional[bool] = default_args.calculate_kv_scales
         additional_config: Optional[Dict[str, Any]] = default_args.additional_config
-        enable_reasoning: Optional[bool] = default_args.additional_config
-        reasoning_parser: Optional[str] = default_args.additional_config
-        use_tqdm_on_load: bool = default_args.additional_config
+        enable_reasoning: Optional[bool] = default_args.enable_reasoning
+        reasoning_parser: Optional[str] = default_args.reasoning_parser
+        use_tqdm_on_load: bool = default_args.use_tqdm_on_load
         otlp_traces_endpoint: Optional[str] = default_args.otlp_traces_endpoint
         collect_detailed_traces: Optional[str] = default_args.collect_detailed_traces
 
