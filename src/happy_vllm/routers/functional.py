@@ -361,7 +361,7 @@ async def create_transcriptions(request: Annotated[vllm_protocol.TranscriptionRe
     model: Model = RESOURCES[RESOURCE_MODEL]
     handler = model.openai_serving_completion
     if handler is None:
-        return base(raw_request).create_error_response(
+        return base(raw_request, model).create_error_response(
             message="The model does not support Transcriptions API")
 
     audio_data = await request.file.read()
