@@ -413,7 +413,7 @@ async def abort_request(request: functional_schema.RequestAbortRequest):
 if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
 
     @router.post("/v1/load_lora_adapter", dependencies=[Depends(validate_json_request)])
-    async def load_lora_adapter(request: vllm_protocol.LoadLoraAdapterRequest):
+    async def load_lora_adapter(request: vllm_protocol.LoadLoRAAdapterRequest):
         model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.load_lora_adapter(request)
         if isinstance(response, vllm_protocol.ErrorResponse):
@@ -428,7 +428,7 @@ if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
         return Response(status_code=200, content=response)
 
     @router.post("/v1/unload_lora_adapter", dependencies=[Depends(validate_json_request)])
-    async def unload_lora_adapter(request: vllm_protocol.UnloadLoraAdapterRequest):
+    async def unload_lora_adapter(request: vllm_protocol.UnloadLoRAAdapterRequest):
         model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.unload_lora_adapter(request)
         if isinstance(response, vllm_protocol.ErrorResponse):
