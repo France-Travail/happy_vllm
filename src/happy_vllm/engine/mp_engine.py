@@ -30,6 +30,7 @@ def run_mp_engine(
         vllm_config: VllmConfig, usage_context: UsageContext,
         ipc_path: str, disable_log_stats: bool,
         disable_log_requests: bool, engine_alive):
+    
     try :
         def signal_handler(*_) -> None:
             # Interrupt server on sigterm
@@ -41,9 +42,8 @@ def run_mp_engine(
             disable_log_stats=disable_log_stats,
             disable_log_requests=disable_log_requests,
             ipc_path=ipc_path)
-        
         model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-        if vllm_config.num_scheduler_steps > 1 :
+        if vllm_config.scheduler_config.num_scheduler_steps > 1 :
             model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner._base_model_runner.model_memory_usage/float(2**30),2)) # type: ignore
         else:
             model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore
