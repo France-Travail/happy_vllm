@@ -103,6 +103,7 @@ async def test_base_client() -> AsyncClient:
         root_path=None,
         with_launch_arguments=True,
         disable_fastapi_docs=False,
+        enable_server_load_tracking=False,
         extra_information=str(TEST_DATA_DIR / "extra_information.json")
     )
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)
@@ -129,6 +130,7 @@ async def test_complete_client(monkeypatch) -> AsyncClient:
         root_path=None,
         with_launch_arguments=True,
         disable_fastapi_docs=False,
+        enable_server_load_tracking=False,
         extra_information=str(TEST_DATA_DIR / "extra_information.json")
     )
     app = await declare_application(happy_vllm_build_async_engine_client(args), args)

@@ -37,6 +37,7 @@ from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
 from vllm.entrypoints.openai.protocol import TokenizeResponse, DetokenizeResponse
 from vllm.entrypoints.openai.serving_tokenization import OpenAIServingTokenization
 from vllm.transformers_utils.tokenizer_group.tokenizer_group import TokenizerGroup
+from vllm.entrypoints.openai.serving_transcription import OpenAIServingTranscription
 from vllm.entrypoints.openai.serving_models import (BaseModelPath, OpenAIServingModels)
 
 from happy_vllm import utils
@@ -87,7 +88,7 @@ class Model:
         """
 
         self._model_conf = {'model_name': args.model_name}
-
+    
         logger.info(f"Loading the model from {args.model}")
         if args.model_name != "TEST MODEL":
             self._model = async_engine_client
@@ -150,6 +151,11 @@ class Model:
                                                                         request_logger=request_logger,
                                                                         chat_template=resolved_chat_template,
                                                                         chat_template_content_format=args.chat_template_content_format)
+            if model_config.task == "transcription":
+                self.openai_serving_transcription = OpenAIServingTranscription(cast(AsyncLLMEngine,self._model),
+                                                                                model_config,
+                                                                                self.openai_serving_models,
+                                                                                request_logger=request_logger)
             self.openai_serving_tokenization = OpenAIServingTokenization(cast(AsyncLLMEngine,self._model), model_config, 
                                                                         self.openai_serving_models,
                                                                         request_logger=request_logger,

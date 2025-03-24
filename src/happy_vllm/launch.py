@@ -86,11 +86,14 @@ async def launch_app(args, **uvicorn_kwargs):
                 return '[' + a + ']'
             return a or "127.0.0.1"
 
-        logger.info("Starting vLLM API server on http://%s:%d",
-                    _listen_addr(sock_addr[0]), sock_addr[1])
+        is_ssl = args.ssl_keyfile and args.ssl_certfile
+        logger.info("Starting vLLM API server on http%s://%s:%d",
+                    "s" if is_ssl else "", _listen_addr(sock_addr[0]),
+                    sock_addr[1])
 
         shutdown_task = await serve_http(app,
                                         sock=sock,
+                                        enable_ssl_refresh=args.enable_ssl_refresh,
                                         host=args.host,
                                         port=args.port,
                                         log_level=args.uvicorn_log_level,

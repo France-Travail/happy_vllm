@@ -80,3 +80,8 @@ Load a specific Lora adapter (more details in [vLLM documentation](https://docs.
 ### /v1/unload_lora_adapter (POST)
 
 Unload a Lora adapter (more details in [vLLM documentation](https://docs.vllm.ai/en/latest/models/lora.html))
+
+## Transcription endpoints
+
+### /v1/audio/transcriptions
+Used to obtain the transcription of an audio file (more details [here](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#transcriptions-api))
