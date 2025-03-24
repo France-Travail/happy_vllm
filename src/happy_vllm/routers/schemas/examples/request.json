@@ -194,5 +194,28 @@
                 "model": "my_model"
               }
         }
+    },
+    "audio_transcription": {
+        "nominal_case": {
+            "summary": "Nominal case",
+            "description": "A nominal case",
+            "value": {
+                "file": "file binaire",
+                "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
+                "model": "my_model",
+                "language": "fr"
+              }
+        },
+        "parameters_case": {
+            "summary": "Parameters case",
+            "description": "A Parameters case",
+            "value": {
+                "file": "file binaire",
+                "prompt": "This is a prompt example. Please complete it with a joke. JOKE:",
+                "model": "my_model",
+                "language": "fr",
+                "temperature": 0.0
+              }
+        }
     }
 }

@@ -15,10 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import signal
-import uvloop
 import logging
 
-from vllm import AsyncEngineArgs
+from vllm.config import VllmConfig
 from prometheus_client import Gauge
 from vllm.usage.usage_lib import UsageContext
 from vllm.engine.multiprocessing.engine import MQLLMEngine
@@ -27,18 +26,24 @@ from vllm.engine.multiprocessing.engine import MQLLMEngine
 logger = logging.getLogger(__name__)
 
 
-def run_mp_engine(engine_args: AsyncEngineArgs, usage_context: UsageContext, ipc_path: str, engine_alive):
+def run_mp_engine(
+        vllm_config: VllmConfig, usage_context: UsageContext,
+        ipc_path: str, disable_log_stats: bool,
+        disable_log_requests: bool, engine_alive):
+    
     try :
         def signal_handler(*_) -> None:
             # Interrupt server on sigterm
             raise KeyboardInterrupt("MQLLMEngine terminated")
-        engine = MQLLMEngine.from_engine_args(
-            engine_args=engine_args,
+        
+        engine = MQLLMEngine.from_vllm_config(
+            vllm_config=vllm_config,
             usage_context=usage_context,
-            ipc_path=ipc_path
-        )
+            disable_log_stats=disable_log_stats,
+            disable_log_requests=disable_log_requests,
+            ipc_path=ipc_path)
         model_consumed_memory = Gauge("model_memory_usage", "Model Consumed GPU Memory in GB ")
-        if engine_args.num_scheduler_steps > 1 :
+        if vllm_config.scheduler_config.num_scheduler_steps > 1 :
             model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner._base_model_runner.model_memory_usage/float(2**30),2)) # type: ignore
         else:
             model_consumed_memory.set(round(engine.engine.model_executor.driver_worker.model_runner.model_memory_usage/float(2**30),2)) # type: ignore

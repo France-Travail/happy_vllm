@@ -22,12 +22,12 @@ from pydantic import BaseModel, Field
 from starlette.requests import Request
 from typing_extensions import assert_never
 from vllm.sampling_params import SamplingParams
-from vllm.entrypoints.utils import with_cancellation
+from vllm.entrypoints.utils import with_cancellation, load_aware_call
 from vllm.engine.async_llm_engine import AsyncLLMEngine
 from lmformatenforcer import TokenEnforcerTokenizerData
-from fastapi import APIRouter, Body, Depends, HTTPException
 from vllm.entrypoints.openai import protocol as vllm_protocol
 from vllm.entrypoints.openai.serving_engine import OpenAIServing
+from fastapi import APIRouter, Body, Depends, HTTPException, Form
 from vllm.entrypoints.openai.api_server import validate_json_request
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from vllm.entrypoints.openai.serving_pooling import OpenAIServingPooling
@@ -292,6 +292,7 @@ async def metadata_text(request: Request,
     dependencies=[Depends(validate_json_request)]
 )
 @with_cancellation
+@load_aware_call
 async def create_chat_completion(
     request: Annotated[vllm_protocol.ChatCompletionRequest, 
     Body(openapi_examples=request_openapi_examples["chat_completions"])],
@@ -329,6 +330,7 @@ async def create_chat_completion(
     dependencies=[Depends(validate_json_request)]
 )
 @with_cancellation
+@load_aware_call
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
     """Open AI compatible completion. See https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html for more details
@@ -352,6 +354,32 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
         return JSONResponse(content=generator.model_dump())
 
 
+@router.post("/v1/audio/transcriptions")
+@with_cancellation
+@load_aware_call
+async def create_transcriptions(request: Annotated[vllm_protocol.TranscriptionRequest,
+                                                   Form()],
+                                raw_request: Request):
+    model: Model = RESOURCES[RESOURCE_MODEL]
+    handler = model.openai_serving_transcription
+    if handler is None:
+        return base(raw_request, model).create_error_response(
+            message="The model does not support Transcriptions API")
+
+    audio_data = await request.file.read()
+    generator = await handler.create_transcription(audio_data, request,
+                                                   raw_request)
+
+    if isinstance(generator, vllm_protocol.ErrorResponse):
+        return JSONResponse(content=generator.model_dump(),
+                            status_code=generator.code)
+
+    elif isinstance(generator, vllm_protocol.TranscriptionResponse):
+        return JSONResponse(content=generator.model_dump())
+
+    return StreamingResponse(content=generator, media_type="text/event-stream")
+
+
 @router.post(
     "/v1/embeddings", 
     response_model=Union[
@@ -360,7 +388,7 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
     ], 
     dependencies=[Depends(validate_json_request)]
 )
-@with_cancellation
+@load_aware_call
 async def create_embedding(request: vllm_protocol.EmbeddingRequest, raw_request: Request):
     model: Model = RESOURCES[RESOURCE_MODEL]
     handler = model.openai_serving_embedding
@@ -387,7 +415,7 @@ async def abort_request(request: functional_schema.RequestAbortRequest):
 if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
 
     @router.post("/v1/load_lora_adapter", dependencies=[Depends(validate_json_request)])
-    async def load_lora_adapter(request: vllm_protocol.LoadLoraAdapterRequest):
+    async def load_lora_adapter(request: vllm_protocol.LoadLoRAAdapterRequest):
         model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.load_lora_adapter(request)
         if isinstance(response, vllm_protocol.ErrorResponse):
@@ -402,7 +430,7 @@ if envs.VLLM_ALLOW_RUNTIME_LORA_UPDATING:
         return Response(status_code=200, content=response)
 
     @router.post("/v1/unload_lora_adapter", dependencies=[Depends(validate_json_request)])
-    async def unload_lora_adapter(request: vllm_protocol.UnloadLoraAdapterRequest):
+    async def unload_lora_adapter(request: vllm_protocol.UnloadLoRAAdapterRequest):
         model: Model = RESOURCES[RESOURCE_MODEL]
         response = await model.openai_serving_chat.unload_lora_adapter(request)
         if isinstance(response, vllm_protocol.ErrorResponse):

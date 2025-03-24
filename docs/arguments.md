@@ -33,6 +33,7 @@ Here is a list of arguments useful for the application (they all have default va
  - `ssl-keyfile`: Uvicorn setting, the file path to the SSL key file (default value is `None`)
  - `ssl-certfile`: Uvicorn setting, the file path to the SSL cert file (default value is `None`)
  - `ssl-ca-certs`: Uvicorn setting, the CA certificates file (default value is `None`)
+ - `enable-ssl-refresh`: Refresh SSL Context when SSL certificate files change (default value is `False`)
  - `ssl-cert-reqs`: Uvicorn setting, Whether client certificate is required (see stdlib ssl module's) (default value is `0`)
  - `root_path`: The FastAPI root path (default value is `None`)
  - `lora-modules`: LoRA module configurations in the format name=path
@@ -46,18 +47,23 @@ Here is a list of arguments useful for the application (they all have default va
  - `disable-frontend-multiprocessing`: If specified, will run the OpenAI frontend server in the same process as the model serving engine (default value is `False`)
  - `enable-request-id-headers`: If specified, API server will add X-Request-Id header to responses. Caution: this hurts performance at high QPS (default value `False`)
  - `enable-auto-tool-choice`: Enable auto tool choice for supported models. Use --tool-call-parser" "to specify which parser to use" (default value is `False`)
- - `enable-reasoning`: Whether to enable reasoning_content for the model. If enabled, the model will be able to generate reasoning content.
  - `tool-call-parser`: Select the tool call parser depending on the model that you're using. This is used to parse the model-generated tool call. Required for --enable-auto-tool-choice. (default value is `None`, only `mistral` and `hermes` are allowed)
- - `reasoning-parser`: Select the reasoning parser depending on the model that you're using. This is used to parse the reasoning content into OpenAI API format. Required for ``--enable-reasoning``.
  - `tool-parser-plugin`: Special the tool parser plugin write to parse the model-generated tool into OpenAI API format, the name register in this plugin can be used in --tool-call-parser (default value is `""`)
  - `disable-fastapi-docs`: Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint (default value is `False`)
  - `enable-prompt-tokens-details`: If set to True, enable prompt_tokens_details in usage (default value is `False`)
+ - `enable-server-load-tracking`: If set to True, enable tracking server_load_metrics in the app state (default value is `False`)
 
 ### Model arguments
 
-All the usual vLLM arguments for the model and vLLM itself are usable. They all have default values (defined by vLLM) and are optional. The exhaustive list is [here (source code)](https://github.com/vllm-project/vllm/blob/main/vllm/engine/arg_utils.py) or [here (documentation)](https://docs.vllm.ai/en/latest/models/engine_args.html). Here are some of them:
+All the usual vLLM arguments for the model and vLLM itself are usable. They all have default values (defined by vLLM) and are optional. The exhaustive list is [here (source code)](https://github.com/vllm-project/vllm/blob/main/vllm/engine/arg_utils.py) or [here (documentation)](https://docs.vllm.ai/en/latest/serving/engine_args.html). Here are some of them:
 
  - `model`: The path to the model or the huggingface repository
+ - `task`: Possible choices: auto, generate, embedding, embed, classify, transcription. The task to use the model for. Each vLLM instance only supports one task, even if the same model can be used for multiple tasks. When the model only supports one task, "auto" can be used to select it; otherwise, you must specify explicitly which task to use. If unspecified, will use the default value of `auto`.
  - `dtype`: The data type for model weights and activations.
  - `max-model-len`: The model context length. If unspecified, will be automatically derived from the model.
  - `gpu-memory-utilization`: The fraction of GPU memory to be used for the model executor, which can range from 0 to 1. If unspecified, will use the default value of 0.9.
+ - `config-format`: Possible choices: auto, hf, mistral. The format of the model config to load. If unspecified, will use the default value of `ConfigFormat.AUTO`.
+ - `load-format`: Possible choices: auto, pt, safetensors, npcache, dummy, tensorizer, sharded_state, gguf, bitsandbytes, mistral, runai_streamer. The format of the model weights to load. If unspecified, will use the default value of `auto`.
+ - `tokenizer-mode`:Possible choices: auto, slow, mistral, custom. The tokenizer mode. If unspecified, will use the default value of `auto`.
+
+
