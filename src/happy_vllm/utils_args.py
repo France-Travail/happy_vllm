@@ -108,8 +108,6 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_request_id_headers: bool = DEFAULT_ENABLE_REQUEST_ID_HEADERS
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
-    enable_reasoning: bool = DEFAULT_ENABLE_REASONING
-    reasoning_parser: Optional[str] = DEFAULT_REASONING_PARSER
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
     tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
     disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
