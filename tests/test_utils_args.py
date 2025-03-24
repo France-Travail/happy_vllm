@@ -23,7 +23,6 @@ def test_get_parser():
     parser = utils_args.get_parser()
     application_settings = utils_args.ApplicationSettings()
     for key, value in application_settings.model_dump().items():
-        print(key)
         assert parser.get_default(key) == value
 
 

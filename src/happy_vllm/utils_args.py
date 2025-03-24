@@ -64,8 +64,6 @@ DEFAULT_RETURN_TOKENS_AS_TOKEN_IDS = False
 DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING = False
 DEFAULT_ENABLE_REQUEST_ID_HEADERS = False
 DEFAULT_ENABLE_AUTO_TOOL_CHOICE = False
-DEFAULT_ENABLE_REASONING = False
-DEFAULT_REASONING_PARSER = None
 DEFAULT_TOOL_CALL_PARSER = None
 DEFAULT_TOOL_PARSER_PLUGIN = ""
 DEFAULT_DISABLE_FASTAPI_DOCS = False
@@ -95,7 +93,7 @@ class ApplicationSettings(BaseSettings):
     ssl_certfile: Optional[str] = DEFAULT_SSL_CERTFILE
     ssl_ca_certs: Optional[str] = DEFAULT_SSL_CA_CERTS
     ssl_cert_reqs: int = DEFAULT_SSL_CERT_REQS
-    enable_ssl_refresh: Optional[bool] = DEFAULT_ENABLE_SSL_REFRESH
+    enable_ssl_refresh: bool = DEFAULT_ENABLE_SSL_REFRESH
     root_path: Optional[str] = DEFAULT_ROOT_PATH
     app_name: str = DEFAULT_APP_NAME
     api_endpoint_prefix: str = DEFAULT_API_ENDPOINT_PREFIX
@@ -110,7 +108,7 @@ class ApplicationSettings(BaseSettings):
     disable_frontend_multiprocessing: bool = DEFAULT_DISABLE_FRONTEND_MULTIPROCESSING
     enable_request_id_headers: bool = DEFAULT_ENABLE_REQUEST_ID_HEADERS
     enable_auto_tool_choice: bool = DEFAULT_ENABLE_AUTO_TOOL_CHOICE
-    enable_reasoning: Optional[bool] = DEFAULT_ENABLE_REASONING
+    enable_reasoning: bool = DEFAULT_ENABLE_REASONING
     reasoning_parser: Optional[str] = DEFAULT_REASONING_PARSER
     tool_call_parser: Optional[str] = DEFAULT_TOOL_CALL_PARSER
     tool_parser_plugin: Optional[str] = DEFAULT_TOOL_PARSER_PLUGIN
@@ -157,7 +155,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         distributed_executor_backend: Optional[Union[str, ExecutorBase]] = default_args.distributed_executor_backend
         pipeline_parallel_size: int = default_args.pipeline_parallel_size
         tensor_parallel_size: int = default_args.tensor_parallel_size
-        enable_expert_parallel: bool = default_args.enable_expert_parallel
+        enable_expert_parallel: bool = False
         max_parallel_loading_workers: Optional[int] = default_args.max_parallel_loading_workers
         block_size: Optional[int] = default_args.block_size
         enable_prefix_caching: Optional[bool] = default_args.enable_prefix_caching

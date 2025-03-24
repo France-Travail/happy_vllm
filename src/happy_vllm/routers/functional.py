@@ -291,6 +291,7 @@ async def metadata_text(request: Request,
     ], 
     dependencies=[Depends(validate_json_request)]
 )
+@with_cancellation
 @load_aware_call
 async def create_chat_completion(
     request: Annotated[vllm_protocol.ChatCompletionRequest, 
@@ -328,6 +329,7 @@ async def create_chat_completion(
     ], 
     dependencies=[Depends(validate_json_request)]
 )
+@with_cancellation
 @load_aware_call
 async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, Body(openapi_examples=request_openapi_examples["completions"])],
                             raw_request: Request):
