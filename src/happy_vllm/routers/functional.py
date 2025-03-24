@@ -358,10 +358,10 @@ async def create_completion(request: Annotated[vllm_protocol.CompletionRequest, 
 @with_cancellation
 @load_aware_call
 async def create_transcriptions(request: Annotated[vllm_protocol.TranscriptionRequest,
-                                                   Body(openapi_examples=request_openapi_examples["audio_transcription"])],
+                                                   Form()],
                                 raw_request: Request):
     model: Model = RESOURCES[RESOURCE_MODEL]
-    handler = model.openai_serving_completion
+    handler = model.openai_serving_transcription
     if handler is None:
         return base(raw_request, model).create_error_response(
             message="The model does not support Transcriptions API")

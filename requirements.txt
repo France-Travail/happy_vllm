@@ -1,4 +1,5 @@
 vllm==0.8.1
+vllm[audio]==0.8.1
 fastapi==0.115.11
 pydantic-settings==2.8.1
 uvicorn[standard]==0.34.0
