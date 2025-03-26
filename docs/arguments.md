@@ -52,6 +52,7 @@ Here is a list of arguments useful for the application (they all have default va
  - `disable-fastapi-docs`: Disable FastAPI's OpenAPI schema, Swagger UI, and ReDoc endpoint (default value is `False`)
  - `enable-prompt-tokens-details`: If set to True, enable prompt_tokens_details in usage (default value is `False`)
  - `enable-server-load-tracking`: If set to True, enable tracking server_load_metrics in the app state (default value is `False`)
+ - `disable-uvicorn-access-log`: Disable uvicorn access log (default value is `False`)
 
 ### Model arguments
 
