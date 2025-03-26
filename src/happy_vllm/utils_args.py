@@ -69,6 +69,7 @@ DEFAULT_TOOL_PARSER_PLUGIN = ""
 DEFAULT_DISABLE_FASTAPI_DOCS = False
 DEFAULT_ENABLE_PROMPT_TOKENS_DETAILS = False
 DEFAULT_ENABLE_SERVER_LOAD_TRACKING = False
+DEFAULT_DISABLE_UVICORN_ACCESS_LOG = False
 
 class ApplicationSettings(BaseSettings):
     """Application settings
@@ -113,6 +114,7 @@ class ApplicationSettings(BaseSettings):
     disable_fastapi_docs : Optional[bool] = DEFAULT_DISABLE_FASTAPI_DOCS
     enable_prompt_tokens_details : Optional[bool] = DEFAULT_ENABLE_PROMPT_TOKENS_DETAILS
     enable_server_load_tracking: Optional[bool]= DEFAULT_ENABLE_SERVER_LOAD_TRACKING
+    disable_uvicorn_access_log: bool = DEFAULT_DISABLE_UVICORN_ACCESS_LOG
 
 
     model_config = SettingsConfigDict(env_file=".env", extra='ignore', protected_namespaces=('settings', ))
@@ -158,6 +160,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         block_size: Optional[int] = default_args.block_size
         enable_prefix_caching: Optional[bool] = default_args.enable_prefix_caching
         disable_sliding_window: bool = False
+        disable_cascade_attn: bool = False
         swap_space: float = default_args.swap_space # GiB
         cpu_offload_gb: float = default_args.cpu_offload_gb  # GiB
         gpu_memory_utilization: float = default_args.gpu_memory_utilization
@@ -214,7 +217,7 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         enable_chunked_prefill: Optional[bool] = default_args.enable_chunked_prefill
         guided_decoding_backend: str = default_args.guided_decoding_backend
         logits_processor_pattern: Optional[str] = default_args.logits_processor_pattern
-        # Speculative decoding configuration.
+        speculative_config: Optional[Union[str, Dict[str, Any]]] = default_args.speculative_config
         speculative_model: Optional[str] = default_args.speculative_model
         speculative_model_quantization: Optional[str] = default_args.speculative_model_quantization
         speculative_draft_tensor_parallel_size: Optional[int] = default_args.speculative_draft_tensor_parallel_size
@@ -227,8 +230,8 @@ def get_model_settings(parser: FlexibleArgumentParser) -> BaseSettings:
         spec_decoding_acceptance_method: str = default_args.spec_decoding_acceptance_method
         typical_acceptance_sampler_posterior_threshold: Optional[float] = default_args.typical_acceptance_sampler_posterior_threshold
         typical_acceptance_sampler_posterior_alpha: Optional[float] = default_args.typical_acceptance_sampler_posterior_alpha
-        qlora_adapter_name_or_path: Optional[str] = default_args.qlora_adapter_name_or_path
         disable_logprobs_during_spec_decoding: Optional[bool] = default_args.disable_logprobs_during_spec_decoding
+        qlora_adapter_name_or_path: Optional[str] = default_args.qlora_adapter_name_or_path
         show_hidden_metrics_for_version: Optional[str] = default_args.show_hidden_metrics_for_version
         disable_async_output_proc: bool = False
         override_neuron_config: Optional[Dict[str, Any]] = default_args.override_neuron_config
@@ -439,6 +442,9 @@ def get_parser() -> FlexibleArgumentParser:
                         action='store_true',
                         default=application_settings.enable_server_load_tracking,
                         help="If set to True, enable tracking server_load_metrics in the app state.")
+    parser.add_argument("--disable-uvicorn-access-log",
+                        action="store_true",
+                        help="Disable uvicorn access log.")
 
     parser = AsyncEngineArgs.add_cli_args(parser)
     return parser
