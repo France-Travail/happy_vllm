@@ -77,7 +77,7 @@ def verify_request(request: Union[
         if request.top_p == 1 and request.top_k == 1:
             detail=f"Use top_p and top_k equal to 1 breaks the model"
     if request.max_tokens and request.min_tokens:
-        if request.max_tokens <= request.min_tokens:
+        if request.max_tokens < request.min_tokens:
             detail=f"Use max_tokens: {request.max_tokens} less than min_tokens : {request.min_tokens} breaks the model"
     if detail :
         raise HTTPException(
