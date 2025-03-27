@@ -84,7 +84,7 @@ def proper_decode(tokenizer, token_ids: Union[int, List[int]]) -> str:
     token_ids = [extra_token_id] + token_ids
     return tokenizer.decode(token_ids)[1:]
 
-def get_input_ids(tokenizer: AnyTokenizer, *args, **kwargs) -> List[int]:
+def get_input_ids(tokenizer: AnyTokenizer, *args, **kwargs) -> Union[List[int], List[List[int]]]:
     "In case of a Mistral tokenizer, the input_ids are in an Encoding object"
     input_ids_tmp = tokenizer(*args, **kwargs)
     if isinstance(input_ids_tmp, Encoding):
