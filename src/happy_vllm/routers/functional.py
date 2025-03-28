@@ -130,7 +130,7 @@ async def tokenizer(request: Request,
     with_tokens_str = request_dict.get('with_tokens_str', False)
     
     if vanilla:
-        tokens_ids = model._tokenizer(text)['input_ids']
+        tokens_ids = utils.get_input_ids(model._tokenizer, text)
         if with_tokens_str:
             tokens_str = model._tokenizer.convert_ids_to_tokens(tokens_ids)
     else:
