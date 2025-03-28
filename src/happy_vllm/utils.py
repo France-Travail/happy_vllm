@@ -18,6 +18,8 @@ import logging
 from pathlib import Path
 import importlib.metadata
 from typing import List, Union
+from vllm.transformers_utils.tokenizer import AnyTokenizer
+from vllm.transformers_utils.tokenizers.mistral import Encoding
 
 
 logger = logging.getLogger(__name__)
@@ -56,18 +58,18 @@ def proper_tokenization(tokenizer, str_to_tokenize: str) -> tuple:
         tuple : The tuple containing the token ids for the input string
     """
     big_word = 'thisisareallybigwordisntit'
-    token_ids_big_word = tokenizer(big_word, add_special_tokens=False)['input_ids']
+    token_ids_big_word = get_input_ids(tokenizer, big_word, add_special_tokens=False)
     # We concatenate the big word with the str in order for the str not to be at the beginning of the sentence
     new_text = big_word + str_to_tokenize
-    token_ids_new_text = tokenizer(new_text, add_special_tokens=False)['input_ids']
+    token_ids_new_text = get_input_ids(tokenizer, new_text, add_special_tokens=False)
     # We check that part of the str was not "integrated" in a token of the big_word
     while token_ids_big_word != token_ids_new_text[:len(token_ids_big_word)]:
         # If it has been "integrated", we take another big_word
         big_word = big_word[:-1]
-        token_ids_big_word = tokenizer(big_word, add_special_tokens=False)['input_ids']
+        token_ids_big_word = get_input_ids(tokenizer, big_word, add_special_tokens=False)
         # We concatenate the big word with the str in order for the str not to be at the beginning of the sentence
         new_text = big_word + str_to_tokenize
-        token_ids_new_text = tokenizer(new_text, add_special_tokens=False)['input_ids']
+        token_ids_new_text = get_input_ids(tokenizer, new_text, add_special_tokens=False)
     token_ids_str = tuple(token_ids_new_text[len(token_ids_big_word):])
     return token_ids_str
 
@@ -81,3 +83,12 @@ def proper_decode(tokenizer, token_ids: Union[int, List[int]]) -> str:
     extra_token_id = proper_tokenization(tokenizer, 'c')[0]
     token_ids = [extra_token_id] + token_ids
     return tokenizer.decode(token_ids)[1:]
+
+def get_input_ids(tokenizer: AnyTokenizer, *args, **kwargs) -> Union[List[int], List[List[int]]]:
+    "In case of a Mistral tokenizer, the input_ids are in an Encoding object"
+    input_ids_tmp = tokenizer(*args, **kwargs)
+    if isinstance(input_ids_tmp, Encoding):
+        input_ids = input_ids_tmp.input_ids
+    else:
+        input_ids = input_ids_tmp["input_ids"]
+    return input_ids
